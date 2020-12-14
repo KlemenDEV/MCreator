@@ -2,7 +2,7 @@
 <#function entityToRegistryName entity>
     <#assign mappedString = entity.getMappedValue(2)>
     <#if mappedString.contains(".CustomEntity")>
-        <#assign mappedString = mappedString?replace(".CustomEntity", "")>
+        <#assign mappedString = mappedString?replace("Entity.CustomEntity", "")>
         <#return generator.getResourceLocationForModElement(mappedString)>
     <#else>
         <#return "minecraft:" + mappedString>
