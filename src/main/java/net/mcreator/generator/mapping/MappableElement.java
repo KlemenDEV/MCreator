@@ -38,8 +38,12 @@ public abstract class MappableElement {
 	}
 
 	public String getMappedValue() {
+		return this.getMappedValue(0);
+	}
+
+	public String getMappedValue(int mapIndex) {
 		try {
-			return mapper.getMapping(value);
+			return mapper.getMapping(value, mapIndex);
 		} catch (Exception e) {
 			LOG.fatal("Failed to map value to the mappable element. Value: " + value + ", mapper: "
 					+ mapper.mappingSource, e);

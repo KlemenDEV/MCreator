@@ -1,126 +1,77 @@
 <#-- @formatter:off -->
+<#include "../../biome.ftl">
 {
     "scale": ${data.heightVariation},
     "depth": ${data.baseHeight},
     "precipitation": <#if (data.rainingPossibility > 0)><#if (data.temperature > 0.15)>"rain"<#else>"snow"</#if><#else>"none"</#if>,
     "temperature": ${data.temperature},
     "downfall": ${data.rainingPossibility},
-    "category": "${data.biomeCategory?lower_case}",
+    "category": "${data.biomeCategory?replace("THEEND", "THE_END")?lower_case}",
+	"surface_builder": "${modid}:${registryname}",
+	"spawn_costs": {},
+    "player_spawn_friendly": true,
+	<#if data.parent?? && data.parent.getUnmappedValue() != "No parent">
+	"parent": "${data.parent}",
+	</#if>
     "effects": {
-    	"mood_sound": {
-    	 "sound": "minecraft:ambient.cave",
-    	 "tick_delay": 6000,
-    	 "block_search_extent": 8,
-    	 "offset": 2.0
-    	},
     	"foliage_color": ${data.foliageColor?has_content?then(data.foliageColor.getRGB(), 10387789)},
-    	<#if data.grassColor?has_content>
-    	"grass_color": ${data.grassColor.getRGB()},
-    	<#else>
-    	"grass_color": 9470285,
-    	</#if>
-    	<#if data.airColor?has_content>
-    	"sky_color": ${data.airColor.getRGB()},
-    	"fog_color": ${data.airColor.getRGB()},
-    	<#else>
-    	"sky_color": 7972607,
-    	"fog_color": 12638463,
-    	</#if>
-    	<#if data.waterColor?has_content>
-    	"water_color": ${data.waterColor.getRGB()},
-    	<#else>
-    	"water_color": 4159204,
-    	</#if>
-    	<#if data.waterFogColorColor?has_content>
-    	"water_fog_color": ${data.waterColor.getRGB()}
-    	<#else>
-    	"water_fog_color": 329011
-    	</#if>
+    	"grass_color": ${data.grassColor?has_content?then(data.grassColor.getRGB(), 9470285)},
+    	"sky_color": ${data.airColor?has_content?then(data.airColor.getRGB(), 7972607)},
+    	"fog_color": ${data.airColor?has_content?then(data.airColor.getRGB(), 12638463)},
+    	"water_color": ${data.waterColor?has_content?then(data.waterColor.getRGB(), 4159204)},
+    	"water_fog_color": ${data.waterFogColor?has_content?then(data.waterFogColor.getRGB(), 329011)}
     },
-    "surface_builder": "${modid}:${registryname}",
+	"spawners": {
+		"monster": [<@generateEntityList data.spawnEntries "monster"/>],
+		"creature": [<@generateEntityList data.spawnEntries "creature"/>],
+		"ambient": [<@generateEntityList data.spawnEntries "ambient"/>],
+		"water_creature": [<@generateEntityList data.spawnEntries "waterCreature"/>],
+		"water_ambient": [],
+		"misc": []
+	},
     "carvers": {
+		<#if data.defaultFeatures?contains("Caves")>
     	"air": [
             "minecraft:cave",
             "minecraft:canyon"
-    	]
+    	],
+		</#if>
     },
     "features": [
-    	[],
-    	[
-    	"minecraft:lake_water",
-    	"minecraft:lake_lava"
+    	<#--RAW_GENERATION-->[],
+		<#--LAKES-->[
+		<#if data.defaultFeatures?contains("Lakes")>
+			"minecraft:lake_water",
+			"minecraft:lake_lava"
+		</#if>
     	],
-    	[],
-    	[
-    	 "minecraft:monster_room"
+		<#--LOCAL_MODIFICATIONS-->[],
+		<#--UNDERGROUND_STRUCTURES-->[
+		<#if data.defaultFeatures?contains("MonsterRooms")>
+			"minecraft:monster_room"
+		</#if>
     	],
-    	[],
-    	[],
-    	[
-    	 "minecraft:ore_dirt",
-    	 "minecraft:ore_gravel",
-    	 "minecraft:ore_granite",
-    	 "minecraft:ore_diorite",
-    	 "minecraft:ore_andesite",
-    	 "minecraft:ore_coal",
-    	 "minecraft:ore_iron",
-    	 "minecraft:ore_gold",
-    	 "minecraft:ore_redstone",
-    	 "minecraft:ore_diamond",
-    	 "minecraft:ore_lapis",
-    	 <#if (data.sandPathcesPerChunk > 0)>
-    	 "minecraft:disk_sand",
-    	 </#if>
-    	 <#if (data.gravelPatchesPerChunk > 0)>
-    	 "minecraft:disk_gravel",
-    	 </#if>
-    	 "minecraft:disk_clay"
+		<#--SURFACE_STRUCTURES-->[],
+		<#--STRONGHOLDS-->[],
+		<#--UNDERGROUND_ORES-->[
+		<#if data.defaultFeatures?contains("Ores")>
+			"minecraft:ore_dirt",
+			"minecraft:ore_gravel",
+			"minecraft:ore_granite",
+			"minecraft:ore_diorite",
+			"minecraft:ore_andesite",
+			"minecraft:ore_coal",
+			"minecraft:ore_iron",
+			"minecraft:ore_gold",
+			"minecraft:ore_redstone",
+			"minecraft:ore_diamond",
+			"minecraft:ore_lapis"
+		</#if>
     	],
-    	[],
-    	[
-    	 <#if (data.treesPerChunk > 0)>
-    	 <#if data.vanillaTreeType == "Big trees">
-    	 "minecraft:fancy_oak",
-    	 "minecraft:fancy_oak_bees_0002",
-    	 "minecraft:fancy_oak_bees_002",
-    	 "minecraft:fancy_oak_bees_005" <#if (data.flowersPerChunk > 0) || (data.grassPerChunk > 0) || (data.mushroomsPerChunk > 0) || (data.reedsPerChunk > 0) || (data.cactiPerChunk > 0)>,</#if>
-    	 <#elseif data.vanillaTreeType == "Mega pine trees">
-    	 "minecraft mega_spruce",
-    	 "minecraft:mega_pine"<#if (data.flowersPerChunk > 0) || (data.grassPerChunk > 0) || (data.mushroomsPerChunk > 0) || (data.reedsPerChunk > 0) || (data.cactiPerChunk > 0)>,</#if>
-    	 <#elseif data.vanillaTreeType == "Savanna trees">
-    	 "minecarft acacia"<#if (data.flowersPerChunk > 0) || (data.grassPerChunk > 0) || (data.mushroomsPerChunk > 0) || (data.reedsPerChunk > 0) || (data.cactiPerChunk > 0)>,</#if>
-    	 <#elseif data.vanillaTreeType == "Birch trees">
-    	 "minecraft:birch",
-    	 "minecraft:birch_0002",
-    	 "minecraft:birch_002",
-    	 "minecraft:birch_005",
-    	 "minecraft:birch_other"<#if (data.flowersPerChunk > 0) || (data.grassPerChunk > 0) || (data.mushroomsPerChunk > 0) || (data.reedsPerChunk > 0) || (data.cactiPerChunk > 0)>,</#if>
-    	 <#else>
-    	 "minecraft:oak",
-    	 "minecraft:oak_bees_0002",
-    	 "minecraft:oak_bees_002",
-    	 "minecraft:oak_bees_005" <#if (data.flowersPerChunk > 0) || (data.grassPerChunk > 0) || (data.mushroomsPerChunk > 0) || (data.reedsPerChunk > 0) || (data.cactiPerChunk > 0)>,</#if>
-    	 </#if>
-    	 </#if>
-    	 <#if (data.flowersPerChunk > 0)>
-    	 "minecraft:flower_default"<#if (data.grassPerChunk > 0) || (data.mushroomsPerChunk > 0) || (data.reedsPerChunk > 0) || (data.cactiPerChunk > 0)>,</#if>
-    	 </#if>
-    	 <#if (data.grassPerChunk > 0)>
-    	 "minecraft:patch_grass_forest"<#if (data.mushroomsPerChunk > 0) || (data.reedsPerChunk > 0) || (data.cactiPerChunk > 0)>,</#if>
-    	 </#if>
-    	 <#if (data.mushroomsPerChunk > 0)>
-    	 "minecraft:brown_mushroom_normal",
-    	 "minecraft:red_mushroom_normal"<#if (data.reedsPerChunk > 0) || (data.cactiPerChunk > 0)>,</#if>
-    	 </#if>
-    	 <#if (data.reedsPerChunk > 0)>
-    	 "minecraft:patch_sugar_cane"<#if (data.cactiPerChunk > 0)>,</#if>
-    	 </#if>
-    	 <#if (data.cactiPerChunk > 0)>
-    	 "minecraft:patch_cactus_decorated"
-    	 </#if>
-    	],
-    	[
-    	 "minecraft:freeze_top_layer"
+		<#--UNDERGROUND_DECORATION-->[],
+		<#--VEGETAL_DECORATION-->[],
+		<#--TOP_LAYER_MODIFICATION-->[
+			"minecraft:freeze_top_layer"
     	]
     ],
     "starts": [
@@ -157,93 +108,6 @@
     	<#if data.villageType != "none">
     	"minecraft:village_${data.villageType}"
     	</#if>
-    ],
-    "spawners": {
-    	"monster": [
-    	<#list data.spawnMonsters as entry>
-    	<#assign entity = generator.map(entry.entity.getUnmappedValue(), "entities", 1)!"null">
-    	<#if !entity.toString().contains(".CustomEntity")>
-    	{
-    	 "type": "minecraft:${entity?lower_case?replace("entity", "")}",
-    	 "weight": ${entry.weight},
-    	 "minCount": ${entry.minGroup},
-    	 "maxCount": ${entry.maxGroup}
-    	}
-    	<#else>
-    	{
-    	 "type": "${modid}:${entity.toString().replace(".CustomEntity", "")?lower_case}",
-    	 "weight": ${entry.weight},
-    	 "minCount": ${entry.minGroup},
-    	 "maxCount": ${entry.maxGroup}
-    	}
-    	</#if><#if entry?has_next>,</#if>
-    	</#list>
-    	],
-    	"creature": [
-    	<#list data.spawnCreatures as entry>
-    	<#assign entity = generator.map(entry.entity.getUnmappedValue(), "entities", 1)!"null">
-    	<#if !entity.toString().contains(".CustomEntity")>
-    	{
-    	 "type": "minecraft:${entity?lower_case?replace("entity", "")}",
-    	 "weight": ${entry.weight},
-    	 "minCount": ${entry.minGroup},
-    	 "maxCount": ${entry.maxGroup}
-    	}
-    	<#else>
-    	{
-    	 "type": "${modid}:${entity.toString().replace(".CustomEntity", "")?lower_case}",
-    	 "weight": ${entry.weight},
-    	 "minCount": ${entry.minGroup},
-    	 "maxCount": ${entry.maxGroup}
-    	}
-    	</#if><#if entry?has_next>,</#if>
-    	</#list>
-    	],
-    	"ambient": [
-    	<#list data.spawnAmbients as entry>
-    	<#assign entity = generator.map(entry.entity.getUnmappedValue(), "entities", 1)!"null">
-    	<#if !entity.toString().contains(".CustomEntity")>
-    	{
-    	 "type": "minecraft:${entity?lower_case?replace("entity", "")}",
-    	 "weight": ${entry.weight},
-    	 "minCount": ${entry.minGroup},
-    	 "maxCount": ${entry.maxGroup}
-    	}
-    	<#else>
-    	{
-    	 "type": "${modid}:${entity.toString().replace(".CustomEntity", "")?lower_case}",
-    	 "weight": ${entry.weight},
-    	 "minCount": ${entry.minGroup},
-    	 "maxCount": ${entry.maxGroup}
-    	}
-    	</#if><#if entry?has_next>,</#if>
-    	</#list>
-    	],
-    	"water_creature": [
-    	<#list data.spawnWaterCreatures as entry>
-    	<#assign entity = generator.map(entry.entity.getUnmappedValue(), "entities", 1)!"null">
-    	<#if !entity.toString().contains(".CustomEntity")>
-    	{
-    	 "type": "minecraft:${entity?lower_case?replace("entity", "")}",
-    	 "weight": ${entry.weight},
-    	 "minCount": ${entry.minGroup},
-    	 "maxCount": ${entry.maxGroup}
-    	}
-    	<#else>
-    	{
-    	 "type": "${modid}:${entity.toString().replace(".CustomEntity", "")?lower_case}",
-    	 "weight": ${entry.weight},
-    	 "minCount": ${entry.minGroup},
-    	 "maxCount": ${entry.maxGroup}
-    	}
-    	</#if><#if entry?has_next>,</#if>
-    	</#list>
-    	],
-    	"water_ambient": [
-    	],
-    	"misc": []
-    },
-    "spawn_costs": {},
-    "player_spawn_friendly": true
+    ]
 }
 <#-- @formatter:on -->

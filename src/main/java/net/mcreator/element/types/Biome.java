@@ -35,24 +35,27 @@ import java.util.List;
 	public final transient int TREES_VANILLA;
 	public final transient int TREES_CUSTOM;
 
-	public String name;//
-	public MItemBlock groundBlock;//
-	public MItemBlock undergroundBlock;//
+	public MItemBlock groundBlock;
+	public MItemBlock undergroundBlock;
 
-	public int treeType;//
-	public String vanillaTreeType;//
-	public int minHeight;//
-	public boolean spawnVines;//
-	public MItemBlock treeVines;//
-	public MItemBlock treeStem;//
-	public MItemBlock treeBranch;//
-	public MItemBlock treeFruits;//
+	public String name;
+	public BiomeEntry parent;
+	public String biomeCategory;
+	public double rainingPossibility;
+	public double temperature;
+	public double baseHeight;
+	public double heightVariation;
 
-	public Color airColor;//
-	public Color grassColor;//
-	public Color foliageColor;//
-	public Color waterColor;//
-	public Color waterFogColor;//
+	public Color airColor;
+	public Color grassColor;
+	public Color foliageColor;
+	public Color waterColor;
+	public Color waterFogColor;
+
+	public boolean spawnBiome;//
+	public int biomeWeight;//
+	public String biomeType;//
+	public List<String> biomeDictionaryTypes;//
 
 	public int treesPerChunk;//
 	public int grassPerChunk;//
@@ -65,17 +68,14 @@ import java.util.List;
 	public int reedsPerChunk;//
 	public int cactiPerChunk;//
 
-	public double rainingPossibility;//
-	public double temperature;//
-	public double baseHeight;//
-	public double heightVariation;//
-
-	public boolean spawnBiome;//
-	public int biomeWeight;//
-	public String biomeType;//
-
-	public String biomeCategory;//
-	public BiomeEntry parent;//
+	public int treeType;//
+	public String vanillaTreeType;//
+	public int minHeight;//
+	public boolean spawnVines;//
+	public MItemBlock treeVines;//
+	public MItemBlock treeStem;//
+	public MItemBlock treeBranch;//
+	public MItemBlock treeFruits;//
 
 	public boolean spawnStronghold;//
 	public boolean spawnMineshaft;//
@@ -89,10 +89,9 @@ import java.util.List;
 	public boolean spawnShipwreck;//
 	public String oceanRuinType;//
 
-	public List<String> biomeDictionaryTypes;//
 	public List<String> defaultFeatures;//
 
-	public List<SpawnEntry> spawnEntries;//
+	public List<SpawnEntry> spawnEntries;
 
 	private Biome() {
 		this(null);
