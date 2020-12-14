@@ -1,5 +1,5 @@
 templates:
-  - template: json/biome.json.ftl
+  - template: json/biome/biome.json.ftl
     writer: json
     name: "@MODDATAROOT/worldgen/biome/@registryname.json"
   - template: json/biome/biome_builder.json.ftl

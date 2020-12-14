@@ -35,68 +35,64 @@ import java.util.List;
 	public final transient int TREES_VANILLA;
 	public final transient int TREES_CUSTOM;
 
-	public String name;
-	public MItemBlock groundBlock;
-	public MItemBlock undergroundBlock;
+	public String name;//
+	public MItemBlock groundBlock;//
+	public MItemBlock undergroundBlock;//
 
-	public int treeType;
-	public String vanillaTreeType;
-	public int minHeight;
-	public boolean spawnVines;
-	public MItemBlock treeVines;
-	public MItemBlock treeStem;
-	public MItemBlock treeBranch;
-	public MItemBlock treeFruits;
+	public int treeType;//
+	public String vanillaTreeType;//
+	public int minHeight;//
+	public boolean spawnVines;//
+	public MItemBlock treeVines;//
+	public MItemBlock treeStem;//
+	public MItemBlock treeBranch;//
+	public MItemBlock treeFruits;//
 
-	public Color airColor;
-	public Color grassColor;
-	public Color foliageColor;
-	public Color waterColor;
-	public Color waterFogColor;
+	public Color airColor;//
+	public Color grassColor;//
+	public Color foliageColor;//
+	public Color waterColor;//
+	public Color waterFogColor;//
 
-	public int treesPerChunk;
-	public int grassPerChunk;
-	public int seagrassPerChunk;
-	public int flowersPerChunk;
-	public int mushroomsPerChunk;
-	public int bigMushroomsChunk;
-	public int sandPathcesPerChunk;
-	public int gravelPatchesPerChunk;
-	public int reedsPerChunk;
-	public int cactiPerChunk;
+	public int treesPerChunk;//
+	public int grassPerChunk;//
+	public int seagrassPerChunk;//
+	public int flowersPerChunk;//
+	public int mushroomsPerChunk;//
+	public int bigMushroomsChunk;//
+	public int sandPathcesPerChunk;//
+	public int gravelPatchesPerChunk;//
+	public int reedsPerChunk;//
+	public int cactiPerChunk;//
 
-	public double rainingPossibility;
-	public double temperature;
-	public double baseHeight;
-	public double heightVariation;
+	public double rainingPossibility;//
+	public double temperature;//
+	public double baseHeight;//
+	public double heightVariation;//
 
-	public boolean spawnBiome;
-	public int biomeWeight;
-	public String biomeType;
+	public boolean spawnBiome;//
+	public int biomeWeight;//
+	public String biomeType;//
 
-	public String biomeCategory;
-	public BiomeEntry parent;
+	public String biomeCategory;//
+	public BiomeEntry parent;//
 
-	public boolean spawnStronghold;
-	public boolean spawnMineshaft;
-	public boolean spawnPillagerOutpost;
-	public String villageType;
-	public boolean spawnWoodlandMansion;
-	public boolean spawnJungleTemple;
-	public boolean spawnDesertPyramid;
-	public boolean spawnIgloo;
-	public boolean spawnOceanMonument;
-	public boolean spawnShipwreck;
-	public String oceanRuinType;
+	public boolean spawnStronghold;//
+	public boolean spawnMineshaft;//
+	public boolean spawnPillagerOutpost;//
+	public String villageType;//
+	public boolean spawnWoodlandMansion;//
+	public boolean spawnJungleTemple;//
+	public boolean spawnDesertPyramid;//
+	public boolean spawnIgloo;//
+	public boolean spawnOceanMonument;//
+	public boolean spawnShipwreck;//
+	public String oceanRuinType;//
 
-	public List<String> biomeDictionaryTypes;
-	public List<String> defaultFeatures;
+	public List<String> biomeDictionaryTypes;//
+	public List<String> defaultFeatures;//
 
-	public List<SpawnEntry> spawnEntries;
-	public List<SpawnEntry> spawnMonsters;
-	public List<SpawnEntry> spawnCreatures;
-	public List<SpawnEntry> spawnAmbients;
-	public List<SpawnEntry> spawnWaterCreatures;
+	public List<SpawnEntry> spawnEntries;//
 
 	private Biome() {
 		this(null);
@@ -120,10 +116,6 @@ import java.util.List;
 		biomeCategory = "NONE";
 		biomeDictionaryTypes = new ArrayList<>();
 		spawnEntries = new ArrayList<>();
-		spawnMonsters = new ArrayList<>();
-		spawnCreatures = new ArrayList<>();
-		spawnAmbients = new ArrayList<>();
-		spawnWaterCreatures = new ArrayList<>();
 		defaultFeatures = new ArrayList<>();
 	}
 
