@@ -34,7 +34,7 @@
     	"air": [
             "minecraft:cave",
             "minecraft:canyon"
-    	],
+    	]
 		</#if>
     },
     "features": [

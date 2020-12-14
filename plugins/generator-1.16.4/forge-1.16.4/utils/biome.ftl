@@ -15,7 +15,7 @@
     <#list entities as entry>
     <#-- @formatter:off -->
     {
-        "type": "minecraft:${entry?lower_case?replace("entity", "")}",
+        "type": "${entityToRegistryName(entry.entity)}",
         "weight": ${entry.weight},
         "minCount": ${entry.minGroup},
         "maxCount": ${entry.maxGroup}
