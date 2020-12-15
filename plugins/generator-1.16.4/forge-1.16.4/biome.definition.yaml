@@ -5,10 +5,10 @@ templates:
   - template: json/biome/biome_builder.json.ftl
     writer: json
     name: "@MODDATAROOT/worldgen/configured_surface_builder/@registryname.json"
-  - template: json/biome/oak_tree.json.ftl
-    writer: json
-    name: "@MODDATAROOT/worldgen/configured_feature/@registryname_tree.json"
-    condition: "treeType #= 1"
+  - template: biome.java.ftl
+    condition: spawnOrBiomeDictionary()
+    deleteWhenConditionFalse: true
+    name: "@SRCROOT/@BASEPACKAGEPATH/world/biome/@NAMEBiome.java"
 
 localizationkeys:
   - key: biome.@modid.@registryname

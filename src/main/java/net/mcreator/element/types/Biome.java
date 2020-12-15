@@ -52,10 +52,10 @@ import java.util.List;
 	public Color waterColor;
 	public Color waterFogColor;
 
-	public boolean spawnBiome;//
-	public int biomeWeight;//
-	public String biomeType;//
-	public List<String> biomeDictionaryTypes;//
+	public boolean spawnBiome;
+	public int biomeWeight;
+	public String biomeType;
+	public List<String> biomeDictionaryTypes;
 
 	public int treesPerChunk;//
 	public int grassPerChunk;//
@@ -95,6 +95,10 @@ import java.util.List;
 
 	private Biome() {
 		this(null);
+	}
+
+	public boolean spawnOrBiomeDictionary() {
+		return spawnBiome || !biomeDictionaryTypes.isEmpty();
 	}
 
 	public Biome(ModElement element) {
