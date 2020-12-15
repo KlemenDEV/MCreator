@@ -40,7 +40,7 @@ package ${package}.world.biome;
 
 	@Override public void init(FMLCommonSetupEvent event) {
 		<#if data.biomeDictionaryTypes?has_content>
-			BiomeDictionary.addTypes(biome,
+			BiomeDictionary.addTypes(RegistryKey.getOrCreateKey(Registry.BIOME_KEY, new ResourceLocation("${modid}:${registryname}")),
 				<#list data.biomeDictionaryTypes as biomeDictionaryType>
 					BiomeDictionary.Type.${generator.map(biomeDictionaryType, "biomedictionarytypes")}<#if biomeDictionaryType?has_next>,</#if>
 				</#list>
@@ -48,7 +48,9 @@ package ${package}.world.biome;
 		</#if>
 
 		<#if data.spawnBiome>
-			BiomeManager.addBiome(BiomeManager.BiomeType.${data.biomeType}, new BiomeManager.BiomeEntry(biome, ${data.biomeWeight}));
+			BiomeManager.addBiome(BiomeManager.BiomeType.${data.biomeType},
+					new BiomeManager.BiomeEntry(RegistryKey.getOrCreateKey(Registry.BIOME_KEY,
+							new ResourceLocation("${modid}:${registryname}")), ${data.biomeWeight}));
 		</#if>
 	}
 
