@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Check Repository
-        if: github.repository != 'KlemenDEV/MCreator'
+        if: github.repository != 'MCreator/MCreator'
         run: |
           cat << EOF
           ⚠️ Deploy action is only intended to be run from the official MCreator's repository. ⚠️
