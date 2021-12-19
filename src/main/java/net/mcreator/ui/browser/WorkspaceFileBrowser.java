@@ -38,7 +38,7 @@ import net.mcreator.ui.init.UIRES;
 import net.mcreator.ui.laf.FileIcons;
 import net.mcreator.ui.laf.SlickDarkScrollBarUI;
 import net.mcreator.ui.laf.SlickTreeUI;
-import org.apache.commons.io.FilenameUtils;
+import net.mcreator.util.FilenameUtilsPatched;
 import org.fife.rsta.ac.java.buildpath.LibraryInfo;
 
 import javax.swing.*;
@@ -186,8 +186,8 @@ public class WorkspaceFileBrowser extends JPanel {
 
 		JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		topBar.setBackground((Color) UIManager.get("MCreatorLAF.LIGHT_ACCENT"));
-		topBar.add(ComponentUtils
-				.setForeground(ComponentUtils.deriveFont(L10N.label("workspace_file_browser.title"), 10f),
+		topBar.add(
+				ComponentUtils.setForeground(ComponentUtils.deriveFont(L10N.label("workspace_file_browser.title"), 10f),
 						(Color) UIManager.get("MCreatorLAF.GRAY_COLOR")));
 
 		topBar.setBorder(BorderFactory.createCompoundBorder(
@@ -204,8 +204,7 @@ public class WorkspaceFileBrowser extends JPanel {
 			if (selected != null) {
 				if (selected.getUserObject() instanceof File) {
 					int n = JOptionPane.showConfirmDialog(mcreator, L10N.t("workspace_file_browser.remove_file"),
-							L10N.t("workspace_file_browser.remove_file.title"), JOptionPane.YES_NO_OPTION,
-							JOptionPane.QUESTION_MESSAGE);
+							L10N.t("common.confirmation"), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 					if (n == 0) {
 						File file = (File) selected.getUserObject();
 						if (file.isFile())
@@ -237,8 +236,7 @@ public class WorkspaceFileBrowser extends JPanel {
 			@Override public void mouseClicked(MouseEvent mouseEvent) {
 				if (mouseEvent.getClickCount() == 2) {
 					if (tree.getLastSelectedPathComponent() != null) {
-						Object selection = ((DefaultMutableTreeNode) tree.getLastSelectedPathComponent())
-								.getUserObject();
+						Object selection = ((DefaultMutableTreeNode) tree.getLastSelectedPathComponent()).getUserObject();
 						FileOpener.openFile(mcreator, selection);
 					}
 				}
@@ -340,7 +338,7 @@ public class WorkspaceFileBrowser extends JPanel {
 			for (LibraryInfo libraryInfo : libraryInfos) {
 				File libraryFile = new File(libraryInfo.getLocationAsString());
 				if (libraryFile.isFile() && ZipIO.checkIfZip(libraryFile)) {
-					String libName = FilenameUtils.removeExtension(libraryFile.getName());
+					String libName = FilenameUtilsPatched.removeExtension(libraryFile.getName());
 					if (libName.equals("rt"))
 						libName = "Java " + System.getProperty("java.version") + " SDK";
 					else
@@ -423,8 +421,7 @@ public class WorkspaceFileBrowser extends JPanel {
 			a.setOpaque(true);
 			ComponentUtils.deriveFont(a, 11);
 
-			if (node.getUserObject() instanceof String) {
-				String tsi = (String) node.getUserObject();
+			if (node.getUserObject() instanceof String tsi) {
 				a.setText(tsi);
 				if (tsi.equals(mcreator.getWorkspaceSettings().getModName()))
 					a.setIcon(UIRES.get("16px.package.gif"));
@@ -444,8 +441,7 @@ public class WorkspaceFileBrowser extends JPanel {
 					a.setIcon(UIRES.get("16px.directory.gif"));
 				else if (tsi.equals("Structures"))
 					a.setIcon(UIRES.get("16px.structures.png"));
-			} else if (node.getUserObject() instanceof FileNode) {
-				FileNode fileNode = (FileNode) node.getUserObject();
+			} else if (node.getUserObject() instanceof FileNode fileNode) {
 				a.setText(fileNode.data);
 				if (fileNode.data.endsWith(".java"))
 					a.setIcon(UIRES.get("16px.classro.gif"));
@@ -455,8 +451,7 @@ public class WorkspaceFileBrowser extends JPanel {
 					a.setIcon(UIRES.get("16px.directory.gif"));
 				else
 					a.setIcon(FileIcons.getIconForFile(fileNode.data));
-			} else if (node.getUserObject() instanceof File) {
-				File fil = (File) node.getUserObject();
+			} else if (node.getUserObject() instanceof File fil) {
 				a.setText(fil.getName());
 				if (!fil.isDirectory())
 					a.setIcon(FileIcons.getIconForFile(fil));

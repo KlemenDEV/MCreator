@@ -25,7 +25,8 @@ import net.mcreator.plugin.PluginLoader;
 import net.mcreator.preferences.PreferencesManager;
 import net.mcreator.ui.blockly.BlocklyPanel;
 import net.mcreator.ui.init.L10N;
-import org.apache.commons.io.FilenameUtils;
+import net.mcreator.util.FilenameUtilsPatched;
+import net.mcreator.util.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -40,10 +41,12 @@ public class ExternalBlockLoader {
 	private static final Pattern blockFormat = Pattern.compile("^[^$].*\\.json");
 	private static final Pattern categoryFormat = Pattern.compile("^\\$.*\\.json");
 
+	private static final Pattern translationsMatcher = Pattern.compile("\\$\\{t:([\\w.]+)}");
+
 	private final Map<String, ToolboxBlock> toolboxBlocks;
 
 	private final String blocksJSONString;
-	private final Map<String, StringBuilder> toolbox = new HashMap<>();
+	private final Map<String, List<Tuple<ToolboxBlock, String>>> toolbox = new HashMap<>();
 
 	ExternalBlockLoader(String resourceFolder) {
 		LOG.debug("Loading blocks for " + resourceFolder);
@@ -57,23 +60,22 @@ public class ExternalBlockLoader {
 		Set<String> fileNames = PluginLoader.INSTANCE.getResources(resourceFolder, blockFormat);
 		for (String procedureBlock : fileNames) {
 			try {
-				JsonObject jsonresult = JsonParser
-						.parseString(FileIO.readResourceToString(PluginLoader.INSTANCE, procedureBlock))
-						.getAsJsonObject();
+				JsonObject jsonresult = JsonParser.parseString(
+						FileIO.readResourceToString(PluginLoader.INSTANCE, procedureBlock)).getAsJsonObject();
 				JsonElement blockMCreatorDefinition = jsonresult.get("mcreator");
 
 				ToolboxBlock toolboxBlock = gson.fromJson(blockMCreatorDefinition, ToolboxBlock.class);
 				if (toolboxBlock != null) {
-					toolboxBlock.machine_name = FilenameUtils.getBaseName(procedureBlock);
+					toolboxBlock.machine_name = FilenameUtilsPatched.getBaseName(procedureBlock);
 
 					String localized_message = L10N.t("blockly.block." + toolboxBlock.machine_name);
 					String localized_message_en = L10N.t_en("blockly.block." + toolboxBlock.machine_name);
 
 					if (localized_message != null) {
-						int parameters_count = net.mcreator.util.StringUtils
-								.countRegexMatches(localized_message, "%[0-9]+");
-						int parameters_count_en = net.mcreator.util.StringUtils
-								.countRegexMatches(localized_message_en, "%[0-9]+");
+						int parameters_count = net.mcreator.util.StringUtils.countRegexMatches(localized_message,
+								"%[0-9]+");
+						int parameters_count_en = net.mcreator.util.StringUtils.countRegexMatches(localized_message_en,
+								"%[0-9]+");
 
 						if (parameters_count == parameters_count_en) {
 							jsonresult.add("message0", new JsonPrimitive(localized_message));
@@ -108,10 +110,9 @@ public class ExternalBlockLoader {
 
 		fileNames = PluginLoader.INSTANCE.getResources(resourceFolder, categoryFormat);
 		for (String toolboxCategoryName : fileNames) {
-			ToolboxCategory toolboxCategory = gson
-					.fromJson(FileIO.readResourceToString(PluginLoader.INSTANCE, toolboxCategoryName),
-							ToolboxCategory.class);
-			toolboxCategory.id = FilenameUtils.getBaseName(toolboxCategoryName).replace("$", "");
+			ToolboxCategory toolboxCategory = gson.fromJson(
+					FileIO.readResourceToString(PluginLoader.INSTANCE, toolboxCategoryName), ToolboxCategory.class);
+			toolboxCategory.id = FilenameUtilsPatched.getBaseName(toolboxCategoryName).replace("$", "");
 			toolboxCategories.add(toolboxCategory);
 		}
 
@@ -134,8 +135,8 @@ public class ExternalBlockLoader {
 
 		// and then sort them for toolbox display
 		if (PreferencesManager.PREFERENCES.blockly.useSmartSort) {
-			toolboxBlocksList
-					.sort(Comparator.comparing(ToolboxBlock::getGroupEstimate).thenComparing(ToolboxBlock::getName));
+			toolboxBlocksList.sort(
+					Comparator.comparing(ToolboxBlock::getGroupEstimate).thenComparing(ToolboxBlock::getName));
 		} else {
 			toolboxBlocksList.sort(Comparator.comparing(ToolboxBlock::getName));
 		}
@@ -143,20 +144,21 @@ public class ExternalBlockLoader {
 		// setup toolbox
 
 		// add default "built-in" categories
-		toolbox.put("other", new StringBuilder());
-		toolbox.put("apis", new StringBuilder());
-		toolbox.put("mcelements", new StringBuilder());
-		toolbox.put("mcvariables", new StringBuilder());
-		toolbox.put("customvariables", new StringBuilder());
-		toolbox.put("logicloops", new StringBuilder());
-		toolbox.put("logicoperations", new StringBuilder());
-		toolbox.put("math", new StringBuilder());
-		toolbox.put("text", new StringBuilder());
-		toolbox.put("advanced", new StringBuilder());
+		toolbox.put("other", new ArrayList<>());
+		toolbox.put("apis", new ArrayList<>());
+		toolbox.put("mcelements", new ArrayList<>());
+		toolbox.put("mcvariables", new ArrayList<>());
+		toolbox.put("customvariables", new ArrayList<>());
+		toolbox.put("logicloops", new ArrayList<>());
+		toolbox.put("logicoperations", new ArrayList<>());
+		toolbox.put("math", new ArrayList<>());
+		toolbox.put("text", new ArrayList<>());
+		toolbox.put("time", new ArrayList<>());
+		toolbox.put("advanced", new ArrayList<>());
 
 		// Handle built-in categories
 		for (ToolboxBlock toolboxBlock : toolboxBlocksList) {
-			for (Map.Entry<String, StringBuilder> entry : toolbox.entrySet()) {
+			for (Map.Entry<String, List<Tuple<ToolboxBlock, String>>> entry : toolbox.entrySet()) {
 				if (entry.getKey().equals("other"))
 					continue;
 
@@ -168,7 +170,7 @@ public class ExternalBlockLoader {
 						toolboxBlock.toolbox_init.forEach(toolboxXML::append);
 					toolboxXML.append("</block>");
 
-					entry.getValue().append(toolboxXML);
+					entry.getValue().add(new Tuple<>(toolboxBlock, toolboxXML.toString()));
 					toolboxBlock.toolboxXML = toolboxXML.toString();
 				}
 			}
@@ -200,11 +202,7 @@ public class ExternalBlockLoader {
 			categoryBuilder.append("</category>");
 
 			if (categoryBuilder.toString().contains("<block type=")) {
-				if (category.api) {
-					toolbox.get("apis").append(categoryBuilder);
-				} else {
-					toolbox.get("other").append(categoryBuilder);
-				}
+				toolbox.get(category.api ? "apis" : "other").add(new Tuple<>(null, categoryBuilder.toString()));
 			}
 		}
 	}
@@ -212,22 +210,30 @@ public class ExternalBlockLoader {
 	public void loadBlocksAndCategoriesInPanel(BlocklyPanel pane, ToolboxType toolboxType) {
 		pane.executeJavaScriptSynchronously("Blockly.defineBlocksWithJsonArray(" + blocksJSONString + ")");
 
-		String toolbox_xml = FileIO
-				.readResourceToString("/blockly/toolbox_" + toolboxType.name().toLowerCase(Locale.ENGLISH) + ".xml");
+		String toolbox_xml = FileIO.readResourceToString(
+				"/blockly/toolbox_" + toolboxType.name().toLowerCase(Locale.ENGLISH) + ".xml");
 
-		Matcher m = Pattern.compile("\\$\\{t:([\\w.]+)}").matcher(toolbox_xml);
+		Matcher m = translationsMatcher.matcher(toolbox_xml);
 		while (m.find()) {
 			String m1 = L10N.t(m.group(1));
 			if (m1 != null)
 				toolbox_xml = toolbox_xml.replace(m.group(), m1);
 		}
 
-		for (Map.Entry<String, StringBuilder> entry : toolbox.entrySet()) {
-			toolbox_xml = toolbox_xml.replace("<custom-" + entry.getKey() + "/>", entry.getValue().toString());
+		for (Map.Entry<String, List<Tuple<ToolboxBlock, String>>> entry : toolbox.entrySet()) {
+			StringBuilder categoryBuilderFinal = new StringBuilder();
+			for (Tuple<ToolboxBlock, String> tuple : entry.getValue()) {
+				if (tuple.x() instanceof DynamicBlockLoader.DynamicToolboxBlock
+						&& !((DynamicBlockLoader.DynamicToolboxBlock) tuple.x()).shouldLoad(
+						pane.getMCreator().getGeneratorConfiguration()))
+					continue;
+				categoryBuilderFinal.append(tuple.y());
+			}
+			toolbox_xml = toolbox_xml.replace("<custom-" + entry.getKey() + "/>", categoryBuilderFinal.toString());
 		}
 
 		pane.executeJavaScriptSynchronously(
-				"workspace.updateToolbox('" + toolbox_xml.replaceAll("[\n\r]", "\\\\\n") + "')");
+				"workspace.updateToolbox('" + toolbox_xml.replace("\n", "").replace("\r", "") + "')");
 	}
 
 	public Map<String, ToolboxBlock> getDefinedBlocks() {

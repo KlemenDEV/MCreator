@@ -23,10 +23,11 @@ import net.mcreator.element.ModElementType;
 import net.mcreator.workspace.Workspace;
 import net.mcreator.workspace.elements.ModElement;
 import net.mcreator.workspace.elements.SoundElement;
-import net.mcreator.workspace.elements.VariableElementTypeLoader;
+import net.mcreator.workspace.elements.VariableTypeLoader;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -44,7 +45,34 @@ public class ElementUtil {
 		workspace.getModElements().forEach(modElement -> elements.addAll(modElement.getMCItems()));
 		elements.addAll(
 				DataListLoader.loadDataList("blocksitems").stream().filter(e -> e.isSupportedInWorkspace(workspace))
-						.map(e -> (MCItem) e).collect(Collectors.toList()));
+						.map(e -> (MCItem) e).toList());
+		return elements;
+	}
+
+	/**
+	 * Loads all mod elements and all Minecraft elements (blocks and items), including elements
+	 * that are wildcard elements to subtypes (wood -&gt; oak wood, birch wood, ...)
+	 * This list also provides potions from both Minecraft elements and mod elements
+	 *
+	 * @return All Blocks and Items and Potions from both Minecraft and custom elements with or without metadata
+	 */
+	public static List<MCItem> loadBlocksAndItemsAndTagsAndPotions(Workspace workspace) {
+		List<MCItem> elements = loadBlocksAndItemsAndTags(workspace);
+		loadAllPotions(workspace).forEach(potion -> elements.add(new MCItem.Potion(workspace, potion)));
+		return elements;
+	}
+
+	/**
+	 * Loads all mod elements and all Minecraft elements (blocks and items) without elements
+	 * that are wildcard elements to subtypes (wood -&gt; oak wood, birch wood, ...)
+	 * so only oak wood, birch wood, ... are loaded, without wildcard wood element
+	 * This list also provides potions from both Minecraft elements and mod elements
+	 *
+	 * @return All Blocks and Items and Potions from both Minecraft and custom elements with or without metadata
+	 */
+	public static List<MCItem> loadBlocksAndItemsAndPotions(Workspace workspace) {
+		List<MCItem> elements = loadBlocksAndItems(workspace);
+		loadAllPotions(workspace).forEach(potion -> elements.add(new MCItem.Potion(workspace, potion)));
 		return elements;
 	}
 
@@ -60,7 +88,7 @@ public class ElementUtil {
 		workspace.getModElements().forEach(modElement -> elements.addAll(modElement.getMCItems()));
 		elements.addAll(
 				DataListLoader.loadDataList("blocksitems").stream().filter(e -> e.isSupportedInWorkspace(workspace))
-						.map(e -> (MCItem) e).filter(MCItem::hasNoSubtypes).collect(Collectors.toList()));
+						.map(e -> (MCItem) e).filter(MCItem::hasNoSubtypes).toList());
 		return elements;
 	}
 
@@ -78,12 +106,12 @@ public class ElementUtil {
 		elements.addAll(
 				DataListLoader.loadDataList("blocksitems").stream().filter(e -> e.isSupportedInWorkspace(workspace))
 						.filter(e -> e.getType().equals("block")).map(e -> (MCItem) e).filter(MCItem::hasNoSubtypes)
-						.collect(Collectors.toList()));
+						.toList());
 		return elements;
 	}
 
 	public static List<DataListEntry> loadAllAchievements(Workspace workspace) {
-		List<DataListEntry> achievements = getCustomElementsOfType(workspace, ModElementType.ACHIEVEMENT);
+		List<DataListEntry> achievements = getCustomElementsOfType(workspace, ModElementType.ADVANCEMENT);
 		achievements.addAll(DataListLoader.loadDataList("achievements"));
 		return achievements;
 	}
@@ -97,6 +125,7 @@ public class ElementUtil {
 	public static List<DataListEntry> loadAllBiomes(Workspace workspace) {
 		List<DataListEntry> biomes = getCustomElementsOfType(workspace, BaseType.BIOME);
 		biomes.addAll(DataListLoader.loadDataList("biomes"));
+		Collections.sort(biomes);
 		return biomes;
 	}
 
@@ -117,6 +146,7 @@ public class ElementUtil {
 	public static List<DataListEntry> loadAllEntities(Workspace workspace) {
 		List<DataListEntry> retval = getCustomElementsOfType(workspace, BaseType.ENTITY);
 		retval.addAll(DataListLoader.loadDataList("entities"));
+		Collections.sort(retval);
 		return retval;
 	}
 
@@ -127,6 +157,12 @@ public class ElementUtil {
 	}
 
 	public static List<DataListEntry> loadAllPotionEffects(Workspace workspace) {
+		List<DataListEntry> retval = getCustomElementsOfType(workspace, BaseType.POTIONEFFECT);
+		retval.addAll(DataListLoader.loadDataList("effects"));
+		return retval;
+	}
+
+	public static List<DataListEntry> loadAllPotions(Workspace workspace) {
 		List<DataListEntry> retval = getCustomElementsOfType(workspace, BaseType.POTION);
 		retval.addAll(DataListLoader.loadDataList("potions"));
 		return retval;
@@ -135,26 +171,24 @@ public class ElementUtil {
 	public static List<DataListEntry> getAllBooleanGameRules(Workspace workspace) {
 		List<DataListEntry> retval = getCustomElements(workspace, modelement -> {
 			if (modelement.getType() == ModElementType.GAMERULE)
-				return modelement.getMetadata("type").equals(VariableElementTypeLoader.BuiltInTypes.LOGIC.getName());
+				return modelement.getMetadata("type").equals(VariableTypeLoader.BuiltInTypes.LOGIC.getName());
 			return false;
 		});
 
 		retval.addAll(DataListLoader.loadDataList("gamerules").stream()
-				.filter(e -> e.getType().equals(VariableElementTypeLoader.BuiltInTypes.LOGIC.getName()))
-				.collect(Collectors.toList()));
+				.filter(e -> e.getType().equals(VariableTypeLoader.BuiltInTypes.LOGIC.getName())).toList());
 		return retval;
 	}
 
 	public static List<DataListEntry> getAllNumberGameRules(Workspace workspace) {
 		List<DataListEntry> retval = getCustomElements(workspace, modelement -> {
 			if (modelement.getType() == ModElementType.GAMERULE)
-				return modelement.getMetadata("type").equals(VariableElementTypeLoader.BuiltInTypes.NUMBER.getName());
+				return modelement.getMetadata("type").equals(VariableTypeLoader.BuiltInTypes.NUMBER.getName());
 			return false;
 		});
 
 		retval.addAll(DataListLoader.loadDataList("gamerules").stream()
-				.filter(e -> e.getType().equals(VariableElementTypeLoader.BuiltInTypes.NUMBER.getName()))
-				.collect(Collectors.toList()));
+				.filter(e -> e.getType().equals(VariableTypeLoader.BuiltInTypes.NUMBER.getName())).toList());
 		return retval;
 	}
 
@@ -168,8 +202,7 @@ public class ElementUtil {
 			}
 		}
 
-		retval.addAll(DataListLoader.loadDataList("fluids").stream().map(DataListEntry::getName)
-				.collect(Collectors.toList()));
+		retval.addAll(DataListLoader.loadDataList("fluids").stream().map(DataListEntry::getName).toList());
 
 		return retval.toArray(new String[0]);
 	}
@@ -181,44 +214,13 @@ public class ElementUtil {
 			retval.add("CUSTOM:" + soundElement.getName());
 		}
 
-		retval.addAll(DataListLoader.loadDataList("sounds").stream().map(DataListEntry::getName)
-				.collect(Collectors.toList()));
+		retval.addAll(DataListLoader.loadDataList("sounds").stream().sorted().map(DataListEntry::getName).toList());
 
 		return retval.toArray(new String[0]);
 	}
 
-	public static String[] getAllDamageSources() {
-		return DataListLoader.loadDataList("damagesources").stream().map(DataListEntry::getName).toArray(String[]::new);
-	}
-
-	public static String[] getAllGameModes() {
-		return DataListLoader.loadDataList("gamemodes").stream().map(DataListEntry::getName).toArray(String[]::new);
-	}
-
-	public static String[] getAllPlantTypes() {
-		return DataListLoader.loadDataList("planttypes").stream().map(DataListEntry::getName).toArray(String[]::new);
-	}
-
 	public static List<DataListEntry> loadStepSounds() {
 		return DataListLoader.loadDataList("stepsounds");
-	}
-
-	public static String[] loadBiomeDictionaryTypes() {
-		return DataListLoader.loadDataList("biomedictionarytypes").stream().map(DataListEntry::getName)
-				.toArray(String[]::new);
-	}
-
-	public static String[] loadDefaultFeatures() {
-		return DataListLoader.loadDataList("defaultfeatures").stream().map(DataListEntry::getName)
-				.toArray(String[]::new);
-	}
-
-	public static String[] loadPathNodeTypes() {
-		return DataListLoader.loadDataList("pathnodetypes").stream().map(DataListEntry::getName).toArray(String[]::new);
-	}
-
-	public static String[] loadMapColors() {
-		return DataListLoader.loadDataList("mapcolors").stream().map(DataListEntry::getName).toArray(String[]::new);
 	}
 
 	public static String[] loadAllDimensions(Workspace workspace) {
@@ -249,13 +251,17 @@ public class ElementUtil {
 		return blocks;
 	}
 
+	public static String[] getDataListAsStringArray(String dataList) {
+		return DataListLoader.loadDataList(dataList).stream().map(DataListEntry::getName).toArray(String[]::new);
+	}
+
 	private static List<DataListEntry> getCustomElements(@Nonnull Workspace workspace,
 			Predicate<ModElement> predicate) {
 		return workspace.getModElements().stream().filter(predicate).map(DataListEntry.Custom::new)
 				.collect(Collectors.toList());
 	}
 
-	private static List<DataListEntry> getCustomElementsOfType(@Nonnull Workspace workspace, ModElementType type) {
+	private static List<DataListEntry> getCustomElementsOfType(@Nonnull Workspace workspace, ModElementType<?> type) {
 		return workspace.getModElements().stream().filter(mu -> mu.getType() == type).map(DataListEntry.Custom::new)
 				.collect(Collectors.toList());
 	}

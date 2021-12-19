@@ -21,6 +21,7 @@ package net.mcreator.ui;
 import javafx.application.Platform;
 import net.mcreator.Launcher;
 import net.mcreator.blockly.data.BlocklyLoader;
+import net.mcreator.element.ModElementTypeLoader;
 import net.mcreator.generator.Generator;
 import net.mcreator.generator.GeneratorConfiguration;
 import net.mcreator.io.FileIO;
@@ -48,7 +49,7 @@ import net.mcreator.util.SoundUtils;
 import net.mcreator.workspace.CorruptedWorkspaceFileException;
 import net.mcreator.workspace.UnsupportedGeneratorException;
 import net.mcreator.workspace.Workspace;
-import net.mcreator.workspace.elements.VariableElementTypeLoader;
+import net.mcreator.workspace.elements.VariableTypeLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -110,11 +111,11 @@ public final class MCreatorApplication {
 
 		splashScreen.setProgress(25, "Loading interface components");
 
-		// load translations after plugins are loaded
-		L10N.initTranslations();
-
 		// preload help entries cache
 		HelpLoader.preloadCache();
+
+		// load translations after plugins are loaded
+		L10N.initTranslations();
 
 		splashScreen.setProgress(35, "Loading plugin data");
 
@@ -134,13 +135,19 @@ public final class MCreatorApplication {
 		ModAPIManager.initAPIs();
 
 		// load variable elements
-		VariableElementTypeLoader.loadVariableTypes();
+		VariableTypeLoader.loadVariableTypes();
+
+		// load JS files for Blockly
+		BlocklyJavaScriptsLoader.init();
 
 		// load blockly blocks after plugins are loaded
 		BlocklyLoader.init();
 
 		// load entity animations for the Java Model animation editor
 		EntityAnimationsLoader.init();
+
+		// register mod element types
+		ModElementTypeLoader.loadModElements();
 
 		splashScreen.setProgress(60, "Preloading resources");
 		TiledImageCache.loadAndTileImages();
@@ -247,8 +254,8 @@ public final class MCreatorApplication {
 		this.workspaceSelector.setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		try {
 			Workspace workspace = Workspace.readFromFS(workspaceFile, this.workspaceSelector);
-			if (workspace.getMCreatorVersion() > Launcher.version.versionlong && !MCreatorVersionNumber
-					.isBuildNumberDevelopment(workspace.getMCreatorVersion())) {
+			if (workspace.getMCreatorVersion() > Launcher.version.versionlong
+					&& !MCreatorVersionNumber.isBuildNumberDevelopment(workspace.getMCreatorVersion())) {
 				JOptionPane.showMessageDialog(workspaceSelector, L10N.t("dialog.workspace.open_failed_message"),
 						L10N.t("dialog.workspace.open_failed_title"), JOptionPane.ERROR_MESSAGE);
 			} else {
@@ -268,8 +275,8 @@ public final class MCreatorApplication {
 						}
 					}
 				}
-				this.workspaceSelector
-						.addOrUpdateRecentWorkspace(new RecentWorkspaceEntry(mcreator.getWorkspace(), workspaceFile));
+				this.workspaceSelector.addOrUpdateRecentWorkspace(
+						new RecentWorkspaceEntry(mcreator.getWorkspace(), workspaceFile));
 			}
 		} catch (CorruptedWorkspaceFileException corruptedWorkspaceFile) {
 			LOG.fatal("Failed to open workspace!", corruptedWorkspaceFile);
@@ -280,10 +287,10 @@ public final class MCreatorApplication {
 				if (files != null) {
 					String[] backups = Arrays.stream(files).filter(e -> e.contains(".mcreator-backup"))
 							.sorted(Collections.reverseOrder()).toArray(String[]::new);
-					String selected = (String) JOptionPane
-							.showInputDialog(this.workspaceSelector, L10N.t("dialog.workspace.got_corrupted_message"),
-									L10N.t("dialog.workspace.got_corrupted_title"), JOptionPane.QUESTION_MESSAGE, null,
-									backups, "");
+					String selected = (String) JOptionPane.showInputDialog(this.workspaceSelector,
+							L10N.t("dialog.workspace.got_corrupted_message"),
+							L10N.t("dialog.workspace.got_corrupted_title"), JOptionPane.QUESTION_MESSAGE, null, backups,
+							"");
 					if (selected != null) {
 						File backup = new File(backupsDir, selected);
 						FileIO.copyFile(backup, workspaceFile);
@@ -309,7 +316,7 @@ public final class MCreatorApplication {
 				L10N.t("dialog.workspace.is_not_valid_title"), JOptionPane.ERROR_MESSAGE);
 	}
 
-	public final void closeApplication() {
+	public void closeApplication() {
 		LOG.debug("Closing any potentially open MCreator windows");
 		List<MCreator> mcreatorsTmp = new ArrayList<>(
 				openMCreators); // create list copy so we don't modify the list we iterate
@@ -350,7 +357,7 @@ public final class MCreatorApplication {
 		System.exit(0); // actually exit MCreator
 	}
 
-	final void showWorkspaceSelector() {
+	void showWorkspaceSelector() {
 		workspaceSelector.setVisible(true);
 	}
 

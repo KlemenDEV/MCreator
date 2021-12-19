@@ -18,10 +18,13 @@
 
 package net.mcreator.ui.help;
 
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
+import net.mcreator.generator.template.base.DefaultFreemarkerConfiguration;
 import net.mcreator.io.FileIO;
 import net.mcreator.plugin.PluginLoader;
 import net.mcreator.ui.init.L10N;
-import org.apache.commons.io.FilenameUtils;
+import net.mcreator.util.FilenameUtilsPatched;
 import org.commonmark.Extension;
 import org.commonmark.ext.autolink.AutolinkExtension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
@@ -29,13 +32,13 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class HelpLoader {
@@ -46,19 +49,31 @@ public class HelpLoader {
 	private static Parser parser;
 	private static HtmlRenderer renderer;
 
+	private static final DefaultFreemarkerConfiguration configuration = new DefaultFreemarkerConfiguration();
+
 	public static void preloadCache() {
-		PluginLoader.INSTANCE.getResources("help.default", Pattern.compile("^[^$].*\\.md")).forEach(e -> DEFAULT_CACHE
-				.put(FilenameUtils.removeExtension(e.replaceFirst("help/default/", "")),
+		PluginLoader.INSTANCE.getResources("help.default", Pattern.compile("^[^$].*\\.md")).forEach(
+				e -> DEFAULT_CACHE.put(FilenameUtilsPatched.removeExtension(e.replaceFirst("help/default/", "")),
 						FileIO.readResourceToString(PluginLoader.INSTANCE, e, StandardCharsets.UTF_8)));
 
 		PluginLoader.INSTANCE.getResources("help." + L10N.getLocaleString(), Pattern.compile("^[^$].*\\.md")).forEach(
-				e -> LOCALIZED_CACHE
-						.put(FilenameUtils.removeExtension(e.replaceFirst("help/" + L10N.getLocaleString() + "/", "")),
-								FileIO.readResourceToString(PluginLoader.INSTANCE, e, StandardCharsets.UTF_8)));
+				e -> LOCALIZED_CACHE.put(FilenameUtilsPatched.removeExtension(
+								e.replaceFirst("help/" + L10N.getLocaleString() + "/", "")),
+						FileIO.readResourceToString(PluginLoader.INSTANCE, e, StandardCharsets.UTF_8)));
 
 		List<Extension> extensionList = Arrays.asList(TablesExtension.create(), AutolinkExtension.create());
 		parser = Parser.builder().extensions(extensionList).build();
 		renderer = HtmlRenderer.builder().extensions(extensionList).build();
+	}
+
+	public static int getCoverageForLocale(Locale locale) {
+		int langcount = PluginLoader.INSTANCE.getResources("help." + locale.toString(), Pattern.compile("^[^$].*\\.md"))
+				.size();
+
+		if (langcount == 0)
+			return 0;
+
+		return Math.min(100, (int) Math.ceil(langcount * 100d / (double) DEFAULT_CACHE.size()));
 	}
 
 	@Nullable private static String getFromCache(String key) {
@@ -85,8 +100,36 @@ public class HelpLoader {
 							+ "th { border: 1px solid #a0a0a0; } td { border: 1px solid #a0a0a0; } </style></head><body>");
 
 			if (helpContext.getEntry() != null) {
-				if (getFromCache(helpContext.getEntry()) != null) {
-					helpString.append(renderer.render(parser.parse(getFromCache(helpContext.getEntry()))));
+				String helpText = getFromCache(helpContext.getEntry());
+				if (helpText != null) {
+					if ((helpText.contains("${") || helpText.contains("<#"))
+							&& helpContext instanceof ModElementHelpContext meHelpContext) {
+						try {
+							Map<String, Object> dataModel = new HashMap<>();
+							dataModel.put("data", meHelpContext.getModElementFromGUI());
+							dataModel.put("registryname",
+									meHelpContext.getModElementFromGUI().getModElement().getRegistryName());
+							dataModel.put("name", meHelpContext.getModElementFromGUI().getModElement().getName());
+							dataModel.put("elementtype",
+									meHelpContext.getModElementFromGUI().getModElement().getType().getReadableName());
+							dataModel.put("l10n", new L10N());
+
+							if (meHelpContext.getModElementFromGUI().getModElement().getGenerator() != null)
+								dataModel.putAll(meHelpContext.getModElementFromGUI().getModElement().getGenerator()
+										.getBaseDataModelProvider().provide());
+
+							Template freemarkerTemplate = new Template(helpContext.getEntry(),
+									new StringReader(helpText), configuration);
+							StringWriter stringWriter = new StringWriter();
+							freemarkerTemplate.process(dataModel, stringWriter, configuration.getBeansWrapper());
+
+							helpString.append(renderer.render(parser.parse(stringWriter.getBuffer().toString())));
+						} catch (TemplateException | IOException e) {
+							helpString.append(renderer.render(parser.parse(helpText)));
+						}
+					} else {
+						helpString.append(renderer.render(parser.parse(helpText)));
+					}
 				} else {
 					helpString.append(L10N.t("help_loader.no_help_entry", helpContext.getEntry()));
 				}

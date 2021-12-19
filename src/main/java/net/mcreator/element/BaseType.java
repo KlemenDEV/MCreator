@@ -22,28 +22,34 @@ package net.mcreator.element;
 // @formatter:off
 public enum BaseType {
 
-	BLOCK,
-	ITEM,
 	ARMOR,
 	BIOME,
+	BLOCK,
+	BLOCKENTITY,
 	COMMAND,
-	FUEL,
-	ENTITY,
-	TAB,
-	DIMENSION,
-	STRUCTURE,
-	GUI,
-	KEYBIND,
-	PROCEDURE,
-	OVERLAY,
-	POTION,
 	DATAPACK,
+	DIMENSION,
 	ENCHANTMENT,
-	PARTICLE,
+	ENTITY,
+	FUEL,
+	GUI,
+	ITEM,
 	OTHER,
+	PARTICLE,
+	POTION,
+	POTIONEFFECT,
+	FEATURE,
+	TAB;
 
-	/* legacy base types */
-	ACHIEVEMENT
+	public String getPluralName() {
+		if (this == ENTITY)
+			return "entities";
+
+		if (this == BLOCKENTITY)
+			return "blockentities";
+
+		return name() + "s";
+	}
 
 }
 // @formatter:on

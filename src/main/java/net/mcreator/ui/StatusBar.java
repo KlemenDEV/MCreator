@@ -129,8 +129,8 @@ public class StatusBar extends JPanel {
 
 		setBackground((Color) UIManager.get("MCreatorLAF.DARK_ACCENT"));
 		setPreferredSize(new Dimension(22, 22));
-		setBorder(BorderFactory
-				.createMatteBorder(1, 0, 0, 0, ((Color) UIManager.get("MCreatorLAF.LIGHT_ACCENT")).darker()));
+		setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0,
+				((Color) UIManager.get("MCreatorLAF.LIGHT_ACCENT")).darker()));
 
 		addToolTipReader();
 
@@ -139,8 +139,7 @@ public class StatusBar extends JPanel {
 
 	private void addToolTipReader() {
 		Toolkit.getDefaultToolkit().addAWTEventListener(e -> {
-			if (e.getID() == 504 && e.getSource() instanceof JComponent) {
-				JComponent component = (JComponent) e.getSource();
+			if (e.getID() == 504 && e.getSource() instanceof JComponent component) {
 				if (component.getToolTipText() != null) {
 					setMessage(component.getToolTipText().replace("<br>", " ").replace("<br/>", " ")
 							.replaceAll("<[^>]*>", ""));

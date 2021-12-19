@@ -22,7 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.mcreator.io.FileIO;
 import net.mcreator.plugin.PluginLoader;
-import org.apache.commons.io.FilenameUtils;
+import net.mcreator.util.FilenameUtilsPatched;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -41,15 +41,14 @@ public class ExternalTriggerLoader {
 
 		Set<String> fileNames = PluginLoader.INSTANCE.getResources(resourceFolder, Pattern.compile("^[^$].*\\.json"));
 		for (String externalTriggerName : fileNames) {
-			ExternalTrigger externalTrigger = gson
-					.fromJson(FileIO.readResourceToString(PluginLoader.INSTANCE, externalTriggerName),
-							ExternalTrigger.class);
-			externalTrigger.id = FilenameUtils.getBaseName(externalTriggerName);
+			ExternalTrigger externalTrigger = gson.fromJson(
+					FileIO.readResourceToString(PluginLoader.INSTANCE, externalTriggerName), ExternalTrigger.class);
+			externalTrigger.id = FilenameUtilsPatched.getBaseName(externalTriggerName);
 			externalTriggers.add(externalTrigger);
 		}
 
-		externalTriggers
-				.sort(Comparator.comparing(ExternalTrigger::getGroupEstimate).thenComparing(ExternalTrigger::getName));
+		externalTriggers.sort(
+				Comparator.comparing(ExternalTrigger::getGroupEstimate).thenComparing(ExternalTrigger::getName));
 	}
 
 	public List<ExternalTrigger> getExternalTrigers() {

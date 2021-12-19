@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * ThemeLoader defines to load and use available Themes.
+ * <p>This class detects and then tries to load all {@link Theme}s.</p>
  */
 public class ThemeLoader {
 
@@ -65,8 +65,8 @@ public class ThemeLoader {
 
 			// Load the custom icon if provided, otherwise load the default one
 			if (PluginLoader.INSTANCE.getResource("themes/" + theme.getID() + "/icon.png") != null)
-				theme.setIcon(new ImageIcon(ImageUtils
-						.resize(UIRES.getImageFromResourceID("themes/" + theme.getID() + "/icon.png").getImage(), 64)));
+				theme.setIcon(new ImageIcon(ImageUtils.resize(
+						UIRES.getImageFromResourceID("themes/" + theme.getID() + "/icon.png").getImage(), 64)));
 
 			THEMES.add(theme);
 		}

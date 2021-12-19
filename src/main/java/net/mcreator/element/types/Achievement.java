@@ -62,17 +62,22 @@ import java.util.List;
 		super(element);
 	}
 
+	public boolean hasRewards() {
+		return rewardXP > 0 || (rewardLoot != null && !rewardLoot.isEmpty()) || (rewardRecipes != null
+				&& !rewardRecipes.isEmpty()) || (rewardFunction != null && !rewardFunction.equals("No function"));
+	}
+
 	@Override public BufferedImage generateModElementPicture() {
-		return MinecraftImageGenerator.Preview
-				.generateAchievementPreviewPicture(getModElement().getWorkspace(), achievementIcon, achievementName);
+		return MinecraftImageGenerator.Preview.generateAchievementPreviewPicture(getModElement().getWorkspace(),
+				achievementIcon, achievementName);
 	}
 
 	@Override public @Nullable IAdditionalTemplateDataProvider getAdditionalTemplateData() {
 		return additionalData -> {
 			BlocklyBlockCodeGenerator blocklyBlockCodeGenerator = new BlocklyBlockCodeGenerator(
 					BlocklyLoader.INSTANCE.getJSONTriggerLoader().getDefinedBlocks(),
-					this.getModElement().getGenerator().getJSONTriggerGenerator(), additionalData)
-					.setTemplateExtension("json");
+					this.getModElement().getGenerator().getJSONTriggerGenerator(), additionalData).setTemplateExtension(
+					"json");
 
 			// load blocklytojava with custom generators loaded
 			BlocklyToJSONTrigger blocklyToJSONTrigger = new BlocklyToJSONTrigger(this.getModElement().getWorkspace(),

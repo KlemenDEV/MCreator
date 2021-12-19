@@ -36,10 +36,9 @@
 
 package net.mcreator.blockly.data;
 
-import net.mcreator.blockly.BlocklyBlockUtil;
 import net.mcreator.generator.mapping.NameMapper;
 import net.mcreator.workspace.Workspace;
-import net.mcreator.workspace.elements.VariableElementTypeLoader;
+import net.mcreator.workspace.elements.VariableTypeLoader;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -112,15 +111,17 @@ public class Dependency implements Comparable<Dependency> {
 		case "itemstack":
 			blockXml.append("<block type=\"itemstack_to_mcitem\"></block>");
 			break;
+		case "blockstate":
+			blockXml.append("<block type=\"blockstate_from_deps\"></block>");
+			break;
 		default:
-			if (VariableElementTypeLoader.INSTANCE.getVariableTypeFromString(type) != null) {
+			if (VariableTypeLoader.INSTANCE.fromName(type) != null) {
 				blockXml.append("<block type=\"custom_dependency_");
 				blockXml.append(type);
 				blockXml.append("\"><field name=\"NAME\">");
 				blockXml.append(name);
 				blockXml.append("</field></block>");
-			}
-			else
+			} else
 				return null;
 		}
 		blockXml.append("</xml>");
@@ -129,26 +130,19 @@ public class Dependency implements Comparable<Dependency> {
 
 	public static Color getColor(String type) {
 		// Check if the type is a loaded variable and then, get its HUE color
-		if (VariableElementTypeLoader.INSTANCE.getVariableTypeFromString(type) != null) {
-			return BlocklyBlockUtil.getBlockColorFromHUE(
-					VariableElementTypeLoader.INSTANCE.getVariableTypeFromString(type).getColor());
+		if (VariableTypeLoader.INSTANCE.fromName(type) != null) {
+			return VariableTypeLoader.INSTANCE.fromName(type).getBlocklyColor();
 		}
 
 		// Return a color for other dependency types
-		switch (type) {
-		case "world":
-			return new Color(0x998160);
-		case "entity":
-			return new Color(0x608a99);
-		case "map":
-			return new Color(0x8FD980);
-		case "advancement":
-			return new Color(0x68712E);
-		case "dimensiontype":
-			return new Color(0x609963);
-		default:
-			return Color.white;
-		}
+		return switch (type) {
+			case "world" -> new Color(0x998160);
+			case "entity" -> new Color(0x608a99);
+			case "map" -> new Color(0x8FD980);
+			case "advancement" -> new Color(0x68712E);
+			case "dimensiontype" -> new Color(0x609963);
+			default -> Color.white;
+		};
 	}
 
 	public static Dependency[] fromString(String input) {

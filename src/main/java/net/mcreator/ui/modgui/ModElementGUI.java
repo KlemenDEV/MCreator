@@ -23,15 +23,16 @@ import net.mcreator.minecraft.MCItem;
 import net.mcreator.preferences.PreferencesManager;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.MCreatorTabs;
-import net.mcreator.ui.component.JEmptyBox;
 import net.mcreator.ui.component.JModElementProgressPanel;
+import net.mcreator.ui.component.ScrollWheelPassLayer;
 import net.mcreator.ui.component.UnsupportedComponent;
 import net.mcreator.ui.component.util.ComponentUtils;
 import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.help.IHelpContext;
+import net.mcreator.ui.help.ModElementHelpContext;
 import net.mcreator.ui.init.L10N;
-import net.mcreator.ui.init.TiledImageCache;
 import net.mcreator.ui.init.UIRES;
+import net.mcreator.ui.modgui.codeviewer.ModElementCodeViewer;
 import net.mcreator.ui.validation.AggregatedValidationResult;
 import net.mcreator.ui.validation.ValidationGroup;
 import net.mcreator.ui.views.ViewBase;
@@ -44,6 +45,7 @@ import javax.annotation.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.*;
 
@@ -59,6 +61,9 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 	private ModElementCreatedListener<GE> modElementCreatedListener;
 
 	private final Map<String, JComponent> pages = new LinkedHashMap<>();
+
+	private ModElementCodeViewer<GE> modElementCodeViewer = null;
+	private JSplitPane splitPane;
 
 	public ModElementGUI(MCreator mcreator, @Nonnull ModElement modElement, boolean editingMode) {
 		super(mcreator);
@@ -87,7 +92,7 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 		if (modIcon != null && modIcon.getImage() != null && modIcon.getIconWidth() > 0 && modIcon.getIconHeight() > 0
 				&& modIcon != MCItem.DEFAULT_ICON)
 			return modIcon;
-		return TiledImageCache.getModTypeIcon(modElement.getType());
+		return modElement.getType().getIcon();
 	}
 
 	@Override public ViewBase showView() {
@@ -112,6 +117,11 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 	}
 
 	protected final void finalizeGUI(boolean wrapInScrollpane) {
+		JComponent centerComponent;
+
+		if (allowCodePreview())
+			this.modElementCodeViewer = new ModElementCodeViewer<>(this);
+
 		if (pages.size() > 1) {
 			JModElementProgressPanel split = new JModElementProgressPanel(pages.values().toArray(new Component[0]));
 
@@ -165,7 +175,7 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 				page.setBorder(null);
 				page.setContentAreaFilled(false);
 				page.setCursor(new Cursor(Cursor.HAND_CURSOR));
-				ComponentUtils.deriveFont(page, 13f);
+				ComponentUtils.deriveFont(page, 13);
 
 				page.addChangeListener(e -> page.setForeground(page.isSelected() ?
 						((Color) UIManager.get("MCreatorLAF.MAIN_TINT")) :
@@ -241,15 +251,40 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 					showErrorsMessage(validationResult);
 			});
 
-			add("South", pager);
-
 			JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
 			toolBar.setOpaque(false);
 			toolBar.add(saveOnly);
 			toolBar.add(save);
-			add("North", PanelUtils
-					.maxMargin(PanelUtils.westAndEastElement(new JEmptyBox(0, 0), toolBar), 5, true, true, false,
-							false));
+
+			JPanel toolBarLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+			toolBarLeft.setOpaque(false);
+
+			if (modElementCodeViewer != null) {
+				JToggleButton codeViewer = L10N.togglebutton("elementgui.code_viewer");
+				codeViewer.setBackground((Color) UIManager.get("MCreatorLAF.BLACK_ACCENT"));
+				codeViewer.setForeground((Color) UIManager.get("MCreatorLAF.GRAY_COLOR"));
+				codeViewer.setFocusPainted(false);
+				codeViewer.setBorder(BorderFactory.createCompoundBorder(
+						BorderFactory.createLineBorder((Color) UIManager.get("MCreatorLAF.DARK_ACCENT"), 1),
+						BorderFactory.createEmptyBorder(2, 40, 2, 40)));
+				codeViewer.addActionListener(e -> {
+					if (codeViewer.isSelected()) {
+						modElementCodeViewer.setVisible(true);
+						splitPane.setDividerSize(10);
+						splitPane.setDividerLocation(0.6);
+						splitPane.setBorder(BorderFactory.createEmptyBorder(7, 0, 0, 0));
+					} else {
+						modElementCodeViewer.setVisible(false);
+						splitPane.setDividerSize(0);
+						splitPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+					}
+				});
+
+				toolBarLeft.add(codeViewer);
+			}
+
+			add("North", PanelUtils.maxMargin(PanelUtils.westAndEastElement(toolBarLeft, toolBar), 5, true, true, false,
+					false));
 
 			if (wrapInScrollpane) {
 				JScrollPane splitScroll = new JScrollPane(split);
@@ -259,9 +294,10 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 				splitScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 				splitScroll.getVerticalScrollBar().setUnitIncrement(15);
 				splitScroll.getHorizontalScrollBar().setUnitIncrement(15);
-				add("Center", splitScroll);
+				centerComponent = PanelUtils.centerAndSouthElement(
+						new JLayer<>(splitScroll, new ScrollWheelPassLayer()), pager);
 			} else {
-				add("Center", split);
+				centerComponent = PanelUtils.centerAndSouthElement(split, pager);
 			}
 		} else {
 			JButton saveOnly = L10N.button("elementgui.save_keep_open");
@@ -295,8 +331,35 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 			toolBar.add(saveOnly);
 			toolBar.add(save);
 
-			add("North", PanelUtils
-					.maxMargin(PanelUtils.westAndEastElement(new JEmptyBox(0, 0), toolBar), 5, true, true, false,
+			JPanel toolBarLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+			toolBarLeft.setOpaque(false);
+
+			if (modElementCodeViewer != null) {
+				JToggleButton codeViewer = L10N.togglebutton("elementgui.code_viewer");
+				codeViewer.setBackground((Color) UIManager.get("MCreatorLAF.BLACK_ACCENT"));
+				codeViewer.setForeground((Color) UIManager.get("MCreatorLAF.GRAY_COLOR"));
+				codeViewer.setFocusPainted(false);
+				codeViewer.setBorder(BorderFactory.createCompoundBorder(
+						BorderFactory.createLineBorder((Color) UIManager.get("MCreatorLAF.DARK_ACCENT"), 1),
+						BorderFactory.createEmptyBorder(2, 40, 2, 40)));
+				codeViewer.addActionListener(e -> {
+					if (codeViewer.isSelected()) {
+						modElementCodeViewer.setVisible(true);
+						splitPane.setDividerSize(10);
+						splitPane.setDividerLocation(0.6);
+						splitPane.setBorder(BorderFactory.createEmptyBorder(7, 0, 0, 0));
+					} else {
+						modElementCodeViewer.setVisible(false);
+						splitPane.setDividerSize(0);
+						splitPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+					}
+				});
+
+				toolBarLeft.add(codeViewer);
+			}
+
+			add("North",
+					PanelUtils.maxMargin(PanelUtils.westAndEastElement(toolBarLeft, toolBar), 5, true, false, false,
 							false));
 
 			if (wrapInScrollpane) {
@@ -307,10 +370,22 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 				splitScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 				splitScroll.getVerticalScrollBar().setUnitIncrement(15);
 				splitScroll.getHorizontalScrollBar().setUnitIncrement(15);
-				add("Center", splitScroll);
+				centerComponent = new JLayer<>(splitScroll, new ScrollWheelPassLayer());
 			} else {
-				add("Center", new ArrayList<>(pages.values()).get(0));
+				centerComponent = new ArrayList<>(pages.values()).get(0);
 			}
+		}
+
+		if (modElementCodeViewer != null) {
+			splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, centerComponent, modElementCodeViewer);
+			splitPane.setOpaque(false);
+			splitPane.setOneTouchExpandable(true);
+			modElementCodeViewer.setVisible(false);
+			splitPane.setDividerSize(0);
+			add("Center", splitPane);
+			modElementCodeViewer.registerUI(centerComponent);
+		} else {
+			add("Center", centerComponent);
 		}
 
 		reloadDataLists();
@@ -360,23 +435,18 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 			Field[] fields = getClass().getDeclaredFields();
 			for (Field field : fields) {
 				if (Component.class.isAssignableFrom(field.getType())) {
-					if (!exclusions.contains(field.getName())) {
-						if (exclusions.contains(field.getName())) {
-							try {
-								field.setAccessible(true);
-								Component obj = (Component) field.get(this);
+					if (exclusions.contains(field.getName())) {
+						try {
+							field.setAccessible(true);
+							Component obj = (Component) field.get(this);
 
-								Container parent = obj.getParent();
-								int index = Arrays.asList(parent.getComponents()).indexOf(obj);
-								parent.remove(index);
-								parent.add(new UnsupportedComponent(obj), index);
-							} catch (IllegalAccessException e) {
-								LOG.warn("Failed to access field", e);
-							}
+							Container parent = obj.getParent();
+							int index = Arrays.asList(parent.getComponents()).indexOf(obj);
+							parent.remove(index);
+							parent.add(new UnsupportedComponent(obj), index);
+						} catch (IllegalAccessException e) {
+							LOG.warn("Failed to access field", e);
 						}
-					} else {
-						LOG.warn(field.getName()
-								+ " can not be used in both inclusions and exclusions fields at the same time. The field will be enabled.");
 					}
 				}
 			}
@@ -410,12 +480,25 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 	private void finishModCreation(boolean closeTab) {
 		GE element = getElementFromGUI();
 
+		// if new element, and if we are not in the root folder, specify the folder of the mod element
+		if (!editingMode && !mcreator.mv.currentFolder.equals(mcreator.getWorkspace().getFoldersRoot()))
+			modElement.setParentFolder(mcreator.mv.currentFolder);
+
 		// add mod element to the list, it will be only added for the first time, otherwise refreshed
 		// add it before generating so all references are loaded
 		mcreator.getWorkspace().addModElement(modElement);
 
 		// we perform any custom defined before the generatable element is generated
 		beforeGeneratableElementGenerated();
+
+		// save the GeneratableElement definition
+		mcreator.getModElementManager().storeModElement(element);
+
+		// we perform any custom defined after all other operations are complete
+		afterGeneratableElementStored();
+
+		// generate mod base as it may be needed
+		mcreator.getGenerator().generateBase();
 
 		// generate mod element code
 		mcreator.getGenerator().generateElement(element);
@@ -424,19 +507,18 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 		mcreator.getModElementManager().storeModElementPicture(element);
 		modElement.reinit(); // re-init mod element to pick up the new mod element picture
 
-		// save the GeneratableElement definition
-		mcreator.getModElementManager().storeModElement(element);
-
-		// we perform any custom defined after all other operations are complete
-		afterGeneratableElementStored();
+		afterGeneratableElementGenerated();
 
 		// build if selected and needed
 		if (PreferencesManager.PREFERENCES.gradle.compileOnSave && mcreator.getModElementManager()
-				.usesGeneratableElementJava(element))
+				.requiresElementGradleBuild(element))
 			mcreator.actionRegistry.buildWorkspace.doAction();
 
 		if (this.tabIn != null && closeTab)
 			mcreator.mcreatorTabs.closeTab(tabIn);
+		else
+			mcreator.mcreatorTabs.getTabs().stream().filter(e -> e.getContent() == this)
+					.forEach(e -> e.setIcon(((ModElementGUI<?>) e.getContent()).getViewIcon()));
 
 		if (!editingMode && modElementCreatedListener
 				!= null) // only call this event if listener registered and we are not in editing mode
@@ -455,6 +537,13 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 	}
 
 	protected void afterGeneratableElementStored() {
+	}
+
+	protected void afterGeneratableElementGenerated() {
+	}
+
+	protected boolean allowCodePreview() {
+		return !modElement.getWorkspace().getGenerator().getModElementGeneratorTemplatesList(modElement).isEmpty();
 	}
 
 	public void reloadDataLists() {
@@ -477,6 +566,15 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 
 	@Override @Nullable public String getContextName() {
 		return modElement.getType().getReadableName();
+	}
+
+	@Override @Nullable public IHelpContext withEntry(String entry) {
+		try {
+			return new ModElementHelpContext(this.getContextName(), this.getContextURL(), entry,
+					this::getElementFromGUI);
+		} catch (URISyntaxException e) {
+			return new ModElementHelpContext(this.getContextName(), null, entry, this::getElementFromGUI);
+		}
 	}
 
 }

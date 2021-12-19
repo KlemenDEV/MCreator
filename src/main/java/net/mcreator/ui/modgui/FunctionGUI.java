@@ -19,6 +19,7 @@
 package net.mcreator.ui.modgui;
 
 import net.mcreator.element.types.Function;
+import net.mcreator.minecraft.RegistryNameFixer;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.MCreatorApplication;
 import net.mcreator.ui.component.util.PanelUtils;
@@ -42,7 +43,6 @@ import java.awt.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.Locale;
 
 public class FunctionGUI extends ModElementGUI<Function> {
 
@@ -68,7 +68,7 @@ public class FunctionGUI extends ModElementGUI<Function> {
 			name.setEnabled(false);
 			namespace.setEnabled(false);
 		} else {
-			name.setText(modElement.getName().toLowerCase(Locale.ENGLISH).replaceAll("[^a-z0-9/._-]+", ""));
+			name.setText(RegistryNameFixer.fromCamelCase(modElement.getName()));
 
 			te.setText("# Enter the function code here");
 		}
@@ -80,8 +80,8 @@ public class FunctionGUI extends ModElementGUI<Function> {
 				L10N.label("elementgui.function.registry_name")));
 		northPanel.add(name);
 
-		northPanel.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("function/namespace"), L10N.label("elementgui.function.namespace")));
+		northPanel.add(HelpUtils.wrapWithHelpButton(this.withEntry("function/namespace"),
+				L10N.label("elementgui.function.namespace")));
 		northPanel.add(namespace);
 
 		RTextScrollPane sp = new RTextScrollPane(te, true);
@@ -140,6 +140,10 @@ public class FunctionGUI extends ModElementGUI<Function> {
 
 	@Override public @Nullable URI getContextURL() throws URISyntaxException {
 		return new URI(MCreatorApplication.SERVER_DOMAIN + "/wiki/how-make-function");
+	}
+
+	@Override protected boolean allowCodePreview() {
+		return false;
 	}
 
 }

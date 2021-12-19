@@ -31,6 +31,8 @@ import net.mcreator.util.image.ImageUtils;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MCItemHolder extends JButton implements IValidable {
 
@@ -38,7 +40,7 @@ public class MCItemHolder extends JButton implements IValidable {
 	private final MCItemSelectorDialog bs;
 
 	private boolean showValidation = true;
-	private ActionListener listener = null;
+	private final List<ActionListener> listeners = new ArrayList<>();
 	private boolean removeButtonHover;
 
 	private static final Color err = new Color(204, 166, 175);
@@ -48,12 +50,17 @@ public class MCItemHolder extends JButton implements IValidable {
 	private final MCreator mcreator;
 
 	public MCItemHolder(MCreator mcreator, MCItem.ListProvider blocksConsumer) {
-		this(mcreator, blocksConsumer, false);
+		this(mcreator, blocksConsumer, false, false);
 	}
 
 	public MCItemHolder(MCreator mcreator, MCItem.ListProvider blocksConsumer, boolean supportTags) {
+		this(mcreator, blocksConsumer, supportTags, false);
+	}
+
+	public MCItemHolder(MCreator mcreator, MCItem.ListProvider blocksConsumer, boolean supportTags,
+			boolean hasPotions) {
 		this.mcreator = mcreator;
-		bs = new MCItemSelectorDialog(mcreator, blocksConsumer, supportTags);
+		bs = new MCItemSelectorDialog(mcreator, blocksConsumer, supportTags, hasPotions);
 		bs.setItemSelectedListener(e -> {
 			MCItem bsa = bs.getSelectedMCItem();
 			if (bsa != null) {
@@ -66,8 +73,8 @@ public class MCItemHolder extends JButton implements IValidable {
 		initGUI();
 	}
 
-	public void setBlockSelectedListener(ActionListener al) {
-		this.listener = al;
+	public void addBlockSelectedListener(ActionListener al) {
+		listeners.add(al);
 	}
 
 	public void setBlock(MItemBlock mItemBlock) {
@@ -109,9 +116,8 @@ public class MCItemHolder extends JButton implements IValidable {
 						setBlock(null);
 					} else {
 						bs.setVisible(true); // show block selector
-						if (listener != null)
-							listener.actionPerformed(new ActionEvent("", 0, ""));
 					}
+					listeners.forEach(listener -> listener.actionPerformed(new ActionEvent("", 0, "")));
 					repaint();
 				}
 			}

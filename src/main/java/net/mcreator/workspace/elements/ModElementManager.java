@@ -23,11 +23,11 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import net.mcreator.element.GeneratableElement;
 import net.mcreator.element.ModElementType;
+import net.mcreator.element.parts.NumberProcedure;
 import net.mcreator.element.types.CustomElement;
 import net.mcreator.generator.Generator;
 import net.mcreator.generator.GeneratorTemplate;
 import net.mcreator.io.FileIO;
-import net.mcreator.ui.init.TiledImageCache;
 import net.mcreator.workspace.Workspace;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,9 +36,11 @@ import javax.annotation.Nonnull;
 import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * ModElementManager is not thread safe
@@ -58,8 +60,9 @@ public class ModElementManager {
 		this.workspace = workspace;
 
 		this.gsonAdapter = new GeneratableElement.GSONAdapter(this.workspace);
-		this.gson = new GsonBuilder().registerTypeHierarchyAdapter(GeneratableElement.class, this.gsonAdapter)
-				.disableHtmlEscaping().setPrettyPrinting().setLenient().create();
+		this.gson = new GsonBuilder().registerTypeAdapter(NumberProcedure.class, new NumberProcedure.GSONAdapter())
+				.registerTypeHierarchyAdapter(GeneratableElement.class, this.gsonAdapter).disableHtmlEscaping()
+				.setPrettyPrinting().setLenient().create();
 	}
 
 	public void invalidateCache() {
@@ -117,16 +120,29 @@ public class ModElementManager {
 		return new File(workspace.getFolderManager().getModElementsDir(), element.getName() + ".mod.json").isFile();
 	}
 
-	public boolean usesGeneratableElementJava(GeneratableElement generatableElement) {
+	public boolean requiresElementGradleBuild(GeneratableElement generatableElement) {
 		Generator generator = workspace.getGenerator();
-		List<GeneratorTemplate> templates = generator
-				.getModElementGeneratorTemplatesList(generatableElement.getModElement());
-		if (templates != null)
-			for (GeneratorTemplate template : templates) {
-				String writer = (String) ((Map<?, ?>) template.getTemplateData()).get("writer");
-				if (writer == null || writer.equals("java"))
-					return true;
-			}
+		Map<?, ?> map = generator.getGeneratorConfiguration().getDefinitionsProvider()
+				.getModElementDefinition(generatableElement.getModElement().getType());
+
+		List<GeneratorTemplate> templates = new ArrayList<>();
+
+		if (map != null && (!map.containsKey("global_templates_trigger_build") || !map.get(
+				"global_templates_trigger_build").toString().equals("false")))
+			templates.addAll(
+					generator.getModElementGlobalTemplatesList(generatableElement.getModElement().getType(), false,
+							new AtomicInteger()));
+
+		List<GeneratorTemplate> elementTemplates = generator.getModElementGeneratorTemplatesList(
+				generatableElement.getModElement());
+		if (elementTemplates != null)
+			templates.addAll(elementTemplates);
+
+		for (GeneratorTemplate template : templates) {
+			String writer = (String) ((Map<?, ?>) template.getTemplateData()).get("writer");
+			if (writer == null || writer.equals("java"))
+				return true;
+		}
 
 		return false;
 	}
@@ -152,7 +168,7 @@ public class ModElementManager {
 	public static ImageIcon getModElementIcon(ModElement element) {
 		ImageIcon icon = element.getElementIcon();
 		if (icon == null || icon.getImage() == null || icon.getIconWidth() <= 0 || icon.getIconHeight() <= 0)
-			icon = TiledImageCache.getModTypeIcon(element.getType());
+			icon = element.getType().getIcon();
 		return icon;
 	}
 

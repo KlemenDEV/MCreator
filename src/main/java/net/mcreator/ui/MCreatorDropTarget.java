@@ -65,8 +65,7 @@ public class MCreatorDropTarget implements DropTargetListener {
 				List<?> transferData = (List<?>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
 				if (transferData.size() > 0) {
 					Object transfObj = transferData.get(0);
-					if (transfObj instanceof File) {
-						File file = (File) transfObj;
+					if (transfObj instanceof File file) {
 						if (file.getName().endsWith(".ogg")) {
 							SoundElementDialog.importSound(mcreator, new File[] { file });
 						} else if (file.getName().endsWith(".java")) {
@@ -78,8 +77,8 @@ public class MCreatorDropTarget implements DropTargetListener {
 						} else if (file.getName().endsWith(".mtl")) {
 							ModelImportActions.importOBJModel(mcreator, null, file);
 						} else if (file.getName().endsWith(".png")) {
-							TextureImportDialogs
-									.importTextureGeneral(mcreator, file, "What kind of texture is this file?");
+							TextureImportDialogs.importTextureGeneral(mcreator, file,
+									"What kind of texture is this file?");
 						} else if (file.getName().endsWith(".nbt")) {
 							StructureImportActions.importStructure(mcreator, new File[] { file });
 						} else {

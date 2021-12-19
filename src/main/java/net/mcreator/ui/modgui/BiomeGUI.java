@@ -79,25 +79,33 @@ public class BiomeGUI extends ModElementGUI<Biome> {
 	private final JCheckBox spawnBiome = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox spawnStronghold = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox spawnMineshaft = L10N.checkbox("elementgui.common.enable");
+	private final JCheckBox spawnMineshaftMesa = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox spawnPillagerOutpost = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox spawnWoodlandMansion = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox spawnJungleTemple = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox spawnDesertPyramid = L10N.checkbox("elementgui.common.enable");
+	private final JCheckBox spawnSwampHut = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox spawnIgloo = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox spawnOceanMonument = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox spawnShipwreck = L10N.checkbox("elementgui.common.enable");
-
+	private final JCheckBox spawnShipwreckBeached = L10N.checkbox("elementgui.common.enable");
+	private final JCheckBox spawnBuriedTreasure = L10N.checkbox("elementgui.common.enable");
+	private final JCheckBox spawnNetherBridge = L10N.checkbox("elementgui.common.enable");
+	private final JCheckBox spawnNetherFossil = L10N.checkbox("elementgui.common.enable");
+	private final JCheckBox spawnBastionRemnant = L10N.checkbox("elementgui.common.enable");
+	private final JCheckBox spawnEndCity = L10N.checkbox("elementgui.common.enable");
+	private final JComboBox<String> spawnRuinedPortal = new JComboBox<>(
+			new String[] { "NONE", "STANDARD", "DESERT", "JUNGLE", "SWAMP", "MOUNTAIN", "OCEAN", "NETHER" });
 	private final JComboBox<String> villageType = new JComboBox<>(
 			new String[] { "none", "desert", "plains", "savanna", "snowy", "taiga" });
 	private final JComboBox<String> oceanRuinType = new JComboBox<>(new String[] { "NONE", "COLD", "WARM" });
 
-	private final JSpawnEntriesList spawnEntries = new JSpawnEntriesList(mcreator);
+	private JSpawnEntriesList spawnEntries;
 
 	private MCItemHolder groundBlock;
 	private MCItemHolder undergroundBlock;
 
 	private final JSpinner minHeight = new JSpinner(new SpinnerNumberModel(7, 0, 1000, 1));
-	private final JSpinner maxWaterDepth = new JSpinner(new SpinnerNumberModel(0, 0, 50, 1));
 	private MCItemHolder treeVines;
 	private MCItemHolder treeStem;
 	private MCItemHolder treeBranch;
@@ -172,47 +180,55 @@ public class BiomeGUI extends ModElementGUI<Biome> {
 		waterColor.setOpaque(false);
 		waterFogColor.setOpaque(false);
 
-		JPanel sbbp2 = new JPanel(new GridLayout(11, 2, 4, 2));
+		spawnEntries = new JSpawnEntriesList(mcreator, this);
+
+		JPanel sbbp2 = new JPanel(new GridLayout(13, 2, 4, 2));
+		JPanel sbbp2b = new JPanel(new GridLayout(7, 2, 4, 2));
 
 		sbbp2.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_strongholds"),
 				L10N.label("elementgui.biome.generate_strongholds")));
 		sbbp2.add(spawnStronghold);
-		spawnStronghold.setSelected(false);
 		spawnStronghold.setOpaque(false);
 
 		sbbp2.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_mineshafts"),
 				L10N.label("elementgui.biome.generate_mineshafts")));
 		sbbp2.add(spawnMineshaft);
-		spawnMineshaft.setSelected(false);
 		spawnMineshaft.setOpaque(false);
+
+		sbbp2.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_mineshafts"),
+				L10N.label("elementgui.biome.generate_mineshafts_mesa")));
+		sbbp2.add(spawnMineshaftMesa);
+		spawnMineshaftMesa.setOpaque(false);
 
 		sbbp2.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_pillager_outposts"),
 				L10N.label("elementgui.biome.generate_pillager_outposts")));
 		sbbp2.add(spawnPillagerOutpost);
-		spawnPillagerOutpost.setSelected(false);
 		spawnPillagerOutpost.setOpaque(false);
 
-		sbbp2.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/village"), L10N.label("elementgui.biome.generate_village")));
+		sbbp2.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/village"),
+				L10N.label("elementgui.biome.generate_village")));
 		sbbp2.add(villageType);
+		villageType.setPreferredSize(new Dimension(200, 36));
 
 		sbbp2.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_woodland_mansions"),
 				L10N.label("elementgui.biome.generate_mansions")));
 		sbbp2.add(spawnWoodlandMansion);
-		spawnWoodlandMansion.setSelected(false);
 		spawnWoodlandMansion.setOpaque(false);
 
 		sbbp2.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_jungle_temples"),
 				L10N.label("elementgui.biome.generate_jungle_temples")));
 		sbbp2.add(spawnJungleTemple);
-		spawnJungleTemple.setSelected(false);
 		spawnJungleTemple.setOpaque(false);
 
 		sbbp2.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_desert_pyramids"),
 				L10N.label("elementgui.biome.generate_desert_pyramids")));
 		sbbp2.add(spawnDesertPyramid);
-		spawnDesertPyramid.setSelected(false);
 		spawnDesertPyramid.setOpaque(false);
+
+		sbbp2.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_swamp_huts"),
+				L10N.label("elementgui.biome.generate_swamp_huts")));
+		sbbp2.add(spawnSwampHut);
+		spawnSwampHut.setOpaque(false);
 
 		sbbp2.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_igloo"),
 				L10N.label("elementgui.biome.generate_igloos")));
@@ -223,22 +239,58 @@ public class BiomeGUI extends ModElementGUI<Biome> {
 		sbbp2.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_ocean_monuments"),
 				L10N.label("elementgui.biome.generate_monuments")));
 		sbbp2.add(spawnOceanMonument);
-		spawnOceanMonument.setSelected(false);
 		spawnOceanMonument.setOpaque(false);
 
 		sbbp2.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_shipwrecks"),
 				L10N.label("elementgui.biome.generate_shipwrecks")));
-
 		sbbp2.add(spawnShipwreck);
-		spawnShipwreck.setSelected(false);
 		spawnShipwreck.setOpaque(false);
 
-		sbbp2.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_ocean_ruins"),
+		sbbp2.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_shipwrecks_beached"),
+				L10N.label("elementgui.biome.generate_shipwrecks_beached")));
+		sbbp2.add(spawnShipwreckBeached);
+		spawnShipwreckBeached.setOpaque(false);
+
+		sbbp2b.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_buried_treasures"),
+				L10N.label("elementgui.biome.generate_buried_treasures")));
+		sbbp2b.add(spawnBuriedTreasure);
+		spawnBuriedTreasure.setOpaque(false);
+
+		sbbp2b.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_ocean_ruins"),
 				L10N.label("elementgui.biome.generate_ocean_ruins")));
-		sbbp2.add(oceanRuinType);
+		sbbp2b.add(oceanRuinType);
 
 		oceanRuinType.setPreferredSize(new Dimension(200, 36));
 
+		sbbp2b.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_nether_bridges"),
+				L10N.label("elementgui.biome.generate_nether_bridges")));
+		sbbp2b.add(spawnNetherBridge);
+		spawnNetherBridge.setOpaque(false);
+
+		sbbp2b.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_nether_fossils"),
+				L10N.label("elementgui.biome.generate_nether_fossils")));
+		sbbp2b.add(spawnNetherFossil);
+		spawnNetherFossil.setOpaque(false);
+
+		sbbp2b.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_bastion_remnants"),
+				L10N.label("elementgui.biome.generate_bastion_remnants")));
+		sbbp2b.add(spawnBastionRemnant);
+		spawnBastionRemnant.setOpaque(false);
+
+		sbbp2b.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_ruined_portals"),
+				L10N.label("elementgui.biome.generate_ruined_portals")));
+		sbbp2b.add(spawnRuinedPortal);
+		spawnRuinedPortal.setPreferredSize(new Dimension(200, 36));
+
+		sbbp2b.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/generate_end_cities"),
+				L10N.label("elementgui.biome.generate_end_cities")));
+		sbbp2b.add(spawnEndCity);
+		spawnEndCity.setOpaque(false);
+
+		pane2.add("Center", PanelUtils.totalCenterInPanel(
+				PanelUtils.westAndEastElement(sbbp2, PanelUtils.pullElementUp(sbbp2b), 20, 20)));
+
+		sbbp2b.setOpaque(false);
 		sbbp2.setOpaque(false);
 		pane2.setOpaque(false);
 		pane5.setOpaque(false);
@@ -252,36 +304,36 @@ public class BiomeGUI extends ModElementGUI<Biome> {
 		spawnBiome.setSelected(true);
 		spawnBiome.setOpaque(false);
 
-		spawnproperties.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/weight"), L10N.label("elementgui.biome.weight")));
+		spawnproperties.add(
+				HelpUtils.wrapWithHelpButton(this.withEntry("biome/weight"), L10N.label("elementgui.biome.weight")));
 		spawnproperties.add(biomeWeight);
 
-		spawnproperties.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/temperature"), L10N.label("elementgui.biome.temperature")));
+		spawnproperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/temperature"),
+				L10N.label("elementgui.biome.temperature")));
 		spawnproperties.add(temperature);
 
 		spawnproperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/raining_possibility"),
 				L10N.label("elementgui.biome.raining_possibility")));
 		spawnproperties.add(rainingPossibility);
 
-		spawnproperties
-				.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/type"), L10N.label("elementgui.biome.type")));
+		spawnproperties.add(
+				HelpUtils.wrapWithHelpButton(this.withEntry("biome/type"), L10N.label("elementgui.biome.type")));
 		spawnproperties.add(biomeType);
 
-		spawnproperties.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/category"), L10N.label("elementgui.biome.category")));
+		spawnproperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/category"),
+				L10N.label("elementgui.biome.category")));
 		spawnproperties.add(biomeCategory);
 
-		spawnproperties.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/parent"), L10N.label("elementgui.biome.parent")));
+		spawnproperties.add(
+				HelpUtils.wrapWithHelpButton(this.withEntry("biome/parent"), L10N.label("elementgui.biome.parent")));
 		spawnproperties.add(parent);
 
-		spawnproperties.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/dictionary"), L10N.label("elementgui.biome.dictionnary")));
+		spawnproperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/dictionary"),
+				L10N.label("elementgui.biome.dictionnary")));
 		spawnproperties.add(biomeDictionaryTypes);
 
-		spawnproperties.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/base_height"), L10N.label("elementgui.biome.height")));
+		spawnproperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/base_height"),
+				L10N.label("elementgui.biome.height")));
 		spawnproperties.add(baseHeight);
 
 		spawnproperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/height_variation"),
@@ -289,7 +341,6 @@ public class BiomeGUI extends ModElementGUI<Biome> {
 		spawnproperties.add(heightVariation);
 
 		pane5.add("Center", PanelUtils.totalCenterInPanel(spawnproperties));
-		pane2.add("Center", PanelUtils.totalCenterInPanel(sbbp2));
 
 		JPanel sbbp3 = new JPanel(new GridLayout(11, 2, 10, 2));
 
@@ -375,29 +426,28 @@ public class BiomeGUI extends ModElementGUI<Biome> {
 		sbbp4.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/name"), L10N.label("elementgui.biome.name")));
 		sbbp4.add(name);
 
-		sbbp4n.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/ground_block"), L10N.label("elementgui.biome.ground_block"),
-						new Color(206, 109, 109).brighter()));
+		sbbp4n.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/ground_block"),
+				L10N.label("elementgui.biome.ground_block"), new Color(206, 109, 109).brighter()));
 		sbbp4n.add(PanelUtils.join(groundBlock));
 
 		sbbp4n.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/underground_block"),
 				L10N.label("elementgui.biome.undeground_block"), new Color(179, 94, 26).brighter()));
 		sbbp4n.add(PanelUtils.join(undergroundBlock));
 
-		sbbp4.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/air_color"), L10N.label("elementgui.biome.air_color")));
+		sbbp4.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/air_color"),
+				L10N.label("elementgui.biome.air_color")));
 		sbbp4.add(airColor);
 
-		sbbp4.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/grass_color"), L10N.label("elementgui.biome.grass_color")));
+		sbbp4.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/grass_color"),
+				L10N.label("elementgui.biome.grass_color")));
 		sbbp4.add(grassColor);
 
 		sbbp4.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/foliage_color"),
 				L10N.label("elementgui.biome.foliage_color")));
 		sbbp4.add(foliageColor);
 
-		sbbp4.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/water_color"), L10N.label("elementgui.biome.water_color")));
+		sbbp4.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/water_color"),
+				L10N.label("elementgui.biome.water_color")));
 		sbbp4.add(waterColor);
 
 		sbbp4.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/water_fog_color"),
@@ -413,28 +463,20 @@ public class BiomeGUI extends ModElementGUI<Biome> {
 		sbbp5.add(L10N.label("elementgui.biome.minimal_height"));
 		sbbp5.add(minHeight);
 
-		sbbp5.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/max_water_depth"),
-				L10N.label("elementgui.biome.max_water_depth")));
-		sbbp5.add(maxWaterDepth);
-
-		sbbp5.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/stem_block"), L10N.label("elementgui.biome.stem_block"),
-						new Color(49, 148, 53)));
+		sbbp5.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/stem_block"),
+				L10N.label("elementgui.biome.stem_block"), new Color(49, 148, 53)));
 		sbbp5.add(PanelUtils.join(treeStem));
 
-		sbbp5.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/branch_block"), L10N.label("elementgui.biome.branch_block"),
-						new Color(196, 104, 205)));
+		sbbp5.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/branch_block"),
+				L10N.label("elementgui.biome.branch_block"), new Color(196, 104, 205)));
 		sbbp5.add(PanelUtils.join(treeBranch));
 
-		sbbp5.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/vines_block"), L10N.label("elementgui.biome.vines_block"),
-						new Color(148, 248, 252)));
+		sbbp5.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/vines_block"),
+				L10N.label("elementgui.biome.vines_block"), new Color(148, 248, 252)));
 		sbbp5.add(PanelUtils.join(treeVines));
 
-		sbbp5.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/fruits_block"), L10N.label("elementgui.biome.fruits_block"),
-						new Color(255, 255, 0)));
+		sbbp5.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/fruits_block"),
+				L10N.label("elementgui.biome.fruits_block"), new Color(255, 255, 0)));
 		sbbp5.add(PanelUtils.join(treeFruits));
 
 		customTrees.addActionListener(event -> updateBiomeTreesForm());
@@ -463,8 +505,8 @@ public class BiomeGUI extends ModElementGUI<Biome> {
 
 		JPanel pane1 = new JPanel(new GridLayout());
 
-		JComponent component = PanelUtils.northAndCenterElement(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/spawn_entities"),
+		JComponent component = PanelUtils.northAndCenterElement(
+				HelpUtils.wrapWithHelpButton(this.withEntry("biome/spawn_entities"),
 						L10N.label("elementgui.biome.spawn_entities")), spawnEntries);
 
 		component.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -488,8 +530,8 @@ public class BiomeGUI extends ModElementGUI<Biome> {
 				L10N.label("elementgui.biome.additions_sound")));
 		sounds.add(additionsSound);
 
-		sounds.add(HelpUtils
-				.wrapWithHelpButton(this.withEntry("biome/mood_sound"), L10N.label("elementgui.biome.mood_sound")));
+		sounds.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/mood_sound"),
+				L10N.label("elementgui.biome.mood_sound")));
 		sounds.add(moodSound);
 
 		sounds.add(HelpUtils.wrapWithHelpButton(this.withEntry("biome/mood_sound_delay"),
@@ -528,8 +570,8 @@ public class BiomeGUI extends ModElementGUI<Biome> {
 		spawnParticle.addActionListener(event -> updateParticleParameters());
 
 		effectsPane.setOpaque(false);
-		effectsPane.add("Center", PanelUtils
-				.totalCenterInPanel(PanelUtils.westAndEastElement(sounds, PanelUtils.pullElementUp(particles))));
+		effectsPane.add("Center", PanelUtils.totalCenterInPanel(
+				PanelUtils.westAndEastElement(sounds, PanelUtils.pullElementUp(particles))));
 
 		page1group.addValidationElement(name);
 		page1group.addValidationElement(groundBlock);
@@ -578,20 +620,16 @@ public class BiomeGUI extends ModElementGUI<Biome> {
 	private void updateBiomeTreesForm() {
 		if (customTrees.isSelected()) {
 			minHeight.setEnabled(true);
-			maxWaterDepth.setEnabled(true);
 			treeVines.setEnabled(true);
 			treeStem.setEnabled(true);
 			treeBranch.setEnabled(true);
 			treeFruits.setEnabled(true);
-			maxWaterDepth.setEnabled(true);
 		} else {
 			minHeight.setEnabled(false);
-			maxWaterDepth.setEnabled(false);
 			treeVines.setEnabled(false);
 			treeStem.setEnabled(false);
 			treeBranch.setEnabled(false);
 			treeFruits.setEnabled(false);
-			maxWaterDepth.setEnabled(false);
 		}
 	}
 
@@ -613,7 +651,6 @@ public class BiomeGUI extends ModElementGUI<Biome> {
 		treeStem.setBlock(biome.treeStem);
 		treeBranch.setBlock(biome.treeBranch);
 		treeFruits.setBlock(biome.treeFruits);
-		maxWaterDepth.setValue(biome.maxWaterDepth);
 
 		if (biome.treeType == biome.TREES_CUSTOM) {
 			vanillaTrees.setSelected(false);
@@ -652,15 +689,24 @@ public class BiomeGUI extends ModElementGUI<Biome> {
 		spawnBiome.setSelected(biome.spawnBiome);
 		spawnStronghold.setSelected(biome.spawnStronghold);
 		spawnMineshaft.setSelected(biome.spawnMineshaft);
+		spawnMineshaftMesa.setSelected(biome.spawnMineshaftMesa);
 		spawnPillagerOutpost.setSelected(biome.spawnPillagerOutpost);
 		villageType.setSelectedItem(biome.villageType);
 		spawnWoodlandMansion.setSelected(biome.spawnWoodlandMansion);
 		spawnJungleTemple.setSelected(biome.spawnJungleTemple);
 		spawnDesertPyramid.setSelected(biome.spawnDesertPyramid);
+		spawnSwampHut.setSelected(biome.spawnSwampHut);
 		spawnIgloo.setSelected(biome.spawnIgloo);
 		spawnOceanMonument.setSelected(biome.spawnOceanMonument);
 		spawnShipwreck.setSelected(biome.spawnShipwreck);
+		spawnShipwreckBeached.setSelected(biome.spawnShipwreckBeached);
+		spawnBuriedTreasure.setSelected(biome.spawnBuriedTreasure);
 		oceanRuinType.setSelectedItem(biome.oceanRuinType);
+		spawnNetherBridge.setSelected(biome.spawnNetherBridge);
+		spawnNetherFossil.setSelected(biome.spawnNetherFossil);
+		spawnBastionRemnant.setSelected(biome.spawnBastionRemnant);
+		spawnEndCity.setSelected(biome.spawnEndCity);
+		spawnRuinedPortal.setSelectedItem(biome.spawnRuinedPortal);
 
 		temperature.setValue(biome.temperature);
 		bigMushroomsChunk.setValue(biome.bigMushroomsChunk);
@@ -729,19 +775,27 @@ public class BiomeGUI extends ModElementGUI<Biome> {
 		biome.treeStem = treeStem.getBlock();
 		biome.treeBranch = treeBranch.getBlock();
 		biome.treeFruits = treeFruits.getBlock();
-		biome.maxWaterDepth = (int) maxWaterDepth.getValue();
 		biome.spawnBiome = spawnBiome.isSelected();
 		biome.spawnMineshaft = spawnMineshaft.isSelected();
+		biome.spawnMineshaftMesa = spawnMineshaftMesa.isSelected();
 		biome.spawnStronghold = spawnStronghold.isSelected();
 		biome.spawnPillagerOutpost = spawnPillagerOutpost.isSelected();
 		biome.villageType = (String) villageType.getSelectedItem();
 		biome.spawnWoodlandMansion = spawnWoodlandMansion.isSelected();
 		biome.spawnJungleTemple = spawnJungleTemple.isSelected();
 		biome.spawnDesertPyramid = spawnDesertPyramid.isSelected();
+		biome.spawnSwampHut = spawnSwampHut.isSelected();
 		biome.spawnIgloo = spawnIgloo.isSelected();
 		biome.spawnOceanMonument = spawnOceanMonument.isSelected();
 		biome.spawnShipwreck = spawnShipwreck.isSelected();
+		biome.spawnShipwreckBeached = spawnShipwreckBeached.isSelected();
+		biome.spawnBuriedTreasure = spawnBuriedTreasure.isSelected();
 		biome.oceanRuinType = (String) oceanRuinType.getSelectedItem();
+		biome.spawnNetherBridge = spawnNetherBridge.isSelected();
+		biome.spawnNetherFossil = spawnNetherFossil.isSelected();
+		biome.spawnBastionRemnant = spawnBastionRemnant.isSelected();
+		biome.spawnEndCity = spawnEndCity.isSelected();
+		biome.spawnRuinedPortal = (String) spawnRuinedPortal.getSelectedItem();
 		return biome;
 	}
 

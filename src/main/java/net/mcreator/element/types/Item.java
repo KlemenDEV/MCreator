@@ -22,6 +22,7 @@ import net.mcreator.element.GeneratableElement;
 import net.mcreator.element.parts.MItemBlock;
 import net.mcreator.element.parts.Procedure;
 import net.mcreator.element.parts.TabEntry;
+import net.mcreator.element.types.interfaces.IItem;
 import net.mcreator.element.types.interfaces.IItemWithModel;
 import net.mcreator.element.types.interfaces.IItemWithTexture;
 import net.mcreator.element.types.interfaces.ITabContainedElement;
@@ -35,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused") public class Item extends GeneratableElement
-		implements IItemWithModel, ITabContainedElement, IItemWithTexture {
+		implements IItem, IItemWithModel, ITabContainedElement, IItemWithTexture {
 
 	public int renderType;
 	public String texture;
@@ -76,6 +77,10 @@ import java.util.Map;
 	public Procedure onStoppedUsing;
 	public Procedure onEntitySwing;
 	public Procedure onDroppedByPlayer;
+
+	public boolean hasDispenseBehavior;
+	public Procedure dispenseSuccessCondition;
+	public Procedure dispenseResultItemstack;
 
 	private Item() {
 		this(null);
@@ -123,6 +128,10 @@ import java.util.Map;
 
 	public boolean hasToolModel() {
 		return getItemModel().getType() == Model.Type.BUILTIN && getItemModel().getReadableName().equals("Tool");
+	}
+
+	public boolean hasInventory() {
+		return guiBoundTo != null && !guiBoundTo.isEmpty() && !guiBoundTo.equals("<NONE>");
 	}
 
 }

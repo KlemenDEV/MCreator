@@ -54,6 +54,8 @@ public class GeneratorConfiguration implements Comparable<GeneratorConfiguration
 
 	private final GeneratorFlavor generatorFlavor;
 
+	private final GeneratorVariableTypes generatorVariableTypes;
+
 	private final TemplateGeneratorConfiguration templateGeneratorConfiguration;
 	private final TemplateGeneratorConfiguration procedureGeneratorConfiguration;
 	private final TemplateGeneratorConfiguration triggerGeneratorConfiguration;
@@ -87,6 +89,9 @@ public class GeneratorConfiguration implements Comparable<GeneratorConfiguration
 		this.triggerGeneratorConfiguration = new TemplateGeneratorConfiguration(generatorName, "triggers");
 		this.aitaskGeneratorConfiguration = new TemplateGeneratorConfiguration(generatorName, "aitasks");
 		this.jsonTriggerGeneratorConfiguration = new TemplateGeneratorConfiguration(generatorName, "jsontriggers");
+
+		// load global variable definitions
+		this.generatorVariableTypes = new GeneratorVariableTypes(this);
 
 		this.generatorStats = new GeneratorStats(this);
 	}
@@ -157,13 +162,51 @@ public class GeneratorConfiguration implements Comparable<GeneratorConfiguration
 		return (List<?>) generatorConfig.get("resources_setup_tasks");
 	}
 
+	@Nullable public List<?> getSourceSetupTasks() {
+		return (List<?>) generatorConfig.get("sources_setup_tasks");
+	}
+
+	public String getJavaModelsKey() {
+		return generatorConfig.get("java_models") != null ?
+				((Map<?, ?>) generatorConfig.get("java_models")).get("key").toString() :
+				"legacy";
+	}
+
+	public List<String> getCompatibleJavaModelKeys() {
+		List<String> retval = new ArrayList<>();
+		retval.add(getJavaModelsKey());
+
+		if (generatorConfig.get("java_models") != null) {
+			if (((Map<?, ?>) generatorConfig.get("java_models")).get("compatible") != null) {
+				retval.addAll(((List<?>) ((Map<?, ?>) generatorConfig.get("java_models")).get("compatible")).stream()
+						.map(Object::toString).toList());
+			}
+		}
+
+		return retval;
+	}
+
+	public List<String> getJavaModelRequirementKeyWords() {
+		List<String> retval = new ArrayList<>();
+
+		if (generatorConfig.get("java_models") != null) {
+			if (((Map<?, ?>) generatorConfig.get("java_models")).get("requested_key_words") != null) {
+				retval.addAll(
+						((List<?>) ((Map<?, ?>) generatorConfig.get("java_models")).get("requested_key_words")).stream()
+								.map(Object::toString).toList());
+			}
+		}
+
+		return retval;
+	}
+
 	public String getGeneratorName() {
 		return generatorName;
 	}
 
 	@Override public boolean equals(Object o) {
-		return o instanceof GeneratorConfiguration && ((GeneratorConfiguration) o).generatorName
-				.equals(this.generatorName);
+		return o instanceof GeneratorConfiguration && ((GeneratorConfiguration) o).generatorName.equals(
+				this.generatorName);
 	}
 
 	@Override public int hashCode() {
@@ -211,11 +254,15 @@ public class GeneratorConfiguration implements Comparable<GeneratorConfiguration
 		return jsonTriggerGeneratorConfiguration;
 	}
 
-	@Nullable public List<String> getSupportedDefinitionFields(ModElementType type) {
+	public GeneratorVariableTypes getVariableTypes() {
+		return generatorVariableTypes;
+	}
+
+	@Nullable public List<String> getSupportedDefinitionFields(ModElementType<?> type) {
 		Map<?, ?> map = definitionsProvider.getModElementDefinition(type);
 
 		if (map == null) {
-			LOG.info("Failed to load element definition for mod element type " + type.name());
+			LOG.info("Failed to load element definition for mod element type " + type.getRegistryName());
 			return null;
 		}
 
@@ -226,11 +273,11 @@ public class GeneratorConfiguration implements Comparable<GeneratorConfiguration
 		return null;
 	}
 
-	@Nullable public List<String> getUnsupportedDefinitionFields(ModElementType type) {
+	@Nullable public List<String> getUnsupportedDefinitionFields(ModElementType<?> type) {
 		Map<?, ?> map = definitionsProvider.getModElementDefinition(type);
 
 		if (map == null) {
-			LOG.info("Failed to load element definition for mod element type " + type.name());
+			LOG.info("Failed to load element definition for mod element type " + type.getRegistryName());
 			return null;
 		}
 

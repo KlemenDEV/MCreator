@@ -27,7 +27,7 @@ import net.mcreator.ui.component.util.ComponentUtils;
 import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.help.HelpUtils;
 import net.mcreator.ui.init.L10N;
-import net.mcreator.ui.minecraft.ProcedureSelector;
+import net.mcreator.ui.procedure.ProcedureSelector;
 import net.mcreator.ui.validation.AggregatedValidationResult;
 import net.mcreator.ui.validation.component.VComboBox;
 import net.mcreator.ui.validation.component.VTextField;
@@ -85,8 +85,7 @@ public class KeyBindGUI extends ModElementGUI<KeyBinding> {
 
 		enderpanel.add(HelpUtils.wrapWithHelpButton(this.withEntry("keybinding/category"),
 				L10N.label("elementgui.keybind.key_binding_category")));
-		enderpanel.add(PanelUtils.westAndCenterElement(L10N.label("elementgui.keybind.key_binding_category_key"),
-				keyBindingCategoryKey));
+		enderpanel.add(PanelUtils.westAndCenterElement(new JLabel("key.categories."), keyBindingCategoryKey));
 
 		keyBindingCategoryKey.setEditable(true);
 
@@ -95,7 +94,7 @@ public class KeyBindGUI extends ModElementGUI<KeyBinding> {
 		JPanel evente = new JPanel();
 		evente.setOpaque(false);
 		evente.setBorder(BorderFactory.createTitledBorder(
-				BorderFactory.createLineBorder((Color) UIManager.get("MCreatorLAF.BRIGHT_COLOR"), 2),
+				BorderFactory.createLineBorder((Color) UIManager.get("MCreatorLAF.BRIGHT_COLOR"), 1),
 				L10N.t("elementgui.keybind.key_procedure_triggers"), 0, 0, getFont().deriveFont(12.0f),
 				(Color) UIManager.get("MCreatorLAF.BRIGHT_COLOR")));
 		evente.add(onKeyPressed);
@@ -116,6 +115,7 @@ public class KeyBindGUI extends ModElementGUI<KeyBinding> {
 
 		keyBindingCategoryKey.setValidator(new RegistryNameValidator(keyBindingCategoryKey,
 				L10N.t("elementgui.keybind.error_key_category_needs_name")));
+		keyBindingCategoryKey.enableRealtimeValidation();
 
 		addPage(pane5);
 

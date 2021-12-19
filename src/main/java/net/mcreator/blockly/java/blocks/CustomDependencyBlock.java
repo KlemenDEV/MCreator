@@ -22,20 +22,19 @@ import net.mcreator.blockly.BlocklyCompileNote;
 import net.mcreator.blockly.BlocklyToCode;
 import net.mcreator.blockly.IBlockGenerator;
 import net.mcreator.blockly.data.Dependency;
+import net.mcreator.ui.init.L10N;
 import net.mcreator.util.XMLUtil;
-import net.mcreator.workspace.elements.VariableElementType;
-import net.mcreator.workspace.elements.VariableElementTypeLoader;
+import net.mcreator.workspace.elements.VariableType;
+import net.mcreator.workspace.elements.VariableTypeLoader;
 import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Element;
-
-import java.util.stream.Collectors;
 
 public class CustomDependencyBlock implements IBlockGenerator {
 	private final String[] names;
 
 	public CustomDependencyBlock() {
-		names = VariableElementTypeLoader.INSTANCE.getVariableTypes().stream().map(VariableElementType::getName)
-				.collect(Collectors.toList()).stream().map(s -> s = "custom_dependency_" + s).toArray(String[]::new);
+		names = VariableTypeLoader.INSTANCE.getAllVariableTypes().stream().map(VariableType::getName)
+				.map(s -> s = "custom_dependency_" + s).toArray(String[]::new);
 	}
 
 	@Override public void generateBlock(BlocklyToCode master, Element block) {
@@ -48,11 +47,13 @@ public class CustomDependencyBlock implements IBlockGenerator {
 
 			if (deptype.equalsIgnoreCase("itemstack"))
 				master.append("/*@ItemStack*/");
+			else if (deptype.equalsIgnoreCase("blockstate"))
+				master.append("/*@BlockState*/");
 
 			master.append("(").append(element.getTextContent()).append(")");
 		} else {
-			master.addCompileNote(new BlocklyCompileNote(BlocklyCompileNote.Type.ERROR,
-					"Custom dependency block is not well defined!"));
+			master.addCompileNote(
+					new BlocklyCompileNote(BlocklyCompileNote.Type.ERROR, L10N.t("blockly.errors.custom_dependency")));
 		}
 	}
 

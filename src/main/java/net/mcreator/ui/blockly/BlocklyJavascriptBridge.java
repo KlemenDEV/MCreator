@@ -20,13 +20,11 @@ package net.mcreator.ui.blockly;
 
 import com.google.gson.Gson;
 import net.mcreator.blockly.data.ExternalTrigger;
+import net.mcreator.blockly.java.BlocklyVariables;
 import net.mcreator.element.BaseType;
 import net.mcreator.element.ModElementType;
 import net.mcreator.io.OS;
-import net.mcreator.minecraft.DataListEntry;
-import net.mcreator.minecraft.ElementUtil;
-import net.mcreator.minecraft.MCItem;
-import net.mcreator.minecraft.MinecraftImageGenerator;
+import net.mcreator.minecraft.*;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.dialogs.AIConditionEditor;
 import net.mcreator.ui.dialogs.MCItemSelectorDialog;
@@ -35,8 +33,8 @@ import net.mcreator.util.ListUtils;
 import net.mcreator.util.image.ImageUtils;
 import net.mcreator.workspace.Workspace;
 import net.mcreator.workspace.elements.ModElement;
-import net.mcreator.workspace.elements.VariableElementType;
-import net.mcreator.workspace.elements.VariableElementTypeLoader;
+import net.mcreator.workspace.elements.VariableType;
+import net.mcreator.workspace.elements.VariableTypeLoader;
 import netscape.javascript.JSObject;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -75,8 +73,8 @@ public class BlocklyJavascriptBridge {
 		ImageIcon base = new ImageIcon(ImageUtils.resize(MinecraftImageGenerator.generateItemSlot(), 36, 36));
 		ImageIcon image;
 		if (name != null && !name.equals("") && !name.equals("null"))
-			image = ImageUtils
-					.drawOver(base, MCItem.getBlockIconBasedOnName(mcreator.getWorkspace(), name), 2, 2, 32, 32);
+			image = ImageUtils.drawOver(base, MCItem.getBlockIconBasedOnName(mcreator.getWorkspace(), name), 2, 2, 32,
+					32);
 		else
 			image = base;
 
@@ -138,7 +136,7 @@ public class BlocklyJavascriptBridge {
 		callback.call("callback", StringUtils.join(retval, ','));
 	}
 
-	private final Map<String, String> ext_triggers = new LinkedHashMap<String, String>() {{
+	private final Map<String, String> ext_triggers = new LinkedHashMap<>() {{
 		put("no_ext_trigger", L10N.t("trigger.no_ext_trigger"));
 	}};
 
@@ -171,18 +169,14 @@ public class BlocklyJavascriptBridge {
 		case "gui":
 			retval = ElementUtil.loadBasicGUI(workspace);
 			break;
-		case "gamemode":
-			return ElementUtil.getAllGameModes();
-		case "biomedictionary":
-			return ElementUtil.loadBiomeDictionaryTypes();
-		case "damagesource":
-			return ElementUtil.getAllDamageSources();
 		case "achievement":
 			return ElementUtil.loadAllAchievements(workspace).stream().map(DataListEntry::getName)
 					.toArray(String[]::new);
-		case "potion":
+		case "effect":
 			return ElementUtil.loadAllPotionEffects(workspace).stream().map(DataListEntry::getName)
 					.toArray(String[]::new);
+		case "potion":
+			return ElementUtil.loadAllPotions(workspace).stream().map(DataListEntry::getName).toArray(String[]::new);
 		case "gamerulesboolean":
 			return ElementUtil.getAllBooleanGameRules(workspace).stream().map(DataListEntry::getName)
 					.toArray(String[]::new);
@@ -219,22 +213,23 @@ public class BlocklyJavascriptBridge {
 					workspace.getModElements().stream().filter(var -> var.getType() == ModElementType.RANGEDITEM)
 							.map(ModElement::getName).collect(Collectors.toList()));
 			break;
-		case "planttype":
-			return ElementUtil.getAllPlantTypes();
 		default:
 			retval = new ArrayList<>();
 		}
+
+		// check if the data list exists and returns it if true
+		if (!DataListLoader.loadDataList(type).isEmpty())
+			return ElementUtil.getDataListAsStringArray(type);
 
 		// check if type is "call procedure with return value"
 		if (type.contains("procedure_retval_")) {
 			retval = workspace.getModElements().stream().filter(mod -> {
 				if (mod.getType() == ModElementType.PROCEDURE) {
-					VariableElementType returnTypeCurrent = mod.getMetadata("return_type") != null ?
-							VariableElementTypeLoader.INSTANCE
-									.getVariableTypeFromString((String) mod.getMetadata("return_type")) :
+					VariableType returnTypeCurrent = mod.getMetadata("return_type") != null ?
+							VariableTypeLoader.INSTANCE.fromName((String) mod.getMetadata("return_type")) :
 							null;
-					return returnTypeCurrent == VariableElementTypeLoader.INSTANCE
-							.getVariableTypeFromString(StringUtils.removeStart(type, "procedure_retval_"));
+					return returnTypeCurrent == VariableTypeLoader.INSTANCE.fromName(
+							StringUtils.removeStart(type, "procedure_retval_"));
 				}
 				return false;
 			}).map(ModElement::getName).collect(Collectors.toList());
@@ -244,6 +239,25 @@ public class BlocklyJavascriptBridge {
 			return new String[] { "" };
 
 		return retval.toArray(new String[0]);
+	}
+
+	@SuppressWarnings("unused") public String[] getReadableListOf(String type) {
+		return getReadableListOfForWorkspace(mcreator.getWorkspace(), type);
+	}
+
+	@SuppressWarnings("unused") public static String[] getReadableListOfForWorkspace(Workspace workspace, String type) {
+		List<String> retval;
+		return switch (type) {
+			case "entity" -> ElementUtil.loadAllEntities(workspace).stream().map(DataListEntry::getReadableName)
+					.toArray(String[]::new);
+			case "biome" -> ElementUtil.loadAllBiomes(workspace).stream().map(DataListEntry::getReadableName)
+					.toArray(String[]::new);
+			default -> getListOfForWorkspace(workspace, type);
+		};
+	}
+
+	@SuppressWarnings("unused") public boolean isPlayerVariable(String field) {
+		return BlocklyVariables.isPlayerVariableForWorkspace(mcreator.getWorkspace(), field);
 	}
 
 	public void setJavaScriptEventListener(JavaScriptEventListener listener) {

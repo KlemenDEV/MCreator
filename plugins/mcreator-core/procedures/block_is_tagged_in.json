@@ -15,7 +15,8 @@
   "output": "Boolean",
   "colour": "%{BKY_LOGIC_HUE}",
   "mcreator": {
-    "toolbox_id": "blockactions",
+    "group": "data",
+    "toolbox_id": "blockdata",
     "toolbox_init": [
       "<value name=\"b\"><block type=\"text\"><field name=\"TEXT\">minecraft:logs</field></block></value>",
       "<value name=\"a\"><block type=\"mcitem_allblocks\"><field name=\"value\"></field></block></value>"

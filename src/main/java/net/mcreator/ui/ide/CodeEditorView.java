@@ -34,13 +34,14 @@ import net.mcreator.ui.ide.autocomplete.CustomJSCCache;
 import net.mcreator.ui.ide.autocomplete.StringCompletitionProvider;
 import net.mcreator.ui.ide.json.JsonTree;
 import net.mcreator.ui.ide.mcfunction.MinecraftCommandsTokenMaker;
+import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.laf.FileIcons;
 import net.mcreator.ui.laf.SlickDarkScrollBarUI;
 import net.mcreator.ui.laf.SlickTreeUI;
 import net.mcreator.ui.laf.renderer.AstTreeCellRendererCustom;
 import net.mcreator.ui.views.ViewBase;
+import net.mcreator.util.FilenameUtilsPatched;
 import net.mcreator.workspace.elements.ModElement;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.fife.rsta.ac.AbstractSourceTree;
@@ -125,7 +126,7 @@ public class CodeEditorView extends ViewBase {
 		this(fa, FileIO.readFileToString(fs), fs.getName(), fs, false);
 	}
 
-	CodeEditorView(MCreator fa, String code, String fileName, File fileWorkingOn, boolean readOnly) {
+	public CodeEditorView(MCreator fa, String code, String fileName, File fileWorkingOn, boolean readOnly) {
 		super(fa);
 
 		this.fileWorkingOn = fileWorkingOn;
@@ -165,7 +166,6 @@ public class CodeEditorView extends ViewBase {
 		te.setAutoIndentEnabled(true);
 
 		te.setTabSize(4);
-		te.setTabsEmulated(false);
 
 		ToolTipManager.sharedInstance().registerComponent(te);
 
@@ -297,8 +297,7 @@ public class CodeEditorView extends ViewBase {
 			bars.add("Center", sed);
 			bars.add("South", rep);
 		} else {
-			ro.setText(
-					"This is (decompiled/provided) source code and is read-only and intended for internal reference and educational use only");
+			ro.setText(L10N.t("ide.warnings.read_only"));
 			bars.add("North", ro);
 			bars.add("South", sed);
 			ro.setVisible(true);
@@ -326,7 +325,7 @@ public class CodeEditorView extends ViewBase {
 							fa.actionRegistry.buildWorkspace.doAction();
 							if (CodeEditorView.this.mouseEvent != null)
 								new FocusableTip(te, null).toolTipRequested(CodeEditorView.this.mouseEvent,
-										"Code saved and build started");
+										L10N.t("ide.tips.save_and_build"));
 						}
 					});
 
@@ -339,13 +338,13 @@ public class CodeEditorView extends ViewBase {
 							reformatTheCodeOrganiseAndFixImports();
 							if (CodeEditorView.this.mouseEvent != null)
 								new FocusableTip(te, null).toolTipRequested(CodeEditorView.this.mouseEvent,
-										"Reformatted and organized code and imports");
+										L10N.t("ide.tips.reformat_and_organize_imports"));
 						}
 					});
 
 		if (!readOnly)
 			KeyStrokes.registerKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_M,
-					Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx() | InputEvent.SHIFT_DOWN_MASK, false), te,
+							Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx() | InputEvent.SHIFT_DOWN_MASK, false), te,
 					new AbstractAction() {
 						@Override public void actionPerformed(ActionEvent actionEvent) {
 							disableJumpToMode();
@@ -353,7 +352,7 @@ public class CodeEditorView extends ViewBase {
 							fa.actionRegistry.runClient.doAction();
 							if (CodeEditorView.this.mouseEvent != null)
 								new FocusableTip(te, null).toolTipRequested(CodeEditorView.this.mouseEvent,
-										"Code saved and Minecraft launched");
+										L10N.t("ide.tips.save_and_launch"));
 						}
 					});
 
@@ -429,8 +428,9 @@ public class CodeEditorView extends ViewBase {
 					if (keyEvent.getKeyCode() == KeyEvent.VK_CONTROL) {
 						te.setCursor(new Cursor(Cursor.HAND_CURSOR));
 						jumpToMode = true;
-					} else if (smartAutocomplete && !completitionInAction && jls.isAutoActivationEnabled() && Character
-							.isLetterOrDigit(keyEvent.getKeyChar()) && jcp.getAlreadyEnteredText(te).length() > 1) {
+					} else if (smartAutocomplete && !completitionInAction && jls.isAutoActivationEnabled()
+							&& Character.isLetterOrDigit(keyEvent.getKeyChar())
+							&& jcp.getAlreadyEnteredText(te).length() > 1) {
 						if (!completitionInAction) {
 							new Thread(() -> {
 								if (ac != null) {
@@ -474,20 +474,20 @@ public class CodeEditorView extends ViewBase {
 				@Override public void mouseClicked(MouseEvent mouseEvent) {
 					CodeEditorView.this.mouseEvent = mouseEvent;
 					if (jumpToMode && ac != null) {
-						DeclarationFinder.InClassPosition position = DeclarationFinder
-								.getDeclarationOnPos(mcreator.getWorkspace(), parser, te, jls.getJarManager());
+						DeclarationFinder.InClassPosition position = DeclarationFinder.getDeclarationOnPos(
+								mcreator.getWorkspace(), parser, te, jls.getJarManager());
 						if (position != null) {
 							if (position.classFileNode == null) {
 								te.setCaretPosition(position.carret);
 								SwingUtilities.invokeLater(() -> centerLineInScrollPane());
 							} else {
-								ProjectFileOpener
-										.openFileSpecific(mcreator, position.classFileNode, position.openInReadOnly,
-												position.carret, position.virtualFile);
+								ProjectFileOpener.openFileSpecific(mcreator, position.classFileNode,
+										position.openInReadOnly, position.carret, position.virtualFile);
 							}
 							disableJumpToMode();
 						} else {
-							new FocusableTip(te, null).toolTipRequested(mouseEvent, "Failed to find declaration!");
+							new FocusableTip(te, null).toolTipRequested(mouseEvent,
+									L10N.t("ide.errors.failed_find_declaration"));
 						}
 					}
 					jumpToMode = false;
@@ -500,7 +500,12 @@ public class CodeEditorView extends ViewBase {
 				te.setSyntaxEditingStyle("text/mcfunction");
 			});
 		} else if (fileName.endsWith(".info") || fileName.endsWith(".json") || fileName.endsWith(".mcmeta")) {
-			SwingUtilities.invokeLater(() -> te.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JSON));
+			SwingUtilities.invokeLater(() -> {
+				try {
+					te.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JSON);
+				} catch (Exception ignored) {
+				}
+			});
 		} else if (fileName.endsWith(".xml")) {
 			SwingUtilities.invokeLater(() -> te.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_XML));
 		} else if (fileName.endsWith(".lang")) {
@@ -515,8 +520,8 @@ public class CodeEditorView extends ViewBase {
 			JavaScriptLanguageSupport javaScriptLanguageSupport = new JavaScriptLanguageSupport();
 
 			javaScriptLanguageSupport.setAutoCompleteEnabled(PreferencesManager.PREFERENCES.ide.autocomplete);
-			javaScriptLanguageSupport
-					.setAutoActivationEnabled(!PreferencesManager.PREFERENCES.ide.autocompleteMode.equals("Manual"));
+			javaScriptLanguageSupport.setAutoActivationEnabled(
+					!PreferencesManager.PREFERENCES.ide.autocompleteMode.equals("Manual"));
 			javaScriptLanguageSupport.setParameterAssistanceEnabled(true);
 			javaScriptLanguageSupport.setShowDescWindow(PreferencesManager.PREFERENCES.ide.autocompleteDocWindow);
 
@@ -535,6 +540,10 @@ public class CodeEditorView extends ViewBase {
 		ro.setText(notice);
 		ro.setBackground(color);
 		ro.setVisible(true);
+	}
+
+	public void hideNotice() {
+		ro.setVisible(false);
 	}
 
 	public void disableJumpToMode() {
@@ -645,9 +654,7 @@ public class CodeEditorView extends ViewBase {
 		this.fileOwner = fileOwner;
 		boolean codeLocked = this.fileOwner.isCodeLocked();
 		if (!codeLocked) {
-			setCustomNotice(this.fileOwner.getName()
-							+ " was created from MCreator's interface. You need to lock its code to prevent the code from being overwritten!",
-					new Color(0x31332F));
+			setCustomNotice(L10N.t("ide.warnings.created_from_ui", this.fileOwner.getName()), new Color(0x31332F));
 		}
 	}
 
@@ -655,16 +662,9 @@ public class CodeEditorView extends ViewBase {
 		if (this.fileOwner != null) {
 			boolean codeLocked = this.fileOwner.isCodeLocked();
 			if (!codeLocked) {
-				Object[] options = { "Lock the code for MCreator and save", "Save without locking" };
-				int n = JOptionPane.showOptionDialog(mcreator,
-						"<html><b>You are trying to save unlocked mod file!</b><br>"
-								+ "<br>This means that MCreator might overwrite your changes in some cases.<br>"
-								+ "To prevent this, you can lock the code.<br><br>"
-								+ "If the code is locked, MCreator won't change the source code, but this means that when<br>"
-								+ "updating MCreator or changing Minecraft version, changes and fixes won't be applied<br>"
-								+ "to the elements that are locked, but will need to be done manually.<br>"
-								+ "<br><small>Please read the wiki page on MCreator's website about locking code before using this action.",
-						"Overwriting MCreator generated file", JOptionPane.YES_NO_CANCEL_OPTION,
+				Object[] options = { L10N.t("ide.actions.lock_and_save"), L10N.t("ide.actions.save_without_locking") };
+				int n = JOptionPane.showOptionDialog(mcreator, L10N.t("ide.warnings.save_unlocked_element"),
+						L10N.t("ide.warnings.save_unlocked_element.title"), JOptionPane.YES_NO_CANCEL_OPTION,
 						JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
 
 				if (n == 0) {
@@ -672,8 +672,7 @@ public class CodeEditorView extends ViewBase {
 					mcreator.getWorkspace().updateModElement(this.fileOwner);
 					ro.setVisible(false);
 				} else {
-					setCustomNotice(this.fileOwner.getName()
-									+ " was created from MCreator's interface. You need to lock its code to prevent the code from being overwritten!",
+					setCustomNotice(L10N.t("ide.warnings.created_from_ui", this.fileOwner.getName()),
 							new Color(0x31332F));
 				}
 			}
@@ -684,12 +683,11 @@ public class CodeEditorView extends ViewBase {
 		MCreatorTabs.Tab fileTab = new MCreatorTabs.Tab(this, fileWorkingOn, false);
 		fileTab.setTabClosingListener(tab -> {
 			if (((CodeEditorView) tab.getContent()).changed) {
-				Object[] options = { "Close and save", "Close", "Cancel" };
-				int res = JOptionPane.showOptionDialog(mcreator,
-						"<html><b>The file " + ((CodeEditorView) tab.getContent()).fileWorkingOn.getName()
-								+ " has not been saved.</b><br>Please select desired action to solve this conflict:",
-						"Warning", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null, options,
-						options[0]);
+				Object[] options = { L10N.t("ide.action.close_and_save"), L10N.t("common.close"),
+						UIManager.getString("OptionPane.cancelButtonText") };
+				int res = JOptionPane.showOptionDialog(mcreator, L10N.t("ide.warnings.file_not_saved",
+								((CodeEditorView) tab.getContent()).fileWorkingOn.getName()), L10N.t("common.warning"),
+						JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 				if (res == 0) {
 					((CodeEditorView) tab.getContent()).saveCode();
 					return true;
@@ -721,6 +719,10 @@ public class CodeEditorView extends ViewBase {
 		return (ViewBase) existing.getContent();
 	}
 
+	public CodeCleanup getCodeCleanup() {
+		return codeCleanup;
+	}
+
 	@Override public String getViewName() {
 		return fileWorkingOn.getName();
 	}
@@ -730,9 +732,9 @@ public class CodeEditorView extends ViewBase {
 	}
 
 	public static boolean isFileSupported(String fileName) {
-		return Arrays
-				.asList("java", "info", "txt", "json", "mcmeta", "lang", "gradle", "ini", "conf", "xml", "properties",
-						"mcfunction", "toml", "js", "yaml", "yml", "md").contains(FilenameUtils.getExtension(fileName));
+		return Arrays.asList("java", "info", "txt", "json", "mcmeta", "lang", "gradle", "ini", "conf", "xml",
+						"properties", "mcfunction", "toml", "js", "yaml", "yml", "md", "cfg")
+				.contains(FilenameUtilsPatched.getExtension(fileName));
 	}
 
 	public void jumpToLine(int linenum) {

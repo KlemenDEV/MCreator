@@ -1,2 +1,2 @@
-Si vous avez activé "Est-ce que l'objet reste dans la grille de fabrication après la fabrication?",
-vous pouvez activer cette option pour endommager l'item au lieu de simplement le garder dans la grille d'artisanat.
+Si vous avez activé "${l10n.t("elementgui.item.container_item")}", vous pouvez activer cette option pour endommager
+l'item au lieu de simplement le garder dans la grille d'artisanat.

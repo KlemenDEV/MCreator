@@ -23,13 +23,16 @@ import freemarker.template.TemplateException;
 import net.mcreator.element.GeneratableElement;
 import net.mcreator.generator.Generator;
 import net.mcreator.generator.template.base.BaseDataModelProvider;
+import net.mcreator.workspace.resources.Model;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class TemplateGenerator {
 
@@ -42,7 +45,7 @@ public class TemplateGenerator {
 	public TemplateGenerator(TemplateGeneratorConfiguration templateGeneratorConfiguration, Generator generator) {
 		this.generator = generator;
 		this.templateGeneratorConfiguration = templateGeneratorConfiguration;
-		this.baseDataModelProvider = new BaseDataModelProvider(generator);
+		this.baseDataModelProvider = generator.getBaseDataModelProvider();
 	}
 
 	public String generateElementFromTemplate(GeneratableElement element, String templateName,
@@ -66,6 +69,9 @@ public class TemplateGenerator {
 
 		dataModel.put("variables", generator.getWorkspace().getVariableElements());
 		dataModel.put("sounds", generator.getWorkspace().getSoundElements());
+		dataModel.put("javamodels",
+				Model.getModels(generator.getWorkspace()).stream().filter(model -> model.getType() == Model.Type.JAVA)
+						.collect(Collectors.toList()));
 
 		return generateTemplate(templateName, dataModel);
 	}
@@ -74,6 +80,19 @@ public class TemplateGenerator {
 			throws TemplateGeneratorException {
 		dataModel.putAll(baseDataModelProvider.provide());
 		return generateTemplate(templateName, dataModel);
+	}
+
+	public String generateFromString(String template, Map<String, Object> dataModel) throws TemplateGeneratorException {
+		dataModel.putAll(baseDataModelProvider.provide());
+		return generateTemplateFromString(template, dataModel);
+	}
+
+	public boolean hasTemplate(String templateName) {
+		try {
+			return templateGeneratorConfiguration.getConfiguration().getTemplate(templateName) != null;
+		} catch (IOException e) {
+			return false;
+		}
 	}
 
 	private String generateTemplate(String templateName, Map<String, Object> dataModel)
@@ -85,6 +104,20 @@ public class TemplateGenerator {
 			return stringWriter.getBuffer().toString();
 		} catch (IOException | TemplateException e) {
 			LOG.error("Failed to generate template: " + templateName, e);
+			throw new TemplateGeneratorException();
+		}
+	}
+
+	private String generateTemplateFromString(String template, Map<String, Object> dataModel)
+			throws TemplateGeneratorException {
+		try {
+			Template freemarkerTemplate = new Template("DIRECT", new StringReader(template),
+					templateGeneratorConfiguration.getConfiguration());
+			StringWriter stringWriter = new StringWriter();
+			freemarkerTemplate.process(dataModel, stringWriter, templateGeneratorConfiguration.getBeansWrapper());
+			return stringWriter.getBuffer().toString();
+		} catch (IOException | TemplateException e) {
+			LOG.error("Failed to generate template from string", e);
 			throw new TemplateGeneratorException();
 		}
 	}

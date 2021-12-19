@@ -31,6 +31,7 @@ import net.mcreator.util.image.ImageUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -61,7 +62,7 @@ public class PreferencesDialog extends MCreatorDialog {
 
 	private final Window parent;
 
-	public PreferencesDialog(Window parent, String selectedTab) {
+	public PreferencesDialog(Window parent, @Nullable String selectedTab) {
 		super(parent);
 
 		this.parent = parent;
@@ -103,7 +104,7 @@ public class PreferencesDialog extends MCreatorDialog {
 		ComponentUtils.deriveFont(sections, 13);
 
 		JButton ok = L10N.button("dialog.preferences.save");
-		JButton cancel = L10N.button(UIManager.getString("OptionPane.cancelButtonText"));
+		JButton cancel = new JButton(UIManager.getString("OptionPane.cancelButtonText"));
 
 		JButton reset = L10N.button("dialog.preferences.restore_defaults");
 		reset.addActionListener(actionEvent -> {
@@ -251,8 +252,9 @@ public class PreferencesDialog extends MCreatorDialog {
 		if (actualField.getType().equals(int.class) || actualField.getType().equals(Integer.class)) {
 			int max = (int) entry.max();
 			if (entry.meta().equals("max:maxram")) {
-				max = ((int) (((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean())
-						.getTotalPhysicalMemorySize() / 1048576)) - 1024;
+				max = ((int) (
+						((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalMemorySize()
+								/ 1048576)) - 1024;
 			}
 			value = Math.max(entry.min(), Math.min(max, (Integer) value));
 			SpinnerNumberModel model = new SpinnerNumberModel((int) Math.round((double) value), (int) entry.min(), max,
@@ -287,8 +289,8 @@ public class PreferencesDialog extends MCreatorDialog {
 		} else if (actualField.getType().equals(Locale.class)) {
 			List<Locale> locales = new ArrayList<>(L10N.getSupportedLocales());
 			locales.sort((a, b) -> {
-				int sa = L10N.getLocaleSupport(a);
-				int sb = L10N.getLocaleSupport(b);
+				int sa = L10N.getUITextsLocaleSupport(a) + L10N.getHelpTipsSupport(a);
+				int sb = L10N.getUITextsLocaleSupport(b) + L10N.getHelpTipsSupport(b);
 				if (sa == sb)
 					return a.getDisplayName().compareTo(b.getDisplayName());
 
@@ -338,7 +340,8 @@ public class PreferencesDialog extends MCreatorDialog {
 
 	private static class LocaleListRenderer extends JLabel implements ListCellRenderer<Locale> {
 
-		private int percent = 0;
+		private int uiTextsPercent = 0;
+		private int helpTipsPercent = 0;
 
 		@Override
 		public Component getListCellRendererComponent(JList<? extends Locale> list, Locale value, int index,
@@ -351,11 +354,13 @@ public class PreferencesDialog extends MCreatorDialog {
 			ComponentUtils.deriveFont(this, 12);
 			setText(" " + value.getDisplayName(Locale.ROOT));
 
-			percent = L10N.getLocaleSupport(value);
+			uiTextsPercent = L10N.getUITextsLocaleSupport(value);
+			helpTipsPercent = L10N.getHelpTipsSupport(value);
 
 			try {
 				String flagpath = "/flags/" + value.toString().split("_")[1].toUpperCase(Locale.ENGLISH) + ".png";
-				BufferedImage image = ImageIO.read(getClass().getResourceAsStream(flagpath));
+				@SuppressWarnings("ConstantConditions") BufferedImage image = ImageIO.read(
+						getClass().getResourceAsStream(flagpath));
 				setIcon(new ImageIcon(ImageUtils.crop(image, new Rectangle(1, 2, 14, 11))));
 			} catch (Exception ignored) { // flag not found, ignore
 			}
@@ -377,13 +382,19 @@ public class PreferencesDialog extends MCreatorDialog {
 			g.setColor(Color.lightGray);
 			g.fillRect(0, getHeight() - 11, getWidth(), 11);
 
-			g.setColor(Color.getHSBColor((float) (1 / 3d - ((100 - percent) / 3d / 100d)), 0.65f, 0.9f));
-			g.fillRect(0, getHeight() - 11, (int) (getWidth() * (percent / 100d)), 11);
+			g.setColor(Color.getHSBColor((float) (1 / 3d - ((100 - uiTextsPercent) / 3d / 100d)), 0.65f, 0.9f));
+			g.fillRect(0, getHeight() - 11, (int) ((getWidth() / 2 - 2) * (uiTextsPercent / 100d)), 11);
+
+			g.setColor(Color.getHSBColor((float) (1 / 3d - ((100 - helpTipsPercent) / 3d / 100d)), 0.65f, 0.9f));
+			g.fillRect(getWidth() / 2 + 2, getHeight() - 11, (int) ((getWidth() / 2 - 2) * (helpTipsPercent / 100d)),
+					11);
 
 			g.setFont(getFont().deriveFont(9f));
 			g.setColor(Color.darkGray);
 			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-			g.drawString("Coverage: " + percent + "%", 2, getHeight() - 2);
+
+			g.drawString("Texts: " + uiTextsPercent + "%", 2, getHeight() - 2);
+			g.drawString("Tips: " + helpTipsPercent + "%", getWidth() / 2 + 2 + 2, getHeight() - 2);
 		}
 
 	}

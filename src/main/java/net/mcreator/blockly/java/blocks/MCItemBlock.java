@@ -22,6 +22,7 @@ import net.mcreator.blockly.BlocklyCompileNote;
 import net.mcreator.blockly.BlocklyToCode;
 import net.mcreator.blockly.IBlockGenerator;
 import net.mcreator.generator.mapping.NameMapper;
+import net.mcreator.ui.init.L10N;
 import net.mcreator.util.XMLUtil;
 import org.w3c.dom.Element;
 
@@ -29,12 +30,12 @@ public class MCItemBlock implements IBlockGenerator {
 
 	@Override public void generateBlock(BlocklyToCode master, Element block) {
 		Element element = XMLUtil.getFirstChildrenWithName(block, "field");
-		if (element != null && element.getTextContent() != null && !element.getTextContent().equals("") && !element
-				.getTextContent().equals("null")) {
+		if (element != null && element.getTextContent() != null && !element.getTextContent().equals("")
+				&& !element.getTextContent().equals("null")) {
 			master.append(new NameMapper(master.getWorkspace(), "blocksitems").getMapping(element.getTextContent()));
 		} else {
-			master.addCompileNote(new BlocklyCompileNote(BlocklyCompileNote.Type.ERROR,
-					"Empty Minecraft element block. You need to define the element."));
+			master.addCompileNote(
+					new BlocklyCompileNote(BlocklyCompileNote.Type.ERROR, L10N.t("blockly.errors.empty_mcitem")));
 		}
 	}
 

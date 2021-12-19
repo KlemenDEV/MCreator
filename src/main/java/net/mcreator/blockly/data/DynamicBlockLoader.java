@@ -19,8 +19,9 @@
 
 package net.mcreator.blockly.data;
 
-import net.mcreator.workspace.elements.VariableElementType;
-import net.mcreator.workspace.elements.VariableElementTypeLoader;
+import net.mcreator.generator.GeneratorConfiguration;
+import net.mcreator.workspace.elements.VariableType;
+import net.mcreator.workspace.elements.VariableTypeLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,13 +30,21 @@ public class DynamicBlockLoader {
 
 	public static List<ToolboxBlock> getDynamicBlocks() {
 		List<ToolboxBlock> list = new ArrayList<>();
-		for (VariableElementType varType : VariableElementTypeLoader.INSTANCE.getVariableTypes()) {
-			ToolboxBlock getBlock = new DynamicToolboxBlock();
+		for (VariableType varType : VariableTypeLoader.INSTANCE.getAllVariableTypes()) {
+			ToolboxBlock getBlock = new DynamicToolboxBlock() {
+				@Override public boolean shouldLoad(GeneratorConfiguration configuration) {
+					return varType.canBeLocal(configuration) || varType.canBeGlobal(configuration);
+				}
+			};
 			getBlock.machine_name = "variables_get_" + varType.getName();
 			getBlock.toolbox_id = "customvariables";
 			list.add(getBlock);
 
-			ToolboxBlock setBlock = new DynamicToolboxBlock();
+			ToolboxBlock setBlock = new DynamicToolboxBlock() {
+				@Override public boolean shouldLoad(GeneratorConfiguration configuration) {
+					return varType.canBeLocal(configuration) || varType.canBeGlobal(configuration);
+				}
+			};
 			setBlock.machine_name = "variables_set_" + varType.getName();
 			setBlock.toolbox_id = "customvariables";
 			list.add(setBlock);
@@ -58,10 +67,15 @@ public class DynamicBlockLoader {
 		return list;
 	}
 
-	private static class DynamicToolboxBlock extends ToolboxBlock {
+	public static class DynamicToolboxBlock extends ToolboxBlock {
 
 		@Override public String getName() {
 			return machine_name;
+		}
+
+		@SuppressWarnings("BooleanMethodIsAlwaysInverted")
+		public boolean shouldLoad(GeneratorConfiguration configuration) {
+			return true;
 		}
 
 	}
