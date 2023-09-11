@@ -55,7 +55,7 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
-class WorkspacePanelVariables extends AbstractWorkspacePanel {
+public class WorkspacePanelVariables extends AbstractWorkspacePanel {
 
 	private final TableRowSorter<TableModel> sorter;
 	private final JTable elements;
@@ -68,7 +68,7 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 
 	private final Map<VariableElement, Map<Long, Object>> debugValueCache = new HashMap<>();
 
-	WorkspacePanelVariables(WorkspacePanel workspacePanel) {
+	public WorkspacePanelVariables(WorkspacePanel workspacePanel) {
 		super(workspacePanel);
 		setLayout(new BorderLayout(0, 5));
 
@@ -91,11 +91,15 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 								return L10N.t("common.not_applicable");
 							} else {
 								Map<Long, Object> values = debugValueCache.get(variableElement);
-								Collection<Object> valuesValues = values.values();
+								List<Object> valuesValues = new ArrayList<>(values.values());
 								if (valuesValues.isEmpty()) {
 									return L10N.t("common.not_applicable");
 								} else {
-									return valuesValues;
+									if (valuesValues.size() == 1) {
+										return valuesValues.get(0);
+									} else {
+										return valuesValues;
+									}
 								}
 							}
 						} else {
@@ -108,7 +112,7 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 			}
 
 			@Override public boolean isCellEditable(int row, int column) {
-				if (machineEditOngoing)
+				if (machineEditOngoing || isDebugging)  // do not allow setting value while debugging
 					return false;
 
 				if (!getValueAt(row, 1).toString().equals(VariableTypeLoader.BuiltInTypes.STRING.getName())
@@ -120,6 +124,9 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 			}
 
 			@Override public void setValueAt(Object value, int row, int column) {
+				if (isDebugging) // do not allow setting value while debugging as values are not correct
+					return;
+
 				Object oldVal = elements.getValueAt(row, column);
 				if (oldVal.equals(value))
 					return;
@@ -297,7 +304,7 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 		// save values on table edit, do it in another thread
 		elements.getModel().addTableModelListener(e -> new Thread(() -> {
 			if (e.getType() == TableModelEvent.UPDATE) {
-				if (machineEditOngoing)
+				if (machineEditOngoing || isDebugging) // we don't update values while debugging
 					return;
 
 				machineEditOngoing = true;
@@ -405,6 +412,7 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 					}
 
 					try {
+						//noinspection BusyWait
 						Thread.sleep(500);
 					} catch (InterruptedException ignored) {
 					}
@@ -418,7 +426,7 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 		reloadElements();
 	}
 
-	private void setVariableDebugValue(VariableElement element, long objectId, Object value) {
+	public void setVariableDebugValue(VariableElement element, long objectId, Object value) {
 		if (!debugValueCache.containsKey(element))
 			debugValueCache.put(element, new HashMap<>());
 		debugValueCache.get(element).put(objectId, value);

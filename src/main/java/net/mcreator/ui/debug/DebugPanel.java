@@ -337,7 +337,7 @@ public class DebugPanel extends JPanel {
 		markVMResumed();
 
 		new Thread(() -> DebugMarkersHandler.handleDebugMarkers(this), "DebugMarkerLoader").start();
-		new Thread(() -> DebugVariablesHandler.handleVariables(this), "DebugVariablesLoader").start();
+		new Thread(() -> DebugVariablesHandler.handleVariables(mcreator, this), "DebugVariablesLoader").start();
 
 		cardLayout.show(this, DEBUGGING);
 

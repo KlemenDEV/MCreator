@@ -95,6 +95,7 @@ import java.util.stream.Collectors;
 	private final Map<String, AbstractWorkspacePanel> sectionTabs = new HashMap<>();
 	private final List<JButton> verticalTabs = new ArrayList<>();
 	public final WorkspacePanelResources resourcesPan;
+	public final WorkspacePanelVariables variablesPan;
 
 	private String currentTab = "mods";
 
@@ -170,6 +171,7 @@ import java.util.stream.Collectors;
 		this.currentFolder = mcreator.getWorkspace().getFoldersRoot();
 
 		this.resourcesPan = new WorkspacePanelResources(this);
+		this.variablesPan = new WorkspacePanelVariables(this);
 
 		this.elementsBreadcrumb = new WorkspaceFolderBreadcrumb(mcreator);
 
@@ -771,7 +773,7 @@ import java.util.stream.Collectors;
 		addVerticalTab("mods", L10N.t("workspace.category.mod_elements"),
 				new WorkspacePanelMods(PanelUtils.westAndCenterElement(toolp, modElementsPanel)));
 		addVerticalTab("res", L10N.t("workspace.category.resources"), resourcesPan);
-		addVerticalTab("locales", L10N.t("workspace.category.variables"), new WorkspacePanelVariables(this));
+		addVerticalTab("locales", L10N.t("workspace.category.variables"), variablesPan);
 		addVerticalTab("variables", L10N.t("workspace.category.localization"), new WorkspacePanelLocalizations(this));
 
 		verticalTabs.get(0).doClick();

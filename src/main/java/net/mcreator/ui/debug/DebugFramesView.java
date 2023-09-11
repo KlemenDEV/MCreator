@@ -39,6 +39,7 @@
 package net.mcreator.ui.debug;
 
 import com.sun.jdi.*;
+import net.mcreator.java.debug.JDIValueUtil;
 import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.component.util.TreeUtils;
 import net.mcreator.ui.init.L10N;
@@ -110,14 +111,15 @@ public class DebugFramesView extends JPanel {
 				for (LocalVariable var : variables) {
 					Value value = frame.getValue(var);
 					DefaultMutableTreeNode varNode = new DefaultMutableTreeNode(
-							"<html>" + var.name() + " = " + StringUtils.abbreviateString(getValueString(value), 100)
-									+ "<br><small>" + var.typeName());
+							"<html>" + var.name() + " = " + StringUtils.abbreviateString(
+									JDIValueUtil.getValueString(value), 100) + "<br><small>" + var.typeName());
 
 					if (value instanceof ArrayReference arrayReference) {
 						int i = 0;
 						for (Value v : arrayReference.getValues()) {
 							DefaultMutableTreeNode arrayNode = new DefaultMutableTreeNode(
-									StringUtils.abbreviateString("[" + i + "] = " + getValueString(v), 100));
+									StringUtils.abbreviateString("[" + i + "] = " + JDIValueUtil.getValueString(v),
+											100));
 							varNode.add(arrayNode);
 							i++;
 						}
@@ -136,34 +138,6 @@ public class DebugFramesView extends JPanel {
 		frames.repaint();
 
 		layout.show(this, "frames");
-	}
-
-	private static String getValueString(Value value) {
-		if (value == null) {
-			return "null";
-		} else if (value instanceof StringReference) {
-			return ((StringReference) value).value();
-		} else if (value instanceof BooleanValue) {
-			return Boolean.toString(((BooleanValue) value).value());
-		} else if (value instanceof ByteValue) {
-			return Byte.toString(((ByteValue) value).value());
-		} else if (value instanceof CharValue) {
-			return Character.toString(((CharValue) value).value());
-		} else if (value instanceof ShortValue) {
-			return Short.toString(((ShortValue) value).value());
-		} else if (value instanceof IntegerValue) {
-			return Integer.toString(((IntegerValue) value).value());
-		} else if (value instanceof LongValue) {
-			return Long.toString(((LongValue) value).value());
-		} else if (value instanceof FloatValue) {
-			return Float.toString(((FloatValue) value).value());
-		} else if (value instanceof DoubleValue) {
-			return Double.toString(((DoubleValue) value).value());
-		} else if (value instanceof ArrayReference arrayReference) {
-			return "[size: " + arrayReference.getValues().size() + "]";
-		} else {
-			return value.toString();
-		}
 	}
 
 	private static class FramesCellRenderer extends DefaultTreeCellRenderer {

@@ -21,30 +21,56 @@ package net.mcreator.ui.debug;
 
 import com.sun.jdi.event.ModificationWatchpointEvent;
 import com.sun.jdi.event.WatchpointEvent;
+import net.mcreator.generator.GeneratorTokens;
 import net.mcreator.java.debug.JVMDebugClient;
 import net.mcreator.java.debug.Watchpoint;
+import net.mcreator.ui.MCreator;
+import net.mcreator.workspace.elements.VariableElement;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.Map;
 
 public class DebugVariablesHandler {
 
-	public static void handleVariables(DebugPanel debugPanel) {
+	private static final Logger LOG = LogManager.getLogger("DebugVariablesHandler");
+
+	public static void handleVariables(MCreator mcreator, DebugPanel debugPanel) {
 		JVMDebugClient debugClient = debugPanel.getDebugClient();
 		if (debugClient != null) {
-			try {
-				debugClient.addWatchpoint(new Watchpoint("net.mcreator.enadvajset.network.EnadvajsetModVariables", "e2",
-						new Watchpoint.WatchpointListener() {
-							@Override public void watchpointLoaded(Watchpoint watchpoint) {
-							}
+			for (VariableElement variableElement : mcreator.getWorkspace().getVariableElements()) {
+				try {
+					Map<?, ?> definition = variableElement.getType()
+							.getScopeDefinition(mcreator.getWorkspace(), variableElement.getScope().name());
+					if (definition == null)
+						continue;
 
-							@Override public void watchpointModified(Watchpoint watchpoint, WatchpointEvent event) {
-								if (event instanceof ModificationWatchpointEvent modificationWatchpointEvent) {
-									System.err.println("Modified watchpoint " + watchpoint.getClassname() + "."
-											+ watchpoint.getFieldname() + " to "
-											+ modificationWatchpointEvent.valueToBe());
-								}
+					Object classFieldTargetObj = definition.get("debug_watchpoint");
+					if (classFieldTargetObj == null)
+						continue;
+
+					String classFieldTarget = classFieldTargetObj.toString();
+
+					String[] classFieldTargetSplit = GeneratorTokens.replaceTokens(mcreator.getWorkspace(),
+							classFieldTarget.replace("@Name", variableElement.getName())).split("#");
+					String className = classFieldTargetSplit[0];
+					String fieldName = classFieldTargetSplit[1];
+
+					debugClient.addWatchpoint(new Watchpoint(className, fieldName, new Watchpoint.WatchpointListener() {
+						@Override public void watchpointLoaded(Watchpoint watchpoint) {
+						}
+
+						@Override public void watchpointModified(Watchpoint watchpoint, WatchpointEvent event) {
+							if (event instanceof ModificationWatchpointEvent modificationWatchpointEvent) {
+								mcreator.mv.variablesPan.setVariableDebugValue(variableElement,
+										event.object() == null ? 0 : event.object().uniqueID(),
+										modificationWatchpointEvent.valueToBe());
 							}
-						}));
-			} catch (Exception e) {
-				e.printStackTrace();
+						}
+					}));
+				} catch (Exception e) {
+					LOG.warn("Failed to add watchpoint", e);
+				}
 			}
 		}
 	}
