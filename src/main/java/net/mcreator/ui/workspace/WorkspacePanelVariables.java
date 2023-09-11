@@ -22,6 +22,7 @@ import net.mcreator.generator.GeneratorStats;
 import net.mcreator.gradle.GradleStateListener;
 import net.mcreator.gradle.GradleTaskResult;
 import net.mcreator.io.Transliteration;
+import net.mcreator.java.debug.JVMDebugClient;
 import net.mcreator.minecraft.ElementUtil;
 import net.mcreator.ui.MCreatorApplication;
 import net.mcreator.ui.component.TransparentToolBar;
@@ -44,6 +45,7 @@ import net.mcreator.workspace.elements.VariableElement;
 import net.mcreator.workspace.elements.VariableType;
 import net.mcreator.workspace.elements.VariableTypeLoader;
 
+import javax.annotation.Nullable;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.*;
@@ -326,17 +328,15 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 
 		workspacePanel.getMCreator().getGradleConsole().addGradleStateListener(new GradleStateListener() {
 			@Override public void taskStarted(String taskName) {
-				if (workspacePanel.getMCreator().getGradleConsole().getDebugClient() != null) {
-					setDebugging(true);
-				}
+				setDebugging(workspacePanel.getMCreator().getGradleConsole().getDebugClient());
 			}
 
 			@Override public void taskFinished(GradleTaskResult result) {
-				setDebugging(false);
+				setDebugging(null);
 			}
 		});
 
-		setDebugging(false);
+		setDebugging(null);
 	}
 
 	private void deleteCurrentlySelected() {
@@ -364,11 +364,12 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 	@Override public void reloadElements() {
 		int row = elements.getSelectedRow();
 
+		machineEditOngoing = true;
 		DefaultTableModel model = (DefaultTableModel) elements.getModel();
 		model.setRowCount(0);
-
 		for (VariableElement variable : workspacePanel.getMCreator().getWorkspace().getVariableElements())
 			model.addRow(new Object[] { variable, variable, variable, variable });
+		machineEditOngoing = false;
 
 		refilterElements();
 
@@ -385,14 +386,30 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 		}
 	}
 
-	public void setDebugging(boolean debugging) {
-		isDebugging = debugging;
+	public void setDebugging(@Nullable JVMDebugClient debugClient) {
+		isDebugging = debugClient != null;
 
 		if (isDebugging) {
 			header.setBackground(DebugPanel.DEBUG_COLOR);
 			header.setForeground(Color.white);
 
 			debugValueCache.clear();
+
+			new Thread(() -> {
+				while (isDebugging) {
+					if (!machineEditOngoing) {
+						DefaultTableModel model = (DefaultTableModel) elements.getModel();
+						machineEditOngoing = true;
+						model.fireTableDataChanged();
+						machineEditOngoing = false;
+					}
+
+					try {
+						Thread.sleep(500);
+					} catch (InterruptedException ignored) {
+					}
+				}
+			}, "VariableDebugUpdater").start();
 		} else {
 			header.setBackground((Color) UIManager.get("MCreatorLAF.MAIN_TINT"));
 			header.setForeground((Color) UIManager.get("MCreatorLAF.DARK_ACCENT"));
@@ -401,15 +418,10 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 		reloadElements();
 	}
 
-	public void setVariableDebugValue(VariableElement element, long objectId, Object value) {
+	private void setVariableDebugValue(VariableElement element, long objectId, Object value) {
 		if (!debugValueCache.containsKey(element))
 			debugValueCache.put(element, new HashMap<>());
 		debugValueCache.get(element).put(objectId, value);
-
-		DefaultTableModel model = (DefaultTableModel) elements.getModel();
-		machineEditOngoing = true;
-		model.fireTableDataChanged();
-		machineEditOngoing = false;
 	}
 
 }

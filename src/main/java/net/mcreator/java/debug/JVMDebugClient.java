@@ -26,6 +26,7 @@ import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.ClassPrepareRequest;
+import com.sun.jdi.request.WatchpointRequest;
 import net.mcreator.gradle.GradleUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,6 +49,7 @@ public class JVMDebugClient {
 	private int vmDebugPort;
 
 	private final Set<Breakpoint> breakpoints = new HashSet<>();
+	private final Set<Watchpoint> watchpoints = new HashSet<>();
 
 	private final List<JVMEventListener> eventListeners = new ArrayList<>();
 
@@ -102,9 +104,31 @@ public class JVMDebugClient {
 									}
 								}
 
+								for (Watchpoint watchpoint : watchpoints) {
+									if (!watchpoint.isLoaded() && classPrepareEvent.referenceType().name()
+											.equals(watchpoint.getClassname())) {
+										try {
+											WatchpointRequest watchpointRequest = loadWatchpoint(
+													classPrepareEvent.referenceType(), watchpoint.getFieldname());
+											watchpoint.setWatchpointRequest(watchpointRequest);
+											watchpoint.setLoaded(true);
+										} catch (Exception e) {
+											LOG.warn("Failed to load breakpoint", e);
+										}
+									}
+								}
+
 								classPrepareEvent.request().disable();
 							} else if (event instanceof StepEvent) {
 								shouldEventBlock = true;
+							} else if (event instanceof WatchpointEvent watchpointEvent) {
+								for (Watchpoint watchpoint : watchpoints) {
+									if (watchpoint.getWatchpointRequest() == watchpointEvent.request()) {
+										if (watchpoint.getListener() != null) {
+											watchpoint.getListener().watchpointModified(watchpoint, watchpointEvent);
+										}
+									}
+								}
 							}
 						}
 
@@ -211,6 +235,27 @@ public class JVMDebugClient {
 		}
 	}
 
+	public void addWatchpoint(Watchpoint watchpoint) throws Exception {
+		if (virtualMachine != null) {
+			if (!watchpoints.contains(watchpoint)) {
+				List<ReferenceType> classes = virtualMachine.classesByName(watchpoint.getClassname());
+				if (!classes.isEmpty()) {
+					ReferenceType classType = classes.get(0);
+					WatchpointRequest watchpointRequest = loadWatchpoint(classType, watchpoint.getFieldname());
+					watchpoint.setWatchpointRequest(watchpointRequest);
+					watchpoint.setLoaded(true);
+				} else {
+					ClassPrepareRequest request = virtualMachine.eventRequestManager().createClassPrepareRequest();
+					request.addClassFilter(watchpoint.getClassname());
+					request.enable();
+				}
+				watchpoints.add(watchpoint);
+			} else {
+				throw new IllegalArgumentException("Watchpoint already added: " + watchpoint.toString());
+			}
+		}
+	}
+
 	private BreakpointRequest loadBreakpoint(ReferenceType classType, int line) throws Exception {
 		if (virtualMachine == null)
 			throw new IllegalStateException("Virtual machine is not connected");
@@ -226,10 +271,33 @@ public class JVMDebugClient {
 		return breakpointRequest;
 	}
 
+	private WatchpointRequest loadWatchpoint(ReferenceType classType, String fieldname)
+			throws IllegalArgumentException {
+		if (virtualMachine == null)
+			throw new IllegalStateException("Virtual machine is not connected");
+
+		Field field = classType.fieldByName(fieldname);
+		if (field == null)
+			throw new IllegalArgumentException("Invalid field name: " + fieldname);
+
+		WatchpointRequest breakpointRequest = virtualMachine.eventRequestManager()
+				.createModificationWatchpointRequest(field);
+		breakpointRequest.enable();
+		return breakpointRequest;
+	}
+
 	public void removeBreakpoint(Breakpoint breakpoint) {
 		if (breakpoints.remove(breakpoint)) {
 			if (breakpoint.getBreakpointRequest() != null) {
 				breakpoint.getBreakpointRequest().disable();
+			}
+		}
+	}
+
+	public void removeWatchpoint(Watchpoint watchpoint) {
+		if (watchpoints.remove(watchpoint)) {
+			if (watchpoint.getWatchpointRequest() != null) {
+				watchpoint.getWatchpointRequest().disable();
 			}
 		}
 	}
