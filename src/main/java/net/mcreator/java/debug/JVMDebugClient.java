@@ -121,7 +121,7 @@ public class JVMDebugClient {
 								classPrepareEvent.request().disable();
 							} else if (event instanceof StepEvent) {
 								shouldEventBlock = true;
-							} else if (event instanceof WatchpointEvent watchpointEvent) {
+							} else if (event instanceof ModificationWatchpointEvent watchpointEvent) {
 								for (Watchpoint watchpoint : watchpoints) {
 									if (watchpoint.getWatchpointRequest() == watchpointEvent.request()) {
 										if (watchpoint.getListener() != null) {

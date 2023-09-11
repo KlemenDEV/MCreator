@@ -5,10 +5,12 @@ scopes:
     get: ${name}
     set: ${name} = ${opt.removeParentheses(value)};
   global_session:
+    debug_watchpoint: "@BASEPACKAGE.network.@JavaModNameVariables#@Name"
     init: public static boolean ${var.getName()} = ${var.getValue()};
     get: ${JavaModName}Variables.${name}
     set: ${JavaModName}Variables.${name} = ${opt.removeParentheses(value)};
   global_world:
+    debug_watchpoint: "@BASEPACKAGE.network.@JavaModNameVariables$WorldVariables#@Name"
     init: public boolean ${var.getName()} = ${var.getValue()};
     read: ${var.getName()} = nbt.getBoolean("${var.getName()}");
     write: nbt.putBoolean("${var.getName()}", ${var.getName()});

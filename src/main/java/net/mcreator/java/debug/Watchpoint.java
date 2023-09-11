@@ -19,6 +19,7 @@
 
 package net.mcreator.java.debug;
 
+import com.sun.jdi.event.ModificationWatchpointEvent;
 import com.sun.jdi.event.WatchpointEvent;
 import com.sun.jdi.request.WatchpointRequest;
 
@@ -84,7 +85,7 @@ public class Watchpoint {
 
 		void watchpointLoaded(Watchpoint watchpoint);
 
-		void watchpointModified(Watchpoint watchpoint, WatchpointEvent event);
+		void watchpointModified(Watchpoint watchpoint, ModificationWatchpointEvent event);
 
 	}
 

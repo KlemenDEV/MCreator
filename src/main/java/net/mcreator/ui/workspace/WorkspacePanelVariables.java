@@ -413,7 +413,7 @@ public class WorkspacePanelVariables extends AbstractWorkspacePanel {
 
 					try {
 						//noinspection BusyWait
-						Thread.sleep(500);
+						Thread.sleep(1000);
 					} catch (InterruptedException ignored) {
 					}
 				}

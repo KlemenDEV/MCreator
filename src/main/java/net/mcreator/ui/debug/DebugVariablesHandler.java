@@ -20,7 +20,6 @@
 package net.mcreator.ui.debug;
 
 import com.sun.jdi.event.ModificationWatchpointEvent;
-import com.sun.jdi.event.WatchpointEvent;
 import net.mcreator.generator.GeneratorTokens;
 import net.mcreator.java.debug.JVMDebugClient;
 import net.mcreator.java.debug.Watchpoint;
@@ -60,12 +59,10 @@ public class DebugVariablesHandler {
 						@Override public void watchpointLoaded(Watchpoint watchpoint) {
 						}
 
-						@Override public void watchpointModified(Watchpoint watchpoint, WatchpointEvent event) {
-							if (event instanceof ModificationWatchpointEvent modificationWatchpointEvent) {
-								mcreator.mv.variablesPan.setVariableDebugValue(variableElement,
-										event.object() == null ? 0 : event.object().uniqueID(),
-										modificationWatchpointEvent.valueToBe());
-							}
+						@Override
+						public void watchpointModified(Watchpoint watchpoint, ModificationWatchpointEvent event) {
+							mcreator.mv.variablesPan.setVariableDebugValue(variableElement,
+									event.object() == null ? 0 : event.object().uniqueID(), event.valueToBe());
 						}
 					}));
 				} catch (Exception e) {
