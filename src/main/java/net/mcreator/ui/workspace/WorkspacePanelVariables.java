@@ -19,6 +19,8 @@
 package net.mcreator.ui.workspace;
 
 import net.mcreator.generator.GeneratorStats;
+import net.mcreator.gradle.GradleStateListener;
+import net.mcreator.gradle.GradleTaskResult;
 import net.mcreator.io.Transliteration;
 import net.mcreator.minecraft.ElementUtil;
 import net.mcreator.ui.MCreatorApplication;
@@ -26,6 +28,7 @@ import net.mcreator.ui.component.TransparentToolBar;
 import net.mcreator.ui.component.util.ComponentUtils;
 import net.mcreator.ui.component.util.SpinnerCellEditor;
 import net.mcreator.ui.component.util.TableUtil;
+import net.mcreator.ui.debug.DebugPanel;
 import net.mcreator.ui.dialogs.NewVariableDialog;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.init.UIRES;
@@ -47,16 +50,21 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.*;
 
 class WorkspacePanelVariables extends AbstractWorkspacePanel {
 
 	private final TableRowSorter<TableModel> sorter;
 	private final JTable elements;
 
-	private volatile boolean storingEdits = false;
+	private volatile boolean machineEditOngoing = false;
+
+	private boolean isDebugging = false;
+
+	private final JTableHeader header;
+
+	private final Map<VariableElement, Map<Long, Object>> debugValueCache = new HashMap<>();
 
 	WorkspacePanelVariables(WorkspacePanel workspacePanel) {
 		super(workspacePanel);
@@ -64,10 +72,41 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 
 		elements = new JTable(new DefaultTableModel(
 				new Object[] { L10N.t("workspace.variables.variable_name"), L10N.t("workspace.variables.variable_type"),
-						L10N.t("workspace.variables.variable_scope"), L10N.t("workspace.variables.initial_value") },
+						L10N.t("workspace.variables.variable_scope"), L10N.t("workspace.variables.variable_value") },
 				0) {
+			@Override public Object getValueAt(int row, int column) {
+				Object value = super.getValueAt(row, column);
+				if (value instanceof VariableElement variableElement) {
+					if (column == 0) { // variable name
+						return variableElement.getName();
+					} else if (column == 1) { // variable type
+						return variableElement.getType().getName();
+					} else if (column == 2) { // variable scope
+						return variableElement.getScope();
+					} else if (column == 3) { // variable value
+						if (isDebugging) {
+							if (debugValueCache.get(variableElement) == null) {
+								return L10N.t("common.not_applicable");
+							} else {
+								Map<Long, Object> values = debugValueCache.get(variableElement);
+								Collection<Object> valuesValues = values.values();
+								if (valuesValues.isEmpty()) {
+									return L10N.t("common.not_applicable");
+								} else {
+									return valuesValues;
+								}
+							}
+						} else {
+							return variableElement.getValue();
+						}
+					}
+				}
+
+				return super.getValueAt(row, column);
+			}
+
 			@Override public boolean isCellEditable(int row, int column) {
-				if (storingEdits)
+				if (machineEditOngoing)
 					return false;
 
 				if (!getValueAt(row, 1).toString().equals(VariableTypeLoader.BuiltInTypes.STRING.getName())
@@ -173,9 +212,7 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 		elements.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 		ComponentUtils.deriveFont(elements, 13);
 
-		JTableHeader header = elements.getTableHeader();
-		header.setBackground((Color) UIManager.get("MCreatorLAF.MAIN_TINT"));
-		header.setForeground((Color) UIManager.get("MCreatorLAF.DARK_ACCENT"));
+		header = elements.getTableHeader();
 
 		JScrollPane sp = new JScrollPane(elements);
 		sp.setBackground((Color) UIManager.get("MCreatorLAF.DARK_ACCENT"));
@@ -258,10 +295,10 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 		// save values on table edit, do it in another thread
 		elements.getModel().addTableModelListener(e -> new Thread(() -> {
 			if (e.getType() == TableModelEvent.UPDATE) {
-				if (storingEdits)
+				if (machineEditOngoing)
 					return;
 
-				storingEdits = true;
+				machineEditOngoing = true;
 				elements.setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
 				Workspace workspace = workspacePanel.getMCreator().getWorkspace();
@@ -283,10 +320,23 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 				}
 
 				elements.setCursor(Cursor.getDefaultCursor());
-				storingEdits = false;
+				machineEditOngoing = false;
 			}
 		}, "WorkspaceVariablesReload").start());
 
+		workspacePanel.getMCreator().getGradleConsole().addGradleStateListener(new GradleStateListener() {
+			@Override public void taskStarted(String taskName) {
+				if (workspacePanel.getMCreator().getGradleConsole().getDebugClient() != null) {
+					setDebugging(true);
+				}
+			}
+
+			@Override public void taskFinished(GradleTaskResult result) {
+				setDebugging(false);
+			}
+		});
+
+		setDebugging(false);
 	}
 
 	private void deleteCurrentlySelected() {
@@ -317,10 +367,9 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 		DefaultTableModel model = (DefaultTableModel) elements.getModel();
 		model.setRowCount(0);
 
-		for (VariableElement variable : workspacePanel.getMCreator().getWorkspace().getVariableElements()) {
-			model.addRow(new Object[] { variable.getName(), variable.getType().getName(), variable.getScope(),
-					variable.getValue() });
-		}
+		for (VariableElement variable : workspacePanel.getMCreator().getWorkspace().getVariableElements())
+			model.addRow(new Object[] { variable, variable, variable, variable });
+
 		refilterElements();
 
 		try {
@@ -334,6 +383,33 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 			sorter.setRowFilter(RowFilter.regexFilter(workspacePanel.search.getText()));
 		} catch (Exception ignored) {
 		}
+	}
+
+	public void setDebugging(boolean debugging) {
+		isDebugging = debugging;
+
+		if (isDebugging) {
+			header.setBackground(DebugPanel.DEBUG_COLOR);
+			header.setForeground(Color.white);
+
+			debugValueCache.clear();
+		} else {
+			header.setBackground((Color) UIManager.get("MCreatorLAF.MAIN_TINT"));
+			header.setForeground((Color) UIManager.get("MCreatorLAF.DARK_ACCENT"));
+		}
+
+		reloadElements();
+	}
+
+	public void setVariableDebugValue(VariableElement element, long objectId, Object value) {
+		if (!debugValueCache.containsKey(element))
+			debugValueCache.put(element, new HashMap<>());
+		debugValueCache.get(element).put(objectId, value);
+
+		DefaultTableModel model = (DefaultTableModel) elements.getModel();
+		machineEditOngoing = true;
+		model.fireTableDataChanged();
+		machineEditOngoing = false;
 	}
 
 }

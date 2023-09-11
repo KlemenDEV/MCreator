@@ -297,6 +297,8 @@ public class GradleConsole extends JPanel {
 			@Nullable JVMDebugClient optionalDebugClient) {
 		status = RUNNING;
 
+		this.debugClient = optionalDebugClient;
+
 		ref.consoleTab.repaint();
 		ref.statusBar.reloadGradleIndicator();
 		ref.statusBar.setGradleMessage("Gradle: " + command);
@@ -348,8 +350,7 @@ public class GradleConsole extends JPanel {
 
 		BuildLauncher task = GradleUtils.getGradleTaskLauncher(ref.getWorkspace(), commands);
 
-		if (optionalDebugClient != null) {
-			this.debugClient = optionalDebugClient;
+		if (this.debugClient != null) {
 			this.debugClient.init(task, cancellationSource.token());
 			ref.getDebugPanel().startDebug(this.debugClient);
 		}
