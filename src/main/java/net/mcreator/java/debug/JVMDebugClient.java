@@ -26,6 +26,7 @@ import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.ClassPrepareRequest;
+import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.WatchpointRequest;
 import net.mcreator.gradle.GradleUtils;
 import org.apache.logging.log4j.LogManager;
@@ -282,6 +283,7 @@ public class JVMDebugClient {
 
 		WatchpointRequest breakpointRequest = virtualMachine.eventRequestManager()
 				.createModificationWatchpointRequest(field);
+		breakpointRequest.setSuspendPolicy(EventRequest.SUSPEND_NONE);
 		breakpointRequest.enable();
 		return breakpointRequest;
 	}
