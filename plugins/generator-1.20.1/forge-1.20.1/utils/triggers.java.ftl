@@ -1,6 +1,29 @@
 <#include "procedures.java.ftl">
 
 <#-- Item-related triggers -->
+<#macro addSpecialInformation procedure="" isBlock=false>
+	<#if procedure?has_content && (hasProcedure(procedure) || !procedure.getFixedValue().isEmpty())>
+		@Override public void appendHoverText(ItemStack itemstack, <#if isBlock>BlockGetter<#else>Level</#if> level, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, level, list, flag);
+		<#if hasProcedure(procedure)>
+			Entity entity = itemstack.getEntityRepresentation();
+			list.add(Component.literal(<@procedureCode procedure, {
+				"x": "entity != null ? entity.getX() : 0.0",
+				"y": "entity != null ? entity.getY() : 0.0",
+				"z": "entity != null ? entity.getZ() : 0.0",
+				"entity": "entity",
+				"world": "level instanceof Level ? (LevelAccessor) level : null",
+				"itemstack": "itemstack"
+			}, false/>));
+		<#else>
+			<#list procedure.getFixedValue() as entry>
+				list.add(Component.literal("${JavaConventions.escapeStringForJava(entry)}"));
+			</#list>
+		</#if>
+		}
+	</#if>
+</#macro>
+
 <#macro onEntitySwing procedure="">
 <#if hasProcedure(procedure)>
 @Override public boolean onEntitySwing(ItemStack itemstack, LivingEntity entity) {
@@ -29,22 +52,6 @@
 		"world": "world",
 		"entity": "entity",
 		"itemstack": "itemstack"
-	}/>
-}
-</#if>
-</#macro>
-
-<#macro onStoppedUsing procedure="">
-<#if hasProcedure(procedure) && (data.useDuration > 0)>
-@Override public void releaseUsing(ItemStack itemstack, Level world, LivingEntity entity, int time) {
-	<@procedureCode data.onStoppedUsing, {
-		"x": "entity.getX()",
-		"y": "entity.getY()",
-		"z": "entity.getZ()",
-		"world": "world",
-		"entity": "entity",
-		"itemstack": "itemstack",
-		"time": "time"
 	}/>
 }
 </#if>
@@ -181,38 +188,63 @@
 </#macro>
 
 <#macro hasGlow procedure="">
+<#if procedure?has_content && (hasProcedure(procedure) || procedure.getFixedValue())>
 @Override @OnlyIn(Dist.CLIENT) public boolean isFoil(ItemStack itemstack) {
 	<#if hasProcedure(procedure)>
-	<#assign dependencies = procedure.getDependencies(generator.getWorkspace())>
-	<#if !(dependencies.isEmpty() || (dependencies.size() == 1 && dependencies.get(0).getName() == "itemstack"))>
-	Entity entity = Minecraft.getInstance().player;
-	</#if>
-	return <@procedureCode procedure, {
-		"x": "entity.getX()",
-		"y": "entity.getY()",
-		"z": "entity.getZ()",
-		"entity": "entity",
-		"world": "entity.level()",
-		"itemstack": "itemstack"
-	}/>
+		<#assign dependencies = procedure.getDependencies(generator.getWorkspace())>
+		<#if !(dependencies.isEmpty() || (dependencies.size() == 1 && dependencies.get(0).getName() == "itemstack"))>
+		Entity entity = Minecraft.getInstance().player;
+		</#if>
+		return <@procedureCode procedure, {
+			"x": "entity.getX()",
+			"y": "entity.getY()",
+			"z": "entity.getZ()",
+			"entity": "entity",
+			"world": "entity.level()",
+			"itemstack": "itemstack"
+		}/>
 	<#else>
-	return true;
+		return true;
 	</#if>
 }
+</#if>
 </#macro>
 
 <#-- Armor triggers -->
 <#macro onArmorTick procedure="">
 <#if hasProcedure(procedure)>
-@Override public void onArmorTick(ItemStack itemstack, Level world, Player entity) {
-	<@procedureCode procedure, {
-	"x": "entity.getX()",
-	"y": "entity.getY()",
-	"z": "entity.getZ()",
-	"world": "world",
-	"entity": "entity",
-	"itemstack": "itemstack"
-	}/>
+<#-- ideally we would use onInventoryTick for slotIndex [36, 40), however this method is not being called in 1.20.1 FG properly -->
+@Override public void inventoryTick(ItemStack itemstack, Level world, Entity entity, int slot, boolean selected) {
+	super.inventoryTick(itemstack, world, entity, slot, selected);
+	if (entity instanceof Player player && Iterables.contains(player.getArmorSlots(), itemstack)) {
+		<@procedureCode procedure, {
+		"x": "entity.getX()",
+		"y": "entity.getY()",
+		"z": "entity.getZ()",
+		"world": "world",
+		"entity": "entity",
+		"itemstack": "itemstack"
+		}/>
+	}
+}
+</#if>
+</#macro>
+
+<#macro piglinNeutral procedure="">
+<#if procedure?has_content && (hasProcedure(procedure) || procedure.getFixedValue())>
+@Override public boolean makesPiglinsNeutral(ItemStack itemstack, LivingEntity entity) {
+	<#if hasProcedure(procedure)>
+		return <@procedureCode procedure, {
+			"x": "entity.getX()",
+			"y": "entity.getY()",
+			"z": "entity.getZ()",
+			"world": "entity.level()",
+			"entity": "entity",
+			"itemstack": "itemstack"
+		}/>
+	<#else>
+		return true;
+	</#if>
 }
 </#if>
 </#macro>
@@ -312,7 +344,7 @@
 
 <#macro onAnimateTick procedure="">
 <#if hasProcedure(procedure)>
-@Override public void animateTick(BlockState blockstate, Level world, BlockPos pos, RandomSource random) {
+@Override @OnlyIn(Dist.CLIENT) public void animateTick(BlockState blockstate, Level world, BlockPos pos, RandomSource random) {
 	super.animateTick(blockstate, world, pos, random);
 	<@procedureCode procedure, {
 	"x": "pos.getX()",
@@ -453,10 +485,14 @@
 @Override public boolean isValidBonemealTarget(LevelReader worldIn, BlockPos pos, BlockState blockstate, boolean clientSide) {
 	<#if hasProcedure(isBonemealTargetCondition)>
 	if (worldIn instanceof LevelAccessor world) {
-		int x = pos.getX();
-		int y = pos.getY();
-		int z = pos.getZ();
-		return <@procedureOBJToConditionCode isBonemealTargetCondition/>;
+		return <@procedureCode isBonemealTargetCondition, {
+			"x": "pos.getX()",
+			"y": "pos.getY()",
+			"z": "pos.getZ()",
+			"world": "world",
+			"blockstate": "blockstate",
+			"clientSide": "clientSide"
+		}/>
 	}
 	return false;
 	<#else>
@@ -466,10 +502,13 @@
 
 @Override public boolean isBonemealSuccess(Level world, RandomSource random, BlockPos pos, BlockState blockstate) {
 	<#if hasProcedure(bonemealSuccessCondition)>
-		int x = pos.getX();
-		int y = pos.getY();
-		int z = pos.getZ();
-		return <@procedureOBJToConditionCode bonemealSuccessCondition/>;
+	return <@procedureCode bonemealSuccessCondition, {
+		"x": "pos.getX()",
+		"y": "pos.getY()",
+		"z": "pos.getZ()",
+		"world": "world",
+		"blockstate": "blockstate"
+	}/>
 	<#else>
 	return true;
 	</#if>

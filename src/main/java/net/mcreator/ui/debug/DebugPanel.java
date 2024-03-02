@@ -17,25 +17,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/*
- * MCreator (https://mcreator.net/)
- * Copyright (C) 2012-2020, Pylo
- * Copyright (C) 2020-2023, Pylo, opensource contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package net.mcreator.ui.debug;
 
 import com.sun.jdi.IncompatibleThreadStateException;
@@ -49,12 +30,14 @@ import net.mcreator.java.DeclarationFinder;
 import net.mcreator.java.debug.JVMDebugClient;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.component.JEmptyBox;
+import net.mcreator.ui.component.SquareLoaderIcon;
 import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.component.util.WrapLayout;
 import net.mcreator.ui.ide.CodeEditorView;
 import net.mcreator.ui.ide.ProjectFileOpener;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.init.UIRES;
+import net.mcreator.ui.laf.themes.Theme;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -102,7 +85,7 @@ public class DebugPanel extends JPanel {
 	public DebugPanel(MCreator mcreator) {
 		this.mcreator = mcreator;
 
-		setBackground((Color) UIManager.get("MCreatorLAF.BLACK_ACCENT"));
+		setBackground(Theme.current().getSecondAltBackgroundColor());
 
 		setLayout(cardLayout);
 
@@ -113,9 +96,10 @@ public class DebugPanel extends JPanel {
 		JPanel waitingToConnect = new JPanel(new BorderLayout());
 		waitingToConnect.setOpaque(false);
 		JLabel loading = L10N.label("debug.loading");
+		loading.setIconTextGap(5);
 		loading.setFont(loading.getFont().deriveFont(16f));
-		loading.setForeground((Color) UIManager.get("MCreatorLAF.GRAY_COLOR"));
-		loading.setIcon(UIRES.get("16px.loading.gif"));
+		loading.setForeground(Theme.current().getAltForegroundColor());
+		loading.setIcon(new SquareLoaderIcon(5, 1, Theme.current().getForegroundColor()));
 		waitingToConnect.add("Center", PanelUtils.totalCenterInPanel(loading));
 		add(waitingToConnect, WAITING_TO_CONNECT);
 
@@ -135,7 +119,7 @@ public class DebugPanel extends JPanel {
 
 		JLabel nomarkers = L10N.label("debug.no_markers");
 		nomarkers.setFont(loading.getFont().deriveFont(14f));
-		nomarkers.setForeground((Color) UIManager.get("MCreatorLAF.GRAY_COLOR"));
+		nomarkers.setForeground(Theme.current().getAltForegroundColor());
 		JComponent nomarkerwrap = PanelUtils.totalCenterInPanel(nomarkers);
 		nomarkerwrap.setPreferredSize(new Dimension(475, 0));
 
@@ -164,7 +148,7 @@ public class DebugPanel extends JPanel {
 		JToolBar bar = new JToolBar();
 		bar.setOrientation(JToolBar.VERTICAL);
 		bar.setOpaque(false);
-		bar.setBorder(BorderFactory.createEmptyBorder(8, 5, 0, 0));
+		bar.setBorder(BorderFactory.createEmptyBorder(8, 2, 0, 0));
 		bar.setFloatable(false);
 		debugging.add("West", bar);
 
@@ -186,7 +170,7 @@ public class DebugPanel extends JPanel {
 		});
 		bar.add(resume);
 
-		JButton stop = new JButton(UIRES.get("16px.stop.gif"));
+		JButton stop = new JButton(UIRES.get("16px.stop"));
 		stop.setToolTipText(L10N.t("debug.stop"));
 		stop.addActionListener(e -> mcreator.getGradleConsole().cancelTask());
 		bar.add(stop);
@@ -251,19 +235,23 @@ public class DebugPanel extends JPanel {
 			if (!resumed) {
 				for (Event event : eventSet) {
 					if (event instanceof BreakpointEvent breakpointEvent) {
-						try {
-							debugFramesView.showFrames(breakpointEvent.thread().frames());
-						} catch (IncompatibleThreadStateException ignored) {
-						}
+						SwingUtilities.invokeLater(() -> {
+							try {
+								debugFramesView.showFrames(breakpointEvent.thread().frames());
+							} catch (IncompatibleThreadStateException ignored) {
+							}
+						});
 						lastBreakpointEvent = breakpointEvent;
 						break;
 					} else if (event instanceof StepEvent stepEvent) {
 						stepEvent.request().disable();
 
-						try {
-							debugFramesView.showFrames(stepEvent.thread().frames());
-						} catch (IncompatibleThreadStateException ignored) {
-						}
+						SwingUtilities.invokeLater(() -> {
+							try {
+								debugFramesView.showFrames(stepEvent.thread().frames());
+							} catch (IncompatibleThreadStateException ignored) {
+							}
+						});
 
 						try {
 							DeclarationFinder.InClassPosition position = ClassFinder.fqdnToInClassPosition(
@@ -286,7 +274,7 @@ public class DebugPanel extends JPanel {
 					}
 				}
 				lastSuspendedEventSet = eventSet;
-				markVMSuspended();
+				SwingUtilities.invokeLater(this::markVMSuspended);
 			}
 
 			for (Event event : eventSet) {
@@ -298,12 +286,16 @@ public class DebugPanel extends JPanel {
 
 		new Thread(() -> {
 			while (this.debugClient != null) {
+				VirtualMachine vm = this.debugClient.getVirtualMachine();
+				if (vm != null) {
+					SwingUtilities.invokeLater(() -> {
+						try {
+							debugThreadView.updateThreadList(vm.allThreads());
+						} catch (Exception ignored) {
+						}
+					});
+				}
 				try {
-					VirtualMachine vm = this.debugClient.getVirtualMachine();
-					if (vm != null) {
-						debugThreadView.updateThreadList(vm.allThreads());
-					}
-
 					//noinspection BusyWait
 					Thread.sleep(1000);
 				} catch (Exception ignored) {
@@ -334,19 +326,21 @@ public class DebugPanel extends JPanel {
 	}
 
 	private void initiateDebugSession() {
-		markVMResumed();
-
 		new Thread(() -> DebugMarkersHandler.handleDebugMarkers(this), "DebugMarkerLoader").start();
 		new Thread(() -> DebugVariablesHandler.handleVariables(mcreator, this), "DebugVariablesLoader").start();
 
-		cardLayout.show(this, DEBUGGING);
+		SwingUtilities.invokeLater(() -> {
+			markVMResumed();
 
-		mcreator.mcreatorTabs.getTabs().forEach(tab -> {
-			if (tab.getContent() instanceof CodeEditorView cev) {
-				if (cev.getBreakpointHandler() != null) {
-					cev.getBreakpointHandler().newDebugClient(debugClient);
+			cardLayout.show(this, DEBUGGING);
+
+			mcreator.mcreatorTabs.getTabs().forEach(tab -> {
+				if (tab.getContent() instanceof CodeEditorView cev) {
+					if (cev.getBreakpointHandler() != null) {
+						cev.getBreakpointHandler().newDebugClient(debugClient);
+					}
 				}
-			}
+			});
 		});
 	}
 
