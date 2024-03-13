@@ -75,7 +75,7 @@ public class DebugPanel extends JPanel {
 	private EventSet lastSuspendedEventSet = null;
 	private BreakpointEvent lastBreakpointEvent = null;
 
-	private final JPanel markers = new JPanel(new WrapLayout(FlowLayout.LEFT));
+	private final JPanel markers = new JPanel(new GridLayout(-1, 2, 5, 5));
 
 	private final JPanel markersParent = new JPanel();
 	private final CardLayout markersLayout = new CardLayout();
@@ -118,7 +118,7 @@ public class DebugPanel extends JPanel {
 		debugging.add("Center", PanelUtils.westAndCenterElement(threadsScroll, debugFramesView));
 
 		JLabel nomarkers = L10N.label("debug.no_markers");
-		nomarkers.setFont(loading.getFont().deriveFont(14f));
+		nomarkers.setFont(loading.getFont().deriveFont(13f));
 		nomarkers.setForeground(Theme.current().getAltForegroundColor());
 		JComponent nomarkerwrap = PanelUtils.totalCenterInPanel(nomarkers);
 		nomarkerwrap.setPreferredSize(new Dimension(475, 0));
@@ -130,7 +130,7 @@ public class DebugPanel extends JPanel {
 				return new Dimension(475, super.getPreferredSize().height);
 			}
 		};
-		viewport.setView(markers);
+		viewport.setView(PanelUtils.pullElementUp(markers));
 		markersScroll.setViewport(viewport);
 		markersScroll.setOpaque(false);
 		markersScroll.setBorder(null);
@@ -317,6 +317,8 @@ public class DebugPanel extends JPanel {
 	public void addMarker(DebugMarker marker) {
 		markersLayout.show(markersParent, "markers");
 		markers.add(marker);
+		markers.revalidate();
+		markers.repaint();
 		debugMarkers.add(marker);
 	}
 

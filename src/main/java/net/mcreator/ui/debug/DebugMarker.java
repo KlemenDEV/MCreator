@@ -54,15 +54,15 @@ public class DebugMarker extends JPanel {
 	private final JLabel hitCountServerLabel = new JLabel();
 	private final JLabel hitCountOtherLabel = new JLabel();
 
-	public DebugMarker(DebugPanel debugPanel, String markerName) {
+	DebugMarker(DebugPanel debugPanel, String markerName) {
 		setPreferredSize(new Dimension(230, 90));
 		setLayout(new BorderLayout());
 		setBackground(Theme.current().getBackgroundColor());
 
 		String[] markerNameParts = markerName.split(":", 2);
 		JLabel title = new JLabel();
-		title.setText("<html>" + StringUtils.abbreviateString(markerNameParts[0], 20, true) + "<br><small>"
-				+ StringUtils.abbreviateString(markerNameParts[1], 30) + "</html>");
+		title.setText("<html>" + StringUtils.abbreviateString(markerNameParts[0], 30, true) + "<br><small>"
+				+ StringUtils.abbreviateString(markerNameParts[1], 40) + "</html>");
 		title.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 		ModElement modElement = debugPanel.getMCreator().getWorkspace().getModElementByName(markerNameParts[0]);

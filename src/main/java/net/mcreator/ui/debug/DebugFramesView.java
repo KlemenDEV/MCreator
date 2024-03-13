@@ -25,7 +25,6 @@ import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.component.util.TreeUtils;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.init.UIRES;
-import net.mcreator.ui.laf.SlickTreeUI;
 import net.mcreator.ui.laf.themes.Theme;
 import net.mcreator.util.StringUtils;
 
@@ -37,6 +36,7 @@ import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static net.mcreator.ui.debug.DebugPanel.DEBUG_COLOR;
 
@@ -55,9 +55,11 @@ public class DebugFramesView extends JPanel {
 		frames.setBackground(Theme.current().getSecondAltBackgroundColor());
 		frames.setRootVisible(false);
 		frames.setShowsRootHandles(true);
+		frames.putClientProperty("FlatLaf.style",
+				Map.of("selectionBackground", DEBUG_COLOR, "selectionInactiveBackground", DEBUG_COLOR));
 
 		JLabel noframes = L10N.label("debug.frames.no_frames");
-		noframes.setFont(noframes.getFont().deriveFont(14f));
+		noframes.setFont(noframes.getFont().deriveFont(13f));
 		noframes.setForeground(Theme.current().getAltForegroundColor());
 
 		JScrollPane framesScroll = new JScrollPane(frames);
@@ -65,7 +67,6 @@ public class DebugFramesView extends JPanel {
 		framesScroll.setBorder(null);
 		framesScroll.getViewport().setOpaque(false);
 		framesScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		frames.setUI(new SlickTreeUI(framesScroll));
 
 		add(PanelUtils.totalCenterInPanel(noframes), "empty");
 		add(framesScroll, "frames");
@@ -127,13 +128,11 @@ public class DebugFramesView extends JPanel {
 		@Override
 		public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
 				boolean leaf, int row, boolean hasFocus) {
-			String text = value.toString();
-
-			setOpaque(false);
-
 			JLabel a = (JLabel) super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-			a.setOpaque(true);
+
+			String text = value.toString();
 			a.setText(text);
+			a.setForeground(Theme.current().getForegroundColor());
 
 			if (text.contains("[size:")) {
 				a.setIcon(UIRES.get("rsta.template_obj"));
@@ -143,13 +142,6 @@ public class DebugFramesView extends JPanel {
 				a.setIcon(UIRES.get("rsta.methpub_obj"));
 			}
 
-			if (sel) {
-				a.setBackground(DEBUG_COLOR);
-				a.setForeground(Theme.current().getForegroundColor());
-			} else {
-				a.setBackground(Theme.current().getSecondAltBackgroundColor());
-				a.setForeground(Theme.current().getForegroundColor());
-			}
 			return a;
 		}
 
