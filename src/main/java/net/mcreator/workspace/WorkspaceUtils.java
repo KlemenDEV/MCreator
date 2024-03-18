@@ -62,7 +62,8 @@ public class WorkspaceUtils {
 		// Check if all required METs are present
 		Set<String> workspaceRequiredMETs = workspace.getModElements().stream().map(ModElement::getTypeString)
 				.collect(Collectors.toSet());
-		Set<String> generatorSupportedMETs = ModElementTypeLoader.getModElementTypes().stream()
+		Set<String> generatorSupportedMETs = ModElementTypeLoader.getModElementTypes(
+						generatorConfiguration.getGeneratorFlavor()).stream()
 				.filter(e -> generatorConfiguration.getGeneratorStats().getModElementTypeCoverageInfo().get(e)
 						!= GeneratorStats.CoverageStatus.NONE).map(ModElementType::getRegistryName)
 				.collect(Collectors.toSet());

@@ -19,6 +19,7 @@
 
 package net.mcreator.element;
 
+import net.mcreator.generator.GeneratorFlavor;
 import net.mcreator.generator.GeneratorStats;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.init.L10N;
@@ -26,7 +27,9 @@ import net.mcreator.ui.init.UIRES;
 import net.mcreator.ui.modgui.ModElementGUI;
 import net.mcreator.workspace.elements.ModElement;
 
+import javax.annotation.Nullable;
 import javax.swing.*;
+import java.util.List;
 import java.util.Locale;
 
 public class ModElementType<GE extends GeneratableElement> {
@@ -41,6 +44,8 @@ public class ModElementType<GE extends GeneratableElement> {
 	private final Character shortcut;
 	private GeneratorStats.CoverageStatus status = GeneratorStats.CoverageStatus.FULL;
 
+	@Nullable private List<GeneratorFlavor> supportedFlavors;
+
 	public ModElementType(String registryName, Character shortcut, ModElementGUIProvider<GE> modElementGUIProvider,
 			Class<? extends GE> modElementStorageClass) {
 		this.registryName = registryName;
@@ -51,6 +56,15 @@ public class ModElementType<GE extends GeneratableElement> {
 
 		this.readableName = L10N.t("modelement." + registryName.toLowerCase(Locale.ENGLISH));
 		this.description = L10N.t("modelement." + registryName.toLowerCase(Locale.ENGLISH) + ".description");
+	}
+
+	public ModElementType<GE> onlyOn(GeneratorFlavor... supportedFlavors) {
+		this.supportedFlavors = List.of(supportedFlavors);
+		return this;
+	}
+
+	@Nullable public List<GeneratorFlavor> getSupportedFlavors() {
+		return supportedFlavors;
 	}
 
 	public String getRegistryName() {

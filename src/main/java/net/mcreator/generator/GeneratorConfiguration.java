@@ -97,7 +97,7 @@ public class GeneratorConfiguration implements Comparable<GeneratorConfiguration
 
 		// load mappings
 		this.mappingLoader = new MappingLoader(this);
-		this.definitionsProvider = new DefinitionsProvider(generatorName);
+		this.definitionsProvider = new DefinitionsProvider(this);
 
 		// load global variable definitions
 		this.generatorVariableTypes = new GeneratorVariableTypes(this);

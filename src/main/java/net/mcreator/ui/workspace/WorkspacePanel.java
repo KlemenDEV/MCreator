@@ -567,7 +567,8 @@ import java.util.stream.Collectors;
 		filterPopup.add(new UnregisteredAction(L10N.t("workspace.elements.list.filter_witherrors"),
 				e -> toggleFilter("f:err")));
 		filterPopup.addSeparator();
-		for (ModElementType<?> type : ModElementTypeLoader.REGISTRY) {
+		for (ModElementType<?> type : ModElementTypeLoader.getModElementTypes(
+				mcreator.getWorkspace().getGeneratorConfiguration().getGeneratorFlavor())) {
 			filterPopup.add(new UnregisteredAction(type.getReadableName(), e -> toggleFilter(
 					"f:" + type.getReadableName().replace(" ", "").toLowerCase(Locale.ENGLISH))).setIcon(
 					IconUtils.resize(type.getIcon(), 16, 16)));
@@ -1342,7 +1343,8 @@ import java.util.stream.Collectors;
 					pat = pat.replaceFirst("f:", "");
 					if (pat.equals("locked") || pat.equals("ok") || pat.equals("err"))
 						filters.add(pat);
-					for (ModElementType<?> type : ModElementTypeLoader.REGISTRY) {
+					for (ModElementType<?> type : ModElementTypeLoader.getModElementTypes(
+							mcreator.getWorkspace().getGeneratorConfiguration().getGeneratorFlavor())) {
 						if (pat.equals(type.getReadableName().replace(" ", "").toLowerCase(Locale.ENGLISH))) {
 							metfilters.add(type);
 						}

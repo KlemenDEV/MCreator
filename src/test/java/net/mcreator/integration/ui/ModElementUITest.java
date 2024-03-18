@@ -116,7 +116,8 @@ import static org.junit.jupiter.api.Assertions.*;
 	}
 
 	private void testModElementLoading(Random random) throws Exception {
-		for (ModElementType<?> modElementType : ModElementTypeLoader.REGISTRY) {
+		for (ModElementType<?> modElementType : ModElementTypeLoader.getModElementTypes(
+				workspace.getGeneratorConfiguration().getGeneratorFlavor())) {
 
 			if (modElementType == ModElementType.CODE)
 				continue; // does not have regular handling so skip it

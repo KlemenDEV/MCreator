@@ -59,7 +59,8 @@ public class GeneratorStats {
 		this.procedureTriggers = new HashSet<>();
 
 		// determine supported mod element types
-		for (ModElementType<?> type : ModElementTypeLoader.REGISTRY) {
+		for (ModElementType<?> type : ModElementTypeLoader.getModElementTypes(
+				generatorConfiguration.getGeneratorFlavor())) {
 			Map<?, ?> definition = generatorConfiguration.getDefinitionsProvider().getModElementDefinition(type);
 			if (definition != null) {
 				if (definition.containsKey("field_inclusions") || definition.containsKey("field_exclusions")) {

@@ -38,7 +38,8 @@ public class ModTypeDropdown extends JPopupMenu {
 	public ModTypeDropdown(MCreator mcreator) {
 		setBorder(BorderFactory.createEmptyBorder());
 
-		List<ModElementType<?>> types = ModElementTypeLoader.REGISTRY.stream()
+		List<ModElementType<?>> types = ModElementTypeLoader.getModElementTypes(
+						mcreator.getWorkspace().getGeneratorConfiguration().getGeneratorFlavor()).stream()
 				.sorted(Comparator.comparing(ModElementType::getReadableName))
 				.filter(entry -> mcreator.getGeneratorStats().getModElementTypeCoverageInfo().get(entry)
 						!= GeneratorStats.CoverageStatus.NONE).collect(Collectors.toList());

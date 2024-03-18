@@ -79,7 +79,8 @@ import static org.junit.jupiter.api.Assertions.*;
 		LOG.info("Generating sample elements");
 		TestWorkspaceDataProvider.fillWorkspaceWithTestData(workspace);
 		GTSampleElements.provideAndGenerateSampleElements(random, workspace);
-		for (ModElementType<?> type : ModElementTypeLoader.REGISTRY) {
+		for (ModElementType<?> type : ModElementTypeLoader.getModElementTypes(
+				generatorConfiguration.getGeneratorFlavor())) {
 			if (workspace.getGeneratorStats().getModElementTypeCoverageInfo().get(type)
 					!= GeneratorStats.CoverageStatus.NONE) {
 				TestWorkspaceDataProvider.getModElementExamplesFor(workspace, type, false, random).forEach(e -> {
