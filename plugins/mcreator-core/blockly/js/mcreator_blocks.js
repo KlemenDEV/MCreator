@@ -233,6 +233,17 @@ Blockly.Blocks['direction_unspecified'] = {
     }
 };
 
+Blockly.Blocks['debug_marker'] = {
+    init: function () {
+        this.appendDummyInput()
+            .appendField(javabridge.t("blockly.block.debug_marker"))
+            .appendField(new FieldJavaName("marker1"), 'NAME');
+        this.setPreviousStatement(true);
+        this.setNextStatement(true);
+        this.setColour("#ef323d");
+    }
+};
+
 Blockly.Blocks['java_code'] = {
     init: function () {
         this.appendDummyInput()
@@ -560,6 +571,14 @@ registerSimpleMutatorContainer(
         'tree_decorator_mutator_container', 'blockly.block.tree_decorator_mutator.container', 320);
 registerSimpleMutatorInput('tree_decorator_mutator_input', 'blockly.block.tree_decorator_mutator.input', 320);
 
+// Mutator blocks for "Direction list" mixin
+registerSimpleMutatorContainer(
+        'direction_list_mutator_container', 'blockly.block.direction_list_mutator.container', 30);
+registerSimpleMutatorInput('direction_list_mutator_input', 'blockly.block.direction_list_mutator.input', 30, true);
+
+// Unregister blocks that we will register again below
+delete Blockly.Blocks['controls_flow_statements'];
+
 Blockly.defineBlocksWithJsonArray([
     {
         "type": "logic_binary_ops",
@@ -766,5 +785,24 @@ Blockly.defineBlocksWithJsonArray([
         ],
         "output": "Direction",
         "colour": "20"
+    },
+    {
+        'type': 'controls_flow_statements',
+        'message0': '%1',
+        'args0': [
+            {
+                'type': 'field_dropdown',
+                'name': 'FLOW',
+                'options': [
+                    ['%{BKY_CONTROLS_FLOW_STATEMENTS_OPERATOR_BREAK}', 'BREAK'],
+                    ['%{BKY_CONTROLS_FLOW_STATEMENTS_OPERATOR_CONTINUE}', 'CONTINUE'],
+                ],
+            },
+        ],
+        'previousStatement': null,
+        'style': 'loop_blocks',
+        'helpUrl': '%{BKY_CONTROLS_FLOW_STATEMENTS_HELPURL}',
+        'suppressPrefixSuffix': true,
+        'extensions': ['controls_flow_tooltip', 'controls_flow_in_loop_check_exclude_wait'],
     }
 ]);

@@ -30,6 +30,7 @@ import net.mcreator.generator.template.TemplateExpressionParser;
 import net.mcreator.generator.template.TemplateGenerator;
 import net.mcreator.generator.template.TemplateGeneratorException;
 import net.mcreator.generator.template.base.BaseDataModelProvider;
+import net.mcreator.generator.usercode.UserCodeProcessor;
 import net.mcreator.gradle.GradleCacheImportFailedException;
 import net.mcreator.io.FileIO;
 import net.mcreator.io.UserFolderManager;
@@ -143,10 +144,6 @@ public class Generator implements IGenerator, Closeable {
 		TemplateGenerator templateGenerator = getTemplateGeneratorFromName("templates");
 
 		List<GeneratorFile> generatorFiles = getModBaseGeneratorTemplatesList(true).stream().map(generatorTemplate -> {
-			if (this.workspace.getWorkspaceSettings().isLockBaseModFiles()) // are mod base file locked
-				if (generatorTemplate.canBeLocked()) // can this file be locked
-					return null; // if yes, we skip this file
-
 			try {
 				String code = templateGenerator.generateBaseFromTemplate(
 						(String) generatorTemplate.getTemplateDefinition().get("template"),
@@ -317,10 +314,9 @@ public class Generator implements IGenerator, Closeable {
 				processTemplateDefinitionsToGeneratorTemplates(generatorConfiguration.getBaseTemplates(),
 						performFSTasks, templateID));
 
-		// Pre-precess GEs and sort them by sortID
+		// Pre-precess GEs
 		List<GeneratableElement> generatableElements = workspace.getModElements().stream()
-				.sorted(Comparator.comparing(ModElement::getSortID)).map(ModElement::getGeneratableElement)
-				.filter(Objects::nonNull).toList();
+				.map(ModElement::getGeneratableElement).filter(Objects::nonNull).toList();
 
 		// Add mod element type specific global files (eg. registries for mod elements)
 		for (ModElementType<?> type : ModElementTypeLoader.REGISTRY) {
@@ -584,11 +580,18 @@ public class Generator implements IGenerator, Closeable {
 				if (formatAndOrganiseImports && !generatorFile.getFile().isFile())
 					FileIO.touchFile(generatorFile.getFile());
 
-				javaFiles.put(generatorFile.getFile(), generatorFile.contents());
+				javaFiles.put(generatorFile.getFile(),
+						UserCodeProcessor.processUserCode(generatorFile.getFile(), generatorFile.contents(), "//"));
 			} else if (generatorFile.writer() == GeneratorFile.Writer.JSON) {
 				JSONWriter.writeJSONToFile(generatorFile.contents(), generatorFile.getFile());
 			} else if (generatorFile.writer() == GeneratorFile.Writer.FILE) {
-				FileIO.writeStringToFile(generatorFile.contents(), generatorFile.getFile());
+				String usercodeComment = generatorFile.source().getUsercodeComment();
+				if (usercodeComment != null)
+					FileIO.writeStringToFile(
+							UserCodeProcessor.processUserCode(generatorFile.getFile(), generatorFile.contents(),
+									usercodeComment), generatorFile.getFile());
+				else
+					FileIO.writeStringToFile(generatorFile.contents(), generatorFile.getFile());
 			}
 		}
 

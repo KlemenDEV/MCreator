@@ -30,6 +30,7 @@ import net.mcreator.generator.blockly.BlocklyBlockCodeGenerator;
 import net.mcreator.generator.blockly.ProceduralBlockCodeGenerator;
 import net.mcreator.generator.mapping.NonMappableElement;
 import net.mcreator.generator.template.TemplateGeneratorException;
+import net.mcreator.minecraft.DataListEntry;
 import net.mcreator.minecraft.ElementUtil;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.MCreatorApplication;
@@ -124,6 +125,8 @@ public class AchievementGUI extends ModElementGUI<Achievement> implements IBlock
 
 		background.setPrototypeDisplayValue("XXXXXXXXXXXXXXXXXXXXXXXXXX");
 		background.setRenderer(new WTextureComboBoxRenderer.TypeTextures(mcreator.getWorkspace(), TextureType.SCREEN));
+
+		parentAchievement.setPrototypeDisplayValue(new DataListEntry.Dummy("XXXXXXXXXXXXXXXXXXXXXXX"));
 
 		showPopup.setOpaque(false);
 		announceToChat.setOpaque(false);
@@ -293,7 +296,7 @@ public class AchievementGUI extends ModElementGUI<Achievement> implements IBlock
 		achievementDescription.setText(achievement.achievementDescription);
 		achievementIcon.setBlock(achievement.achievementIcon);
 		achievementType.setSelectedItem(achievement.achievementType);
-		parentAchievement.setSelectedItem(achievement.parent.getUnmappedValue());
+		parentAchievement.setSelectedItem(achievement.parent);
 		disableDisplay.setSelected(achievement.disableDisplay);
 		showPopup.setSelected(achievement.showPopup);
 		announceToChat.setSelected(achievement.announceToChat);

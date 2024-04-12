@@ -132,12 +132,12 @@ public class TestWorkspaceDataProvider {
 			TagElement tag = new TagElement(TagType.ITEMS, "minecraft:test");
 			workspace.addTagElement(tag);
 			workspace.getTagElements().get(tag).add("minecraft:stone");
-			workspace.getTagElements().get(tag).add("~minecraft:grass");
+			workspace.getTagElements().get(tag).add("~minecraft:dirt");
 
 			tag = new TagElement(TagType.BLOCKS, "minecraft:test");
 			workspace.addTagElement(tag);
 			workspace.getTagElements().get(tag).add("minecraft:stone");
-			workspace.getTagElements().get(tag).add("~minecraft:grass");
+			workspace.getTagElements().get(tag).add("~minecraft:dirt");
 
 			tag = new TagElement(TagType.ENTITIES, "minecraft:test");
 			workspace.addTagElement(tag);
@@ -302,6 +302,12 @@ public class TestWorkspaceDataProvider {
 
 		if (workspace.getFolderManager().getStructuresDir() != null) {
 			FileIO.writeBytesToFile(new byte[0], new File(workspace.getFolderManager().getStructuresDir(), "test.nbt"));
+			FileIO.writeBytesToFile(new byte[0],
+					new File(workspace.getFolderManager().getStructuresDir(), "test1.nbt"));
+			FileIO.writeBytesToFile(new byte[0],
+					new File(workspace.getFolderManager().getStructuresDir(), "test2.nbt"));
+			FileIO.writeBytesToFile(new byte[0],
+					new File(workspace.getFolderManager().getStructuresDir(), "test3.nbt"));
 		}
 	}
 
@@ -681,6 +687,7 @@ public class TestWorkspaceDataProvider {
 			dimension.portalFrame = new MItemBlock(modElement.getWorkspace(),
 					getRandomMCItem(random, blocks).getName());
 			dimension.igniterName = modElement.getName();
+			dimension.igniterRarity = getRandomString(random, Arrays.asList("COMMON", "UNCOMMON", "RARE", "EPIC"));
 			dimension.specialInformation = new StringListProcedure(emptyLists ? null : "string1",
 					Arrays.asList("info 1", "info 2", "test, is this", "another one"));
 			dimension.worldGenType = new String[] { "Nether like gen", "Normal world gen", "End like gen",
@@ -724,6 +731,46 @@ public class TestWorkspaceDataProvider {
 			}
 			structure.generationStep = TestWorkspaceDataProvider.getRandomItem(random,
 					ElementUtil.getDataListAsStringArray("generationsteps"));
+			structure.size = 4;
+			structure.maxDistanceFromCenter = 96;
+			structure.jigsawPools = new ArrayList<>();
+			if (!emptyLists) {
+				Structure.JigsawPool pool = new Structure.JigsawPool();
+				pool.poolName = "pool1";
+				pool.fallbackPool = "test_mod:" + modElement.getRegistryName() + "_pool2";
+				pool.poolParts = new ArrayList<>();
+				Structure.JigsawPool.JigsawPart part = new Structure.JigsawPool.JigsawPart();
+				part.weight = 3;
+				part.structure = "test1";
+				part.projection = "rigid";
+				part.ignoredBlocks = blocks.stream().skip(_true ? 0 : ((long) (blocks.size() / 4) * valueIndex))
+						.limit(blocks.size() / 4).map(e -> new MItemBlock(modElement.getWorkspace(), e.getName()))
+						.toList();
+				pool.poolParts.add(part);
+				part = new Structure.JigsawPool.JigsawPart();
+				part.weight = 7;
+				part.structure = "test2";
+				part.projection = "terrain_matching";
+				part.ignoredBlocks = blocks.stream().skip(_true ? 0 : ((long) (blocks.size() / 4) * valueIndex))
+						.limit(blocks.size() / 4).map(e -> new MItemBlock(modElement.getWorkspace(), e.getName()))
+						.toList();
+				pool.poolParts.add(part);
+				structure.jigsawPools.add(pool);
+
+				pool = new Structure.JigsawPool();
+				pool.poolName = "pool2";
+				pool.fallbackPool = "";
+				pool.poolParts = new ArrayList<>();
+				part = new Structure.JigsawPool.JigsawPart();
+				part.weight = 1;
+				part.structure = "test3";
+				part.projection = "rigid";
+				part.ignoredBlocks = blocks.stream().skip(_true ? 0 : ((long) (blocks.size() / 4) * valueIndex))
+						.limit(blocks.size() / 4).map(e -> new MItemBlock(modElement.getWorkspace(), e.getName()))
+						.toList();
+				pool.poolParts.add(part);
+				structure.jigsawPools.add(pool);
+			}
 			return structure;
 		} else if (ModElementType.ARMOR.equals(modElement.getType())) {
 			Armor armor = new Armor(modElement);
@@ -1583,16 +1630,16 @@ public class TestWorkspaceDataProvider {
 		livingEntity.immuneToFire = _true;
 		livingEntity.immuneToArrows = !_true;
 		livingEntity.immuneToFallDamage = !_true;
-		livingEntity.immuneToCactus = !_true;
+		livingEntity.immuneToCactus = _true;
 		livingEntity.immuneToDrowning = !_true;
 		livingEntity.immuneToLightning = !_true;
 		livingEntity.immuneToPotions = !_true;
 		livingEntity.immuneToPlayer = !_true;
-		livingEntity.immuneToExplosion = !_true;
+		livingEntity.immuneToExplosion = _true;
 		livingEntity.immuneToTrident = !_true;
 		livingEntity.immuneToAnvil = !_true;
 		livingEntity.immuneToDragonBreath = !_true;
-		livingEntity.immuneToWither = !_true;
+		livingEntity.immuneToWither = _true;
 		livingEntity.hasSpawnEgg = !_true;
 		livingEntity.xpAmount = 8;
 		livingEntity.ridable = _true;
