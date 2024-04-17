@@ -18,6 +18,9 @@
 
 package net.mcreator.ui;
 
+import ModernDocking.app.Docking;
+import ModernDocking.app.RootDockingPanel;
+import ModernDocking.ui.DefaultDockingPanel;
 import net.mcreator.Launcher;
 import net.mcreator.generator.IGeneratorProvider;
 import net.mcreator.generator.setup.WorkspaceGeneratorSetup;
@@ -269,13 +272,26 @@ public final class MCreator extends JFrame implements IWorkspaceProvider, IGener
 		rightPanel.setMinimumSize(new Dimension(0, 0));
 		workspaceFileBrowser.setMinimumSize(new Dimension(0, 0));
 
+		Docking docking = new Docking(this);
+		RootDockingPanel dockingPanelRoot = new RootDockingPanel(docking, this);
+
 		JAdaptiveSplitPane mainContent = new JAdaptiveSplitPane(JSplitPane.VERTICAL_SPLIT, splitPane, debugPanel, 0.65);
 
-		this.notificationsRenderer = new NotificationsRenderer(mainContent);
+		DefaultDockingPanel dockingPanelTest = new DefaultDockingPanel("test", "test") {
+			@Override public boolean isWrappableInScrollpane() {
+				return false;
+			}
+		};
+		dockingPanelTest.setLayout(new BorderLayout());
+		dockingPanelTest.add("Center", mainContent);
+		docking.registerDockable(dockingPanelTest);
+		docking.dock(dockingPanelTest, this);
+
+		this.notificationsRenderer = new NotificationsRenderer(dockingPanelRoot);
 
 		add("South", statusBar);
 		add("North", toolBar);
-		add("Center", mainContent);
+		add("Center", dockingPanelRoot);
 
 		MCREvent.event(new MCreatorLoadedEvent(this));
 	}
