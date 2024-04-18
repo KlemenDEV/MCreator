@@ -18,6 +18,7 @@
 
 package net.mcreator.ui;
 
+import ModernDocking.DockingRegion;
 import ModernDocking.app.Docking;
 import ModernDocking.app.RootDockingPanel;
 import ModernDocking.ui.DefaultDockingPanel;
@@ -224,7 +225,7 @@ public final class MCreator extends JFrame implements IWorkspaceProvider, IGener
 		mcreatorTabs.addTab(workspaceTab);
 		pon.add("West", workspaceTab);
 
-		consoleTab = new MCreatorTabs.Tab(L10N.t("tab.console") + " ", gradleConsole, "Console", true, false) {
+		consoleTab = new MCreatorTabs.Tab(L10N.t("tab.console") + " ", new JPanel(), "Console", true, false) {
 			@Override public void paintComponent(Graphics g) {
 				super.paintComponent(g);
 				switch (gradleConsole.getStatus()) {
@@ -275,17 +276,45 @@ public final class MCreator extends JFrame implements IWorkspaceProvider, IGener
 		Docking docking = new Docking(this);
 		RootDockingPanel dockingPanelRoot = new RootDockingPanel(docking, this);
 
-		JAdaptiveSplitPane mainContent = new JAdaptiveSplitPane(JSplitPane.VERTICAL_SPLIT, splitPane, debugPanel, 0.65);
-
 		DefaultDockingPanel dockingPanelTest = new DefaultDockingPanel("test", "test") {
 			@Override public boolean isWrappableInScrollpane() {
 				return false;
 			}
 		};
 		dockingPanelTest.setLayout(new BorderLayout());
-		dockingPanelTest.add("Center", mainContent);
+		dockingPanelTest.add("Center", rightPanel);
 		docking.registerDockable(dockingPanelTest);
-		docking.dock(dockingPanelTest, this);
+		docking.dock(dockingPanelTest, this, DockingRegion.CENTER);
+
+		DefaultDockingPanel dockingPanelTest2 = new DefaultDockingPanel("test2", "test2") {
+			@Override public boolean isWrappableInScrollpane() {
+				return false;
+			}
+		};
+		dockingPanelTest2.setLayout(new BorderLayout());
+		dockingPanelTest2.add("Center", workspaceFileBrowser);
+		docking.registerDockable(dockingPanelTest2);
+		docking.dock(dockingPanelTest2, this, DockingRegion.WEST);
+
+		DefaultDockingPanel dockingPanelTest3 = new DefaultDockingPanel("test3", "test3") {
+			@Override public boolean isWrappableInScrollpane() {
+				return false;
+			}
+		};
+		dockingPanelTest3.setLayout(new BorderLayout());
+		dockingPanelTest3.add("Center", gradleConsole);
+		docking.registerDockable(dockingPanelTest3);
+		docking.dock(dockingPanelTest3, this, DockingRegion.SOUTH);
+
+		DefaultDockingPanel dockingPanelTest4 = new DefaultDockingPanel("test4", "test4") {
+			@Override public boolean isWrappableInScrollpane() {
+				return false;
+			}
+		};
+		dockingPanelTest4.setLayout(new BorderLayout());
+		dockingPanelTest4.add("Center", debugPanel);
+		docking.registerDockable(dockingPanelTest4);
+		docking.dock("test4", "test3", DockingRegion.CENTER);
 
 		this.notificationsRenderer = new NotificationsRenderer(dockingPanelRoot);
 
