@@ -26,6 +26,7 @@ import net.mcreator.io.FileIO;
 import net.mcreator.io.OS;
 import net.mcreator.plugin.PluginLoader;
 import net.mcreator.preferences.PreferencesManager;
+import net.mcreator.ui.laf.DockingUI;
 import net.mcreator.ui.laf.LafUtil;
 import net.mcreator.util.image.ImageUtils;
 import org.apache.logging.log4j.LogManager;
@@ -81,6 +82,8 @@ public class ThemeManager {
 			theme.applyUIDefaultsOverrides(UIManager.getDefaults());
 
 			LafUtil.applyDefaultHTMLStyles();
+
+			DockingUI.applyCustomizations();
 		} catch (Exception e) {
 			LOG.error("Failed to set MCreator UI theme", e);
 		}
