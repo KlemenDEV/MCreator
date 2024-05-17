@@ -137,7 +137,7 @@ import java.util.stream.Collectors;
 
 	private final JRadioButtonMenuItem sortDateCreated = new JRadioButtonMenuItem(
 			L10N.t("workspace.elements.list.sort_date"));
-	public JRadioButtonMenuItem sortName = new JRadioButtonMenuItem(L10N.t("workspace.elements.list.sort_name"));
+	public final JRadioButtonMenuItem sortName = new JRadioButtonMenuItem(L10N.t("workspace.elements.list.sort_name"));
 	private final JRadioButtonMenuItem sortType = new JRadioButtonMenuItem(L10N.t("workspace.elements.list.sort_type"));
 
 	private final OptionPaneValidatior folderNameValidator = new OptionPaneValidatior() {
@@ -905,7 +905,8 @@ import java.util.stream.Collectors;
 	}
 
 	private void updateElementListRenderer() {
-		if (PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.get() == HiddenSection.IconSize.TILES) {
+		switch (PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.get()) {
+		case TILES -> {
 			list.setCellRenderer(new TilesModListRender());
 			list.setFixedCellHeight(72);
 			list.setFixedCellWidth(287);
@@ -913,8 +914,8 @@ import java.util.stream.Collectors;
 			view.setIcon(UIRES.get("16px.tiles"));
 			view.setText(L10N.t("workspace.elements.list.tiles"));
 			detailsbar.setVisible(false);
-		} else if (PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.get()
-				== HiddenSection.IconSize.LARGE) {
+		}
+		case LARGE -> {
 			list.setCellRenderer(new LargeIconModListRender());
 			list.setFixedCellHeight(97);
 			list.setFixedCellWidth(90);
@@ -922,8 +923,8 @@ import java.util.stream.Collectors;
 			view.setIcon(UIRES.get("16px.large"));
 			view.setText(L10N.t("workspace.elements.list.large"));
 			detailsbar.setVisible(false);
-		} else if (PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.get()
-				== HiddenSection.IconSize.MEDIUM) {
+		}
+		case MEDIUM -> {
 			list.setCellRenderer(new MediumIconModListRender());
 			list.setFixedCellHeight(52);
 			list.setFixedCellWidth(287);
@@ -931,8 +932,8 @@ import java.util.stream.Collectors;
 			view.setIcon(UIRES.get("16px.medium"));
 			view.setText(L10N.t("workspace.elements.list.medium"));
 			detailsbar.setVisible(false);
-		} else if (PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.get()
-				== HiddenSection.IconSize.SMALL) {
+		}
+		case SMALL -> {
 			list.setCellRenderer(new SmallIconModListRender(true));
 			list.setFixedCellHeight(32);
 			list.setFixedCellWidth(200);
@@ -940,8 +941,8 @@ import java.util.stream.Collectors;
 			view.setIcon(UIRES.get("16px.small"));
 			view.setText(L10N.t("workspace.elements.list.small"));
 			detailsbar.setVisible(false);
-		} else if (PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.get()
-				== HiddenSection.IconSize.LIST) {
+		}
+		case LIST -> {
 			list.setCellRenderer(new ListIconModListRender());
 			list.setFixedCellHeight(28);
 			list.setFixedCellWidth(-1);
@@ -949,8 +950,8 @@ import java.util.stream.Collectors;
 			view.setIcon(UIRES.get("16px.list"));
 			view.setText(L10N.t("workspace.elements.list.list"));
 			detailsbar.setVisible(false);
-		} else if (PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.get()
-				== HiddenSection.IconSize.DETAILS) {
+		}
+		case DETAILS -> {
 			list.setCellRenderer(new DetailsIconModListRender());
 			list.setFixedCellHeight(24);
 			list.setFixedCellWidth(-1);
@@ -958,6 +959,7 @@ import java.util.stream.Collectors;
 			view.setIcon(UIRES.get("16px.details"));
 			view.setText(L10N.t("workspace.elements.list.details"));
 			detailsbar.setVisible(true);
+		}
 		}
 	}
 
@@ -1173,9 +1175,9 @@ import java.util.stream.Collectors;
 					modElementFiles.stream().filter(e -> !(e instanceof ListTemplate)).toList(), modElementGlobalFiles,
 					modElementListFiles).show(component, x, y);
 		else if (modElementFiles.size() == 1)
-			ProjectFileOpener.openCodeFile(mcreator, modElementFiles.get(0).getFile());
+			ProjectFileOpener.openCodeFile(mcreator, modElementFiles.getFirst().getFile());
 		else if (modElementGlobalFiles.size() == 1)
-			ProjectFileOpener.openCodeFile(mcreator, modElementGlobalFiles.get(0).getFile());
+			ProjectFileOpener.openCodeFile(mcreator, modElementGlobalFiles.getFirst().getFile());
 	}
 
 	private void deleteCurrentlySelectedModElement() {
@@ -1269,8 +1271,8 @@ import java.util.stream.Collectors;
 	}
 
 	private class FilterModel extends DefaultListModel<IElement> {
-		ArrayList<IElement> items;
-		ArrayList<IElement> filterItems;
+		final ArrayList<IElement> items;
+		final ArrayList<IElement> filterItems;
 
 		private final static Pattern pattern = Pattern.compile("([^\"]\\S*|\".+?\")\\s*");
 

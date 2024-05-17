@@ -19,6 +19,7 @@
 package net.mcreator.ui.dialogs;
 
 import com.formdev.flatlaf.ui.FlatLineBorder;
+import net.mcreator.io.OS;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.component.SquareLoaderIcon;
 import net.mcreator.ui.component.util.PanelUtils;
@@ -34,7 +35,7 @@ import java.util.Map;
 
 public class ProgressDialog extends MCreatorDialog {
 
-	private final JLabel titleLabel;
+	private final JLabel titleLabel = new JLabel();
 	private final DefaultListModel<ProgressUnit> listModel = new DefaultListModel<>();
 	private final JList<ProgressUnit> progressUnits = new JList<>(listModel);
 
@@ -47,29 +48,34 @@ public class ProgressDialog extends MCreatorDialog {
 			this.mcreator = mcreatorInst;
 
 		setClosable(false);
-		setUndecorated(true);
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
-		JPanel contentPane = new JPanel() {
-			@Override protected void paintComponent(Graphics g) {
-				Graphics2D g2d = (Graphics2D) g;
-				g2d.setColor(Theme.current().getBackgroundColor());
-				g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
-				super.paintComponent(g);
-			}
-		};
-		contentPane.setBorder(
-				new FlatLineBorder(new Insets(0, 0, 0, 0), UIManager.getColor("PopupMenu.borderColor"), 1, 15));
-		contentPane.setLayout(new BorderLayout(0, 0));
-		contentPane.setOpaque(false);
-		setContentPane(contentPane);
+		// If we use undecorated Dialog on Linux, the dialog contents flicker (#4757)
+		boolean customDecoration = OS.getOS() != OS.LINUX;
+		if (customDecoration) {
+			setUndecorated(true);
 
-		setBackground(new Color(0, 0, 0, 0));
+			JPanel contentPane = new JPanel() {
+				@Override protected void paintComponent(Graphics g) {
+					Graphics2D g2d = (Graphics2D) g;
+					g2d.setColor(Theme.current().getBackgroundColor());
+					g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+					super.paintComponent(g);
+				}
+			};
+			contentPane.setBorder(
+					new FlatLineBorder(new Insets(0, 0, 0, 0), UIManager.getColor("PopupMenu.borderColor"), 1, 15));
+			contentPane.setLayout(new BorderLayout(0, 0));
+			contentPane.setOpaque(false);
+			setContentPane(contentPane);
 
-		titleLabel = new JLabel(title);
-		titleLabel.setBorder(BorderFactory.createEmptyBorder(7, 10, 2, 10));
-		titleLabel.setForeground(Theme.current().getAltForegroundColor());
-		add("North", titleLabel);
+			setBackground(new Color(0, 0, 0, 0));
+
+			titleLabel.setText(title);
+			titleLabel.setBorder(BorderFactory.createEmptyBorder(7, 10, 2, 10));
+			titleLabel.setForeground(Theme.current().getAltForegroundColor());
+			add("North", titleLabel);
+		}
 
 		progressUnits.setCellRenderer(new Render());
 		progressUnits.setOpaque(false);
@@ -202,7 +208,8 @@ public class ProgressDialog extends MCreatorDialog {
 			JLabel status = new JLabel();
 			status.setText(ma.name);
 
-			if (ma.status == ProgressUnit.Status.LOADING) {
+			switch (ma.status) {
+			case LOADING -> {
 				JLabel status2 = new JLabel(LOADER_CACHE.computeIfAbsent(ma,
 						e -> new SquareLoaderIcon(list, 4, 1, Theme.current().getForegroundColor())));
 				status2.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
@@ -212,12 +219,10 @@ public class ProgressDialog extends MCreatorDialog {
 				bar.setValue(ma.percent);
 				if (bar.getValue() > 0)
 					stap.add("West", PanelUtils.totalCenterInPanel(bar));
-			} else if (ma.status == ProgressUnit.Status.COMPLETE) {
-				stap.add("East", PanelUtils.centerInPanel(new JLabel(complete)));
-			} else if (ma.status == ProgressUnit.Status.ERROR) {
-				stap.add("East", PanelUtils.centerInPanel(new JLabel(remove)));
-			} else if (ma.status == ProgressUnit.Status.WARNING) {
-				stap.add("East", PanelUtils.centerInPanel(new JLabel(warning)));
+			}
+			case COMPLETE -> stap.add("East", PanelUtils.centerInPanel(new JLabel(complete)));
+			case ERROR -> stap.add("East", PanelUtils.centerInPanel(new JLabel(remove)));
+			case WARNING -> stap.add("East", PanelUtils.centerInPanel(new JLabel(warning)));
 			}
 
 			add("West", status);
