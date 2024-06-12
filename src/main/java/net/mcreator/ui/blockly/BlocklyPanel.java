@@ -157,6 +157,7 @@ public class BlocklyPanel extends JFXPanel {
 					webEngine.executeScript(
 							FileIO.readResourceToString("/jsdist/msg/" + L10N.getBlocklyLangName() + ".js"));
 					webEngine.executeScript(FileIO.readResourceToString("/jsdist/blocks_compressed.js"));
+					webEngine.executeScript(FileIO.readResourceToString("/jsdist/plugin_field_multilineinput.js"));
 
 					// Blockly MCreator definitions
 					webEngine.executeScript(FileIO.readResourceToString("/blockly/js/mcreator_blockly.js"));

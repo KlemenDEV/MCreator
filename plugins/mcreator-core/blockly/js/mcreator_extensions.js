@@ -164,7 +164,7 @@ Blockly.Extensions.registerMixin('disable_inside_inline_placed_feature',
                 const group = Blockly.Events.getGroup();
                 // Makes it so the move and the disable event get undone together.
                 Blockly.Events.setGroup(e.group);
-                this.setEnabled(enabled);
+                this.setDisabledReason(!enabled, "inside_inline_placed_feature")
                 Blockly.Events.setGroup(group);
             }
         }
@@ -214,7 +214,7 @@ Blockly.Extensions.registerMixin('controls_flow_in_loop_check_exclude_wait',
                 const group = Blockly.Events.getGroup();
                 // Makes it so the move and the disable event get undone together.
                 Blockly.Events.setGroup(e.group);
-                this.setEnabled(isWithinLoop && !isWithinWaitBlock);
+                this.setDisabledReason(!(isWithinLoop && !isWithinWaitBlock), "inside_loop");
                 Blockly.Events.setGroup(group);
             }
         }
