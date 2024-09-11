@@ -38,13 +38,29 @@ package ${package}.potion;
 public class ${name}MobEffect extends MobEffect {
 
 	public ${name}MobEffect() {
-		super(MobEffectCategory.<#if data.isBad>HARMFUL<#elseif data.isBenefitical>BENEFICIAL<#else>NEUTRAL</#if>, ${data.color.getRGB()});
+		super(MobEffectCategory.${data.mobEffectCategory}, ${data.color.getRGB()});
 	}
 
 	<#if data.isInstant>
 		@Override public boolean isInstantenous() {
 			return true;
 		}
+	</#if>
+
+	<#if !(data.isCuredByMilk && data.isProtectedByTotem) || data.isCuredbyHoney>
+	@Override public List<ItemStack> getCurativeItems() {
+		ArrayList<ItemStack> cures = new ArrayList<ItemStack>();
+		<#if data.isCuredByMilk>
+		cures.add(new ItemStack(Items.MILK_BUCKET));
+		</#if>
+		<#if data.isProtectedByTotem>
+		cures.add(new ItemStack(Items.TOTEM_OF_UNDYING));
+		</#if>
+		<#if data.isCuredbyHoney>
+		cures.add(new ItemStack(Items.HONEY_BOTTLE));
+		</#if>
+		return cures;
+	}
 	</#if>
 
 	<#if hasProcedure(data.onStarted)>

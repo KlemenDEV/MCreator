@@ -22,7 +22,6 @@ import net.mcreator.blockly.data.Dependency;
 import net.mcreator.element.GeneratableElement;
 import net.mcreator.element.ModElementType;
 import net.mcreator.element.parts.ProjectileEntry;
-import net.mcreator.element.parts.TabEntry;
 import net.mcreator.element.types.GUI;
 import net.mcreator.element.types.Item;
 import net.mcreator.minecraft.ElementUtil;
@@ -40,7 +39,8 @@ import net.mcreator.ui.laf.renderer.ModelComboBoxRenderer;
 import net.mcreator.ui.laf.themes.Theme;
 import net.mcreator.ui.minecraft.DataListComboBox;
 import net.mcreator.ui.minecraft.MCItemHolder;
-import net.mcreator.ui.minecraft.TextureHolder;
+import net.mcreator.ui.minecraft.TabListField;
+import net.mcreator.ui.minecraft.TextureSelectionButton;
 import net.mcreator.ui.minecraft.states.item.JItemPropertiesStatesList;
 import net.mcreator.ui.procedure.AbstractProcedureSelector;
 import net.mcreator.ui.procedure.LogicProcedureSelector;
@@ -71,11 +71,11 @@ import java.util.stream.Collectors;
 
 public class ItemGUI extends ModElementGUI<Item> {
 
-	private TextureHolder texture;
+	private TextureSelectionButton texture;
 
 	private StringListProcedureSelector specialInformation;
 
-	private final JSpinner stackSize = new JSpinner(new SpinnerNumberModel(64, 0, 64, 1));
+	private final JSpinner stackSize = new JSpinner(new SpinnerNumberModel(64, 1, 64, 1));
 	private final VTextField name = new VTextField(20);
 	private final JComboBox<String> rarity = new JComboBox<>(new String[] { "COMMON", "UNCOMMON", "RARE", "EPIC" });
 
@@ -94,16 +94,15 @@ public class ItemGUI extends ModElementGUI<Item> {
 	private LogicProcedureSelector glowCondition;
 
 	private final JCheckBox enableRanged = L10N.checkbox("elementgui.common.enable");
-
 	private final JCheckBox shootConstantly = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox rangedItemChargesPower = L10N.checkbox("elementgui.common.enable");
-
+	private final JCheckBox projectileDisableAmmoCheck = L10N.checkbox("elementgui.common.enable");
 	private ProcedureSelector onRangedItemUsed;
 	private ProcedureSelector rangedUseCondition;
 
 	private final DataListComboBox projectile = new DataListComboBox(mcreator);
 
-	private final DataListComboBox creativeTab = new DataListComboBox(mcreator);
+	private final TabListField creativeTabs = new TabListField(mcreator);
 
 	private static final Model normal = new Model.BuiltInModel("Normal");
 	private static final Model tool = new Model.BuiltInModel("Tool");
@@ -223,7 +222,7 @@ public class ItemGUI extends ModElementGUI<Item> {
 		JPanel rangedPanel = new JPanel(new BorderLayout(10, 10));
 		JPanel pane4 = new JPanel(new BorderLayout(10, 10));
 
-		texture = new TextureHolder(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM));
+		texture = new TextureSelectionButton(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM));
 		texture.setOpaque(false);
 
 		JPanel destal2 = new JPanel(new BorderLayout(0, 5));
@@ -275,9 +274,9 @@ public class ItemGUI extends ModElementGUI<Item> {
 				HelpUtils.wrapWithHelpButton(this.withEntry("item/rarity"), L10N.label("elementgui.common.rarity")));
 		subpane2.add(rarity);
 
-		subpane2.add(HelpUtils.wrapWithHelpButton(this.withEntry("common/creative_tab"),
-				L10N.label("elementgui.common.creative_tab")));
-		subpane2.add(creativeTab);
+		subpane2.add(HelpUtils.wrapWithHelpButton(this.withEntry("common/creative_tabs"),
+				L10N.label("elementgui.common.creative_tabs")));
+		subpane2.add(creativeTabs);
 
 		subpane2.add(HelpUtils.wrapWithHelpButton(this.withEntry("item/stack_size"),
 				L10N.label("elementgui.common.max_stack_size")));
@@ -425,7 +424,7 @@ public class ItemGUI extends ModElementGUI<Item> {
 
 		updateRangedPanel();
 
-		JPanel rangedProperties = new JPanel(new GridLayout(4, 2, 2, 2));
+		JPanel rangedProperties = new JPanel(new GridLayout(5, 2, 2, 2));
 		rangedProperties.setOpaque(false);
 
 		rangedProperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("item/enable_ranged_item"),
@@ -438,10 +437,16 @@ public class ItemGUI extends ModElementGUI<Item> {
 				L10N.label("elementgui.item.projectile")));
 		rangedProperties.add(projectile);
 
+		rangedProperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("item/projectile_disable_ammo_check"),
+				L10N.label("elementgui.item.projectile_disable_ammo_check")));
+		projectileDisableAmmoCheck.setOpaque(false);
+		rangedProperties.add(projectileDisableAmmoCheck);
+
 		rangedProperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("item/shoot_constantly"),
 				L10N.label("elementgui.item.shoot_constantly")));
 		shootConstantly.setOpaque(false);
 		rangedProperties.add(shootConstantly);
+
 		rangedProperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("item/charges_power"),
 				L10N.label("elementgui.item.charges_power")));
 		rangedItemChargesPower.setOpaque(false);
@@ -513,6 +518,7 @@ public class ItemGUI extends ModElementGUI<Item> {
 			projectile.setEnabled(true);
 			onRangedItemUsed.setEnabled(true);
 			rangedUseCondition.setEnabled(true);
+			projectileDisableAmmoCheck.setEnabled(true);
 			if (!isEditingMode()) {
 				if ((int) useDuration.getValue() == 0)
 					useDuration.setValue(72000);
@@ -527,6 +533,7 @@ public class ItemGUI extends ModElementGUI<Item> {
 			projectile.setEnabled(false);
 			onRangedItemUsed.setEnabled(false);
 			rangedUseCondition.setEnabled(false);
+			projectileDisableAmmoCheck.setEnabled(false);
 			if (!isEditingMode()) {
 				if ((int) useDuration.getValue() == 72000)
 					useDuration.setValue(0);
@@ -558,8 +565,6 @@ public class ItemGUI extends ModElementGUI<Item> {
 
 		customProperties.reloadDataLists();
 
-		ComboBoxUtil.updateComboBoxContents(creativeTab, ElementUtil.loadAllTabs(mcreator.getWorkspace()));
-
 		ComboBoxUtil.updateComboBoxContents(renderType, ListUtils.merge(Arrays.asList(ItemGUI.builtinitemmodels),
 				Model.getModelsWithTextureMaps(mcreator.getWorkspace()).stream()
 						.filter(el -> el.getType() == Model.Type.JSON || el.getType() == Model.Type.OBJ)
@@ -583,7 +588,7 @@ public class ItemGUI extends ModElementGUI<Item> {
 	@Override public void openInEditingMode(Item item) {
 		name.setText(item.name);
 		rarity.setSelectedItem(item.rarity);
-		texture.setTextureFromTextureName(item.texture);
+		texture.setTexture(item.texture);
 		onRightClickedInAir.setSelectedProcedure(item.onRightClickedInAir);
 		onRightClickedOnBlock.setSelectedProcedure(item.onRightClickedOnBlock);
 		onCrafted.setSelectedProcedure(item.onCrafted);
@@ -593,7 +598,7 @@ public class ItemGUI extends ModElementGUI<Item> {
 		onStoppedUsing.setSelectedProcedure(item.onStoppedUsing);
 		onEntitySwing.setSelectedProcedure(item.onEntitySwing);
 		onDroppedByPlayer.setSelectedProcedure(item.onDroppedByPlayer);
-		creativeTab.setSelectedItem(item.creativeTab);
+		creativeTabs.setListElements(item.creativeTabs);
 		stackSize.setValue(item.stackSize);
 		enchantability.setValue(item.enchantability);
 		toolType.setValue(item.toolType);
@@ -620,6 +625,7 @@ public class ItemGUI extends ModElementGUI<Item> {
 		animation.setSelectedItem(item.animation);
 		eatResultItem.setBlock(item.eatResultItem);
 		enableRanged.setSelected(item.enableRanged);
+		projectileDisableAmmoCheck.setSelected(item.projectileDisableAmmoCheck);
 		shootConstantly.setSelected(item.shootConstantly);
 		rangedItemChargesPower.setSelected(item.rangedItemChargesPower);
 		projectile.setSelectedItem(item.projectile);
@@ -642,7 +648,7 @@ public class ItemGUI extends ModElementGUI<Item> {
 		Item item = new Item(modElement);
 		item.name = name.getText();
 		item.rarity = (String) rarity.getSelectedItem();
-		item.creativeTab = new TabEntry(mcreator.getWorkspace(), creativeTab.getSelectedItem());
+		item.creativeTabs = creativeTabs.getListElements();
 		item.stackSize = (int) stackSize.getValue();
 		item.enchantability = (int) enchantability.getValue();
 		item.useDuration = (int) useDuration.getValue();
@@ -678,13 +684,14 @@ public class ItemGUI extends ModElementGUI<Item> {
 		item.onFinishUsingItem = onFinishUsingItem.getSelectedProcedure();
 		item.eatResultItem = eatResultItem.getBlock();
 		item.enableRanged = enableRanged.isSelected();
+		item.projectileDisableAmmoCheck = projectileDisableAmmoCheck.isSelected();
 		item.shootConstantly = shootConstantly.isSelected();
 		item.rangedItemChargesPower = rangedItemChargesPower.isSelected();
 		item.projectile = new ProjectileEntry(mcreator.getWorkspace(), projectile.getSelectedItem());
 		item.onRangedItemUsed = onRangedItemUsed.getSelectedProcedure();
 		item.rangedUseCondition = rangedUseCondition.getSelectedProcedure();
 
-		item.texture = texture.getTextureName();
+		item.texture = texture.getTextureHolder();
 		item.renderType = Item.encodeModelType(Objects.requireNonNull(renderType.getSelectedItem()).getType());
 		item.customModelName = Objects.requireNonNull(renderType.getSelectedItem()).getReadableName();
 

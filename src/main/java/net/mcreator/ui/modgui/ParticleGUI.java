@@ -28,7 +28,7 @@ import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.dialogs.TypedTextureSelectorDialog;
 import net.mcreator.ui.help.HelpUtils;
 import net.mcreator.ui.init.L10N;
-import net.mcreator.ui.minecraft.TextureHolder;
+import net.mcreator.ui.minecraft.TextureSelectionButton;
 import net.mcreator.ui.procedure.AbstractProcedureSelector;
 import net.mcreator.ui.procedure.NumberProcedureSelector;
 import net.mcreator.ui.procedure.ProcedureSelector;
@@ -37,7 +37,6 @@ import net.mcreator.ui.validation.validators.TileHolderValidator;
 import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.workspace.elements.ModElement;
 import net.mcreator.workspace.elements.VariableTypeLoader;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
@@ -47,7 +46,7 @@ import java.net.URISyntaxException;
 
 public class ParticleGUI extends ModElementGUI<Particle> {
 
-	private TextureHolder texture;
+	private TextureSelectionButton texture;
 
 	private final JSpinner width = new JSpinner(new SpinnerNumberModel(0.2, 0, 4096, 0.1));
 	private final JSpinner height = new JSpinner(new SpinnerNumberModel(0.2, 0, 4096, 0.1));
@@ -94,7 +93,7 @@ public class ParticleGUI extends ModElementGUI<Particle> {
 		alwaysShow.setOpaque(false);
 		animate.setOpaque(false);
 
-		texture = new TextureHolder(new TypedTextureSelectorDialog(mcreator, TextureType.PARTICLE));
+		texture = new TextureSelectionButton(new TypedTextureSelectorDialog(mcreator, TextureType.PARTICLE));
 		texture.setOpaque(false);
 
 		JComponent textureComponent = PanelUtils.totalCenterInPanel(ComponentUtils.squareAndBorder(
@@ -176,8 +175,7 @@ public class ParticleGUI extends ModElementGUI<Particle> {
 	}
 
 	@Override public void openInEditingMode(Particle particle) {
-		texture.setTextureFromTextureName(
-				StringUtils.removeEnd(particle.texture, ".png")); // legacy, old workspaces stored name with extension
+		texture.setTexture(particle.texture);
 		width.setValue(particle.width);
 		height.setValue(particle.height);
 		scale.setSelectedProcedure(particle.scale);
@@ -197,7 +195,7 @@ public class ParticleGUI extends ModElementGUI<Particle> {
 
 	@Override public Particle getElementFromGUI() {
 		Particle particle = new Particle(modElement);
-		particle.texture = texture.getTextureName() + ".png"; // legacy, old workspaces stored name with extension
+		particle.texture = texture.getTextureHolder();
 		particle.width = (double) width.getValue();
 		particle.height = (double) height.getValue();
 		particle.scale = scale.getSelectedProcedure();

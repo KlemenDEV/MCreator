@@ -20,20 +20,28 @@
 package net.mcreator.workspace.resources;
 
 import net.mcreator.ui.workspace.resources.TextureType;
+import net.mcreator.util.FilenameUtilsPatched;
 import net.mcreator.workspace.Workspace;
-import org.apache.commons.io.FilenameUtils;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
 import java.io.File;
 
+/**
+ * Base class for texture resource implementations.
+ */
 public abstract class Texture {
 
 	protected final TextureType textureType;
 
+	/**
+	 * Name of the texture, ALWAYS without the final .png extension.
+	 * However, if the original texture name is textureName.png.png,
+	 * this will be textureName.png
+	 */
 	protected final String textureName;
 
-	public Texture(TextureType textureType, String textureName) {
+	Texture(TextureType textureType, String textureName) {
 		this.textureType = textureType;
 		this.textureName = textureName;
 	}
@@ -58,34 +66,32 @@ public abstract class Texture {
 
 	public abstract ImageIcon getTextureIcon(Workspace workspace);
 
+	/**
+	 * Searches in the provided workspace for a texture with matching name and type.
+	 *
+	 * @param workspace   The workspace to search in.
+	 * @param textureType The type of the textures to check.
+	 * @param name        The name of the texture to look for.
+	 * @return The texture with the provided name of the specified type.
+	 */
 	@Nullable public static Texture fromName(Workspace workspace, TextureType textureType, String name) {
 		if (name == null || name.isBlank())
 			return null;
 
-		if (name.indexOf(':') == -1)
-			return new Custom(textureType, workspace.getFolderManager().getTextureFile(name, textureType));
-
-		return null;
-	}
-
-	public static final class Custom extends Texture {
-
-		public Custom(TextureType textureType, File texture) {
-			super(textureType, textureType == TextureType.ARMOR ?
-					(FilenameUtils.removeExtension(texture.getName()).replace("_layer_1", "").replace("_layer_2", "")) :
-					FilenameUtils.removeExtension(texture.getName()));
-		}
-
-		@Override public ImageIcon getTextureIcon(Workspace workspace) {
-			if (textureType == TextureType.ARMOR) {
-				File[] armorTextures = workspace.getFolderManager()
-						.getArmorTextureFilesForName(textureName);
-				return new ImageIcon(armorTextures[0].getAbsolutePath());
-			} else {
-				return workspace.getFolderManager().getTextureImageIcon(textureName, textureType);
+		if (name.indexOf(':') == -1) {
+			File textureFile = workspace.getFolderManager().getTextureFile(name, textureType);
+			// If texture file contains .png, but we can't find it, we may need to remove one level of extensions
+			// This is because in the past some textures had .png extension and others didn't in GE JSON
+			// Therefore to cover edge cases where textures end with .png.png, we need to do this check here
+			if (name.endsWith(".png") && !textureFile.isFile()) {
+				textureFile = workspace.getFolderManager()
+						.getTextureFile(FilenameUtilsPatched.removeExtension(name), textureType);
 			}
-		}
 
+			return new CustomTexture(textureType, textureFile);
+		} else {
+			return ExternalTexture.getTexture(workspace, textureType, name);
+		}
 	}
 
 	public static final class Dummy extends Texture {

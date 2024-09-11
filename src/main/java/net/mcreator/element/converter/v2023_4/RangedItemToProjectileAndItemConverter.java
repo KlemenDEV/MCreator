@@ -25,10 +25,7 @@ import net.mcreator.element.GeneratableElement;
 import net.mcreator.element.ModElementType;
 import net.mcreator.element.converter.ConverterUtils;
 import net.mcreator.element.converter.IConverter;
-import net.mcreator.element.parts.MItemBlock;
-import net.mcreator.element.parts.ProjectileEntry;
-import net.mcreator.element.parts.Sound;
-import net.mcreator.element.parts.TabEntry;
+import net.mcreator.element.parts.*;
 import net.mcreator.element.parts.procedure.LogicProcedure;
 import net.mcreator.element.parts.procedure.Procedure;
 import net.mcreator.element.parts.procedure.StringListProcedure;
@@ -59,12 +56,14 @@ public class RangedItemToProjectileAndItemConverter implements IConverter {
 					ConverterUtils.findSuitableModElementName(workspace,
 							input.getModElement().getName() + "Projectile"), ModElementType.PROJECTILE));
 
+			boolean hasAmmoItem = rangedItem.get("ammoItem") != null && !rangedItem.get("ammoItem").getAsJsonObject().get("value")
+					.getAsString().isEmpty();
+
 			if (rangedItem.get("bulletItemTexture") != null && !rangedItem.get("bulletItemTexture").getAsJsonObject()
 					.get("value").getAsString().isEmpty())
 				projectile.projectileItem = new MItemBlock(workspace,
 						rangedItem.get("bulletItemTexture").getAsJsonObject().get("value").getAsString());
-			else if (rangedItem.get("ammoItem") != null && !rangedItem.get("ammoItem").getAsJsonObject().get("value")
-					.getAsString().isEmpty())
+			else if (hasAmmoItem)
 				projectile.projectileItem = new MItemBlock(workspace,
 						rangedItem.get("ammoItem").getAsJsonObject().get("value").getAsString());
 			else
@@ -117,7 +116,7 @@ public class RangedItemToProjectileAndItemConverter implements IConverter {
 
 			Item item = new Item(new ModElement(workspace, input.getModElement().getName(), ModElementType.ITEM));
 			item.name = rangedItem.get("name").getAsString();
-			item.texture = rangedItem.get("texture").getAsString();
+			item.texture = new TextureHolder(workspace, rangedItem.get("texture").getAsString());
 			item.renderType = rangedItem.get("renderType").getAsInt();
 			if (rangedItem.get("customModelName") != null) {
 				item.customModelName = rangedItem.get("customModelName").getAsString();
@@ -126,8 +125,9 @@ public class RangedItemToProjectileAndItemConverter implements IConverter {
 			} else {
 				item.customModelName = "Ranged item";
 			}
-			item.creativeTab = new TabEntry(workspace,
-					rangedItem.get("creativeTab").getAsJsonObject().get("value").getAsString());
+			JsonObject creativeTab = rangedItem.getAsJsonObject("creativeTab");
+			if (creativeTab != null && !creativeTab.get("value").getAsString().equals("No creative tab entry"))
+				item.creativeTabs = List.of(new TabEntry(workspace, creativeTab.get("value").getAsString()));
 
 			List<String> infoFixedValues = new ArrayList<>();
 			String infoProcedureName = null;
@@ -165,6 +165,7 @@ public class RangedItemToProjectileAndItemConverter implements IConverter {
 			}
 
 			item.enableRanged = true;
+			item.projectileDisableAmmoCheck = !hasAmmoItem;
 			item.shootConstantly = rangedItem.get("shootConstantly").getAsBoolean();
 			item.projectile = new ProjectileEntry(workspace, "CUSTOM:" + projectile.getModElement().getName());
 			item.enableMeleeDamage = rangedItem.get("enableMeleeDamage").getAsBoolean();

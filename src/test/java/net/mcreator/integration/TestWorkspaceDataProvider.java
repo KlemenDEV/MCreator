@@ -19,6 +19,7 @@
 
 package net.mcreator.integration;
 
+import net.mcreator.blockly.data.Dependency;
 import net.mcreator.element.GeneratableElement;
 import net.mcreator.element.ModElementType;
 import net.mcreator.element.parts.Particle;
@@ -36,7 +37,9 @@ import net.mcreator.element.types.Enchantment;
 import net.mcreator.element.types.Fluid;
 import net.mcreator.element.types.*;
 import net.mcreator.element.types.interfaces.IBlockWithBoundingBox;
+import net.mcreator.generator.GeneratorConfiguration;
 import net.mcreator.generator.GeneratorStats;
+import net.mcreator.integration.generator.GTProcedureBlocks;
 import net.mcreator.io.FileIO;
 import net.mcreator.minecraft.*;
 import net.mcreator.ui.dialogs.wysiwyg.AbstractWYSIWYGDialog;
@@ -51,7 +54,11 @@ import net.mcreator.util.StringUtils;
 import net.mcreator.util.image.EmptyIcon;
 import net.mcreator.workspace.Workspace;
 import net.mcreator.workspace.elements.*;
+import net.mcreator.workspace.settings.WorkspaceSettings;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nullable;
 import java.awt.*;
 import java.awt.image.RenderedImage;
 import java.io.File;
@@ -59,11 +66,9 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class TestWorkspaceDataProvider {
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-	private static ModElement me(Workspace workspace, ModElementType<?> type, String suffix) {
-		return new ModElement(workspace, "Example" + type.getRegistryName() + suffix, type);
-	}
+public class TestWorkspaceDataProvider {
 
 	public static List<GeneratableElement> getModElementExamplesFor(Workspace workspace, ModElementType<?> type,
 			boolean uiTest, Random random) {
@@ -121,7 +126,7 @@ public class TestWorkspaceDataProvider {
 		return generatableElements;
 	}
 
-	public static void fillWorkspaceWithTestData(Workspace workspace) {
+	private static void fillWorkspaceWithResourcesAndData(Workspace workspace) {
 		if (workspace.getGeneratorStats().getBaseCoverageInfo().get("sounds") == GeneratorStats.CoverageStatus.FULL) {
 			for (int i = 1; i <= 3; i++) {
 				SoundElement sound = new SoundElement("test" + i, List.of(), "neutral", null);
@@ -154,6 +159,11 @@ public class TestWorkspaceDataProvider {
 			workspace.addTagElement(tag);
 			workspace.getTagElements().get(tag).add("testmod:testdamage");
 			workspace.getTagElements().get(tag).add("~testmod:testdamage2");
+
+			tag = new TagElement(TagType.ENCHANTMENTS, "minecraft:test");
+			workspace.addTagElement(tag);
+			workspace.getTagElements().get(tag).add("testmod:testenchantment");
+			workspace.getTagElements().get(tag).add("~testmod:testenchantment2");
 		}
 
 		if (workspace.getGeneratorStats().getBaseCoverageInfo().get("variables")
@@ -264,12 +274,12 @@ public class TestWorkspaceDataProvider {
 
 		if (workspace.getFolderManager().getTexturesFolder(TextureType.OTHER) != null) {
 			FileIO.writeImageToPNGFile((RenderedImage) imageIcon.getImage(),
-					workspace.getFolderManager().getTextureFile("test", TextureType.OTHER));
+					workspace.getFolderManager().getTextureFile("other0", TextureType.OTHER));
 		}
 
 		if (workspace.getFolderManager().getTexturesFolder(TextureType.ENTITY) != null) {
 			FileIO.writeImageToPNGFile((RenderedImage) imageIcon.getImage(),
-					workspace.getFolderManager().getTextureFile("test", TextureType.ENTITY));
+					workspace.getFolderManager().getTextureFile("entityTx0", TextureType.ENTITY));
 			FileIO.writeImageToPNGFile((RenderedImage) imageIcon.getImage(),
 					workspace.getFolderManager().getTextureFile("entityTx1", TextureType.ENTITY));
 			FileIO.writeImageToPNGFile((RenderedImage) imageIcon.getImage(),
@@ -326,6 +336,8 @@ public class TestWorkspaceDataProvider {
 		List<MCItem> blocks = ElementUtil.loadBlocks(modElement.getWorkspace());
 		List<MCItem> blocksAndTags = ElementUtil.loadBlocksAndTags(modElement.getWorkspace());
 		List<DataListEntry> biomes = ElementUtil.loadAllBiomes(modElement.getWorkspace());
+		List<TabEntry> tabs = ElementUtil.loadAllTabs(modElement.getWorkspace()).stream()
+				.map(e -> new TabEntry(modElement.getWorkspace(), e)).toList();
 
 		if (ModElementType.ADVANCEMENT.equals(modElement.getType())) {
 			Achievement achievement = new Achievement(modElement);
@@ -484,8 +496,8 @@ public class TestWorkspaceDataProvider {
 		} else if (ModElementType.FLUID.equals(modElement.getType())) {
 			Fluid fluid = new Fluid(modElement);
 			fluid.name = modElement.getName();
-			fluid.textureFlowing = "test";
-			fluid.textureStill = "test2";
+			fluid.textureFlowing = new TextureHolder(modElement.getWorkspace(), "test");
+			fluid.textureStill = new TextureHolder(modElement.getWorkspace(), "test2");
 			fluid.canMultiply = _true;
 			fluid.flowRate = 8;
 			fluid.levelDecrease = 2;
@@ -503,9 +515,8 @@ public class TestWorkspaceDataProvider {
 			fluid.temperature = 375;
 			fluid.generateBucket = !_true;
 			fluid.bucketName = modElement.getName() + " Bucket";
-			fluid.textureBucket = emptyLists ? "" : "itest";
-			fluid.creativeTab = new TabEntry(modElement.getWorkspace(),
-					getRandomDataListEntry(random, ElementUtil.loadAllTabs(modElement.getWorkspace())));
+			fluid.textureBucket = new TextureHolder(modElement.getWorkspace(), emptyLists ? "" : "itest");
+			fluid.creativeTabs = emptyLists ? List.of() : tabs;
 			fluid.emptySound = !emptyLists ?
 					new Sound(modElement.getWorkspace(), "") :
 					new Sound(modElement.getWorkspace(),
@@ -657,13 +668,12 @@ public class TestWorkspaceDataProvider {
 					biomes);
 		} else if (ModElementType.DIMENSION.equals(modElement.getType())) {
 			Dimension dimension = new Dimension(modElement);
-			dimension.texture = "test";
-			dimension.portalTexture = "test2";
+			dimension.texture = new TextureHolder(modElement.getWorkspace(), "test");
+			dimension.portalTexture = new TextureHolder(modElement.getWorkspace(), "test2");
 			dimension.enableIgniter = true; // we always want it as it can be referenced in other tests
 			dimension.portalParticles = new Particle(modElement.getWorkspace(),
 					getRandomDataListEntry(random, ElementUtil.loadAllParticles(modElement.getWorkspace())));
-			dimension.igniterTab = new TabEntry(modElement.getWorkspace(),
-					getRandomDataListEntry(random, ElementUtil.loadAllTabs(modElement.getWorkspace())));
+			dimension.creativeTabs = emptyLists ? List.of() : tabs;
 			dimension.portalSound = new Sound(modElement.getWorkspace(),
 					getRandomItem(random, ElementUtil.getAllSounds(modElement.getWorkspace())));
 			dimension.biomesInDimension = new ArrayList<>();
@@ -711,6 +721,11 @@ public class TestWorkspaceDataProvider {
 			structure.surfaceDetectionType = getRandomString(random,
 					Arrays.asList("WORLD_SURFACE_WG", "WORLD_SURFACE", "OCEAN_FLOOR_WG", "OCEAN_FLOOR",
 							"MOTION_BLOCKING", "MOTION_BLOCKING_NO_LEAVES"));
+			structure.useStartHeight = _true;
+			structure.startHeightProviderType = getRandomString(random,
+					Arrays.asList("UNIFORM", "BIASED_TO_BOTTOM", "VERY_BIASED_TO_BOTTOM", "TRAPEZOID"));
+			structure.startHeightMin = -23;
+			structure.startHeightMax = 61;
 			structure.ignoredBlocks = new ArrayList<>();
 			if (!emptyLists) {
 				structure.ignoredBlocks.addAll(
@@ -719,7 +734,7 @@ public class TestWorkspaceDataProvider {
 								.map(e -> new MItemBlock(modElement.getWorkspace(), e.getName())).toList());
 			}
 			structure.terrainAdaptation = getRandomString(random,
-					Arrays.asList("none", "beard_thin", "beard_box", "bury"));
+					Arrays.asList("none", "beard_thin", "beard_box", "bury", "encapsulate"));
 			structure.projection = getRandomString(random, Arrays.asList("rigid", "terrain_matching"));
 			structure.restrictionBiomes = new ArrayList<>();
 			structure.spacing = 14;
@@ -776,17 +791,17 @@ public class TestWorkspaceDataProvider {
 		} else if (ModElementType.ARMOR.equals(modElement.getType())) {
 			Armor armor = new Armor(modElement);
 			armor.enableHelmet = !_true;
-			armor.textureHelmet = "test";
-			armor.helmetModelTexture = emptyLists ? "From armor" : "test.png";
+			armor.textureHelmet = new TextureHolder(modElement.getWorkspace(), "test");
+			armor.helmetModelTexture = emptyLists ? "From armor" : "entityTx0.png";
 			armor.enableBody = !_true;
-			armor.textureBody = "test2";
-			armor.bodyModelTexture = emptyLists ? "From armor" : "test.png";
+			armor.textureBody = new TextureHolder(modElement.getWorkspace(), "test2");
+			armor.bodyModelTexture = emptyLists ? "From armor" : "entityTx0.png";
 			armor.enableLeggings = !_true;
-			armor.textureLeggings = "test3";
-			armor.leggingsModelTexture = emptyLists ? "From armor" : "test.png";
+			armor.textureLeggings = new TextureHolder(modElement.getWorkspace(), "test2");
+			armor.leggingsModelTexture = emptyLists ? "From armor" : "entityTx0.png";
 			armor.enableBoots = !_true;
-			armor.textureBoots = "test4";
-			armor.bootsModelTexture = emptyLists ? "From armor" : "test.png";
+			armor.textureBoots = new TextureHolder(modElement.getWorkspace(), "test4");
+			armor.bootsModelTexture = emptyLists ? "From armor" : "entityTx0.png";
 			armor.helmetItemRenderType = 0;
 			armor.helmetItemCustomModelName = "Normal";
 			armor.bodyItemRenderType = 0;
@@ -825,8 +840,7 @@ public class TestWorkspaceDataProvider {
 			armor.bodyName = modElement.getName() + " appendix2";
 			armor.bootsName = modElement.getName() + " appendix3";
 			armor.leggingsName = modElement.getName() + " appendix4";
-			armor.creativeTab = new TabEntry(modElement.getWorkspace(),
-					getRandomDataListEntry(random, ElementUtil.loadAllTabs(modElement.getWorkspace())));
+			armor.creativeTabs = emptyLists ? List.of() : tabs;
 			armor.armorTextureFile = "armorTexture";
 			armor.maxDamage = 12;
 			armor.damageValueHelmet = 3;
@@ -849,12 +863,11 @@ public class TestWorkspaceDataProvider {
 			Plant plant = new Plant(modElement);
 			plant.name = modElement.getName();
 			plant.plantType = new String[] { "normal", "growapable", "double", "normal" }[valueIndex];
-			plant.creativeTab = new TabEntry(modElement.getWorkspace(),
-					getRandomDataListEntry(random, ElementUtil.loadAllTabs(modElement.getWorkspace())));
-			plant.texture = "test";
-			plant.textureBottom = "test2";
-			plant.itemTexture = emptyLists ? "" : "itest";
-			plant.particleTexture = emptyLists ? "" : "test3";
+			plant.creativeTabs = emptyLists ? List.of() : tabs;
+			plant.texture = new TextureHolder(modElement.getWorkspace(), "test");
+			plant.textureBottom = new TextureHolder(modElement.getWorkspace(), "test2");
+			plant.itemTexture = new TextureHolder(modElement.getWorkspace(), emptyLists ? "" : "itest");
+			plant.particleTexture = new TextureHolder(modElement.getWorkspace(), emptyLists ? "" : "test3");
 			plant.growapableSpawnType = getRandomItem(random, ElementUtil.getDataListAsStringArray("planttypes"));
 			plant.suspiciousStewEffect = getRandomString(random,
 					ElementUtil.loadAllPotionEffects(modElement.getWorkspace()).stream().map(DataListEntry::getName)
@@ -947,7 +960,7 @@ public class TestWorkspaceDataProvider {
 			plant.onRandomUpdateEvent = new Procedure("procedure10");
 			plant.onEntityWalksOn = new Procedure("procedure11");
 			plant.onHitByProjectile = new Procedure("procedure12");
-			plant.placingCondition = _true ? null : new Procedure("condition2");
+			plant.placingCondition = emptyLists ? null : new Procedure("condition2");
 			plant.tintType = getRandomString(random,
 					Arrays.asList("No tint", "Grass", "Foliage", "Birch foliage", "Spruce foliage", "Default foliage",
 							"Water", "Sky", "Fog", "Water fog"));
@@ -973,8 +986,7 @@ public class TestWorkspaceDataProvider {
 			Item item = new Item(modElement);
 			item.name = modElement.getName();
 			item.rarity = getRandomString(random, Arrays.asList("COMMON", "UNCOMMON", "RARE", "EPIC"));
-			item.creativeTab = new TabEntry(modElement.getWorkspace(),
-					getRandomDataListEntry(random, ElementUtil.loadAllTabs(modElement.getWorkspace())));
+			item.creativeTabs = emptyLists ? List.of() : tabs;
 			item.stackSize = 52;
 			item.enchantability = 3;
 			item.useDuration = 8;
@@ -1006,7 +1018,7 @@ public class TestWorkspaceDataProvider {
 			item.damageVsEntity = 6.53;
 			item.specialInformation = new StringListProcedure(emptyLists ? null : "string1",
 					Arrays.asList("info 1", "info 2", "test, is this", "another one"));
-			item.texture = "test2";
+			item.texture = new TextureHolder(modElement.getWorkspace(), "test2");
 			item.renderType = 0;
 			item.customModelName = getRandomItem(random, ItemGUI.builtinitemmodels).getReadableName();
 
@@ -1030,7 +1042,7 @@ public class TestWorkspaceDataProvider {
 					Item.StateEntry stateEntry = new Item.StateEntry();
 					stateEntry.setWorkspace(modElement.getWorkspace());
 					stateEntry.customModelName = getRandomItem(random, ItemGUI.builtinitemmodels).getReadableName();
-					stateEntry.texture = i == 0 ? "test" : "test" + i;
+					stateEntry.texture = new TextureHolder(modElement.getWorkspace(), i == 0 ? "test" : "test" + i);
 					stateEntry.renderType = 0;
 					stateEntry.stateMap = stateMap;
 
@@ -1053,6 +1065,7 @@ public class TestWorkspaceDataProvider {
 					getRandomDataListEntry(random, ElementUtil.loadArrowProjectiles(modElement.getWorkspace())));
 			item.shootConstantly = emptyLists;
 			item.rangedItemChargesPower = !item.shootConstantly;
+			item.projectileDisableAmmoCheck = _true;
 			item.onRangedItemUsed = new Procedure("procedure4");
 			item.rangedUseCondition = new Procedure("condition1");
 			return item;
@@ -1119,12 +1132,14 @@ public class TestWorkspaceDataProvider {
 			PotionEffect potionEffect = new PotionEffect(modElement);
 			potionEffect.effectName = modElement.getName() + " Effect Name";
 			potionEffect.color = Color.magenta;
-			potionEffect.icon = "effect1.png";
+			potionEffect.icon = new TextureHolder(modElement.getWorkspace(), "effect1");
 			potionEffect.isInstant = !_true;
-			potionEffect.isBad = _true;
-			potionEffect.isBenefitical = !_true;
+			potionEffect.mobEffectCategory = getRandomItem(random, new String[] { "NEUTRAL", "HARMFUL", "BENEFICIAL" });
 			potionEffect.renderStatusInHUD = _true;
 			potionEffect.renderStatusInInventory = _true;
+			potionEffect.isCuredByMilk = !_true;
+			potionEffect.isProtectedByTotem = !_true;
+			potionEffect.isCuredbyHoney = _true;
 			potionEffect.onStarted = new Procedure("procedure1");
 			potionEffect.onActiveTick = new Procedure("procedure2");
 			potionEffect.onExpired = new Procedure("procedure3");
@@ -1163,8 +1178,7 @@ public class TestWorkspaceDataProvider {
 			block.hasGravity = _true;
 			block.useLootTableForDrops = !_true;
 			block.requiresCorrectTool = _true;
-			block.creativeTab = new TabEntry(modElement.getWorkspace(),
-					getRandomDataListEntry(random, ElementUtil.loadAllTabs(modElement.getWorkspace())));
+			block.creativeTabs = emptyLists ? List.of() : tabs;
 			block.destroyTool = getRandomItem(random,
 					new String[] { "Not specified", "pickaxe", "axe", "shovel", "hoe" });
 			block.customDrop = new MItemBlock(modElement.getWorkspace(),
@@ -1212,7 +1226,7 @@ public class TestWorkspaceDataProvider {
 			block.aiPathNodeType = getRandomItem(random, ElementUtil.getDataListAsStringArray("pathnodetypes"));
 			block.beaconColorModifier = emptyLists ? null : Color.cyan;
 			block.unbreakable = _true;
-			block.breakHarvestLevel = 4;
+			block.vanillaToolTier = getRandomString(random, Arrays.asList("NONE", "STONE", "IRON", "DIAMOND"));
 			block.tickRandomly = _true;
 			block.hasInventory = _true;
 			block.guiBoundTo = getRandomItem(random, ListUtils.merge(Collections.singleton("<NONE>"),
@@ -1290,18 +1304,19 @@ public class TestWorkspaceDataProvider {
 				block.onEntityWalksOn = new Procedure("procedure13");
 				block.onHitByProjectile = new Procedure("procedure14");
 				block.placingCondition = new Procedure("condition2");
+				block.additionalHarvestCondition = new Procedure("condition1");
 				block.isBonemealTargetCondition = new Procedure("condition3");
 				block.bonemealSuccessCondition = new Procedure("condition4");
 				block.onBonemealSuccess = new Procedure("procedure15");
 			}
-			block.itemTexture = emptyLists ? "" : "itest";
-			block.particleTexture = emptyLists ? "" : "test7";
-			block.texture = "test";
-			block.textureTop = "test2";
-			block.textureLeft = "test3";
-			block.textureFront = "test4";
-			block.textureRight = "test5";
-			block.textureBack = "test6";
+			block.itemTexture = new TextureHolder(modElement.getWorkspace(), emptyLists ? "" : "itest");
+			block.particleTexture = new TextureHolder(modElement.getWorkspace(), emptyLists ? "" : "test7");
+			block.texture = new TextureHolder(modElement.getWorkspace(), "test");
+			block.textureTop = new TextureHolder(modElement.getWorkspace(), "test2");
+			block.textureLeft = new TextureHolder(modElement.getWorkspace(), "test3");
+			block.textureFront = new TextureHolder(modElement.getWorkspace(), "test4");
+			block.textureRight = new TextureHolder(modElement.getWorkspace(), "test5");
+			block.textureBack = new TextureHolder(modElement.getWorkspace(), "test6");
 			block.specialInformation = new StringListProcedure(emptyLists ? null : "string1",
 					Arrays.asList("info 1", "info 2", "test, is this", "another one"));
 			block.tintType = getRandomString(random,
@@ -1374,8 +1389,7 @@ public class TestWorkspaceDataProvider {
 			musicDisc.name = modElement.getName();
 			musicDisc.rarity = getRandomString(random, Arrays.asList("COMMON", "UNCOMMON", "RARE", "EPIC"));
 			musicDisc.description = modElement.getName();
-			musicDisc.creativeTab = new TabEntry(modElement.getWorkspace(),
-					getRandomDataListEntry(random, ElementUtil.loadAllTabs(modElement.getWorkspace())));
+			musicDisc.creativeTabs = emptyLists ? List.of() : tabs;
 			musicDisc.glowCondition = new LogicProcedure(emptyLists ? "condition1" : null, _true);
 			musicDisc.onRightClickedInAir = new Procedure("procedure1");
 			musicDisc.onRightClickedOnBlock = emptyLists ?
@@ -1392,43 +1406,48 @@ public class TestWorkspaceDataProvider {
 					getRandomItem(random, ElementUtil.getAllSounds(modElement.getWorkspace())));
 			musicDisc.specialInformation = new StringListProcedure(emptyLists ? null : "string1",
 					Arrays.asList("info 1", "info 2", "test, is this", "another one"));
-			musicDisc.texture = "test";
+			musicDisc.texture = new TextureHolder(modElement.getWorkspace(), "test");
 			return musicDisc;
 		} else if (ModElementType.ENCHANTMENT.equals(modElement.getType())) {
 			Enchantment enchantment = new Enchantment(modElement);
 			enchantment.name = modElement.getName().toLowerCase(Locale.ENGLISH);
-			enchantment.rarity = getRandomItem(random, new String[] { "COMMON", "UNCOMMON", "RARE", "VERY_RARE" });
-			enchantment.type = getRandomString(random,
-					ElementUtil.loadEnchantmentTypes().stream().map(DataListEntry::getName).toList());
-			enchantment.minLevel = 13;
+			enchantment.supportedSlots = getRandomItem(random,
+					new String[] { "any", "mainhand", "offhand", "hand", "feet", "legs", "chest", "head", "armor",
+							"body" });
+			enchantment.weight = 42;
+			enchantment.anvilCost = 32;
 			enchantment.maxLevel = 45;
 			enchantment.damageModifier = 3;
 			enchantment.isTreasureEnchantment = _true;
-			enchantment.isAllowedOnBooks = !_true;
 			enchantment.isCurse = _true;
 			enchantment.canGenerateInLootTables = !_true;
 			enchantment.canVillagerTrade = _true;
-			enchantment.compatibleItems = new ArrayList<>();
-			if (!emptyLists) {
-				enchantment.compatibleItems = new ArrayList<>(blocksAndItemsAndTags.stream()
-						.skip(_true ? 0 : ((long) (blocksAndItemsAndTags.size() / 4) * valueIndex))
-						.limit(blocksAndItemsAndTags.size() / 4)
-						.map(e -> new MItemBlock(modElement.getWorkspace(), e.getName())).toList());
-				enchantment.compatibleItems.add(new MItemBlock(modElement.getWorkspace(), "TAG:flowers"));
-				enchantment.excludeEnchantments = _true;
+			enchantment.supportedItems = new ArrayList<>();
+			if (_true) {
+				enchantment.supportedItems.add(new MItemBlock(modElement.getWorkspace(), "Items.WOODEN_PICKAXE"));
+				enchantment.supportedItems.add(new MItemBlock(modElement.getWorkspace(), "Items.IRON_HELMET"));
+				enchantment.supportedItems.add(new MItemBlock(modElement.getWorkspace(), "Items.CRIMSON_DOOR"));
+			} else {
+				enchantment.supportedItems.add(
+						new MItemBlock(modElement.getWorkspace(), "TAG:minecraft:enchantable/fishing"));
 			}
-			enchantment.compatibleEnchantments = new ArrayList<>();
+			enchantment.incompatibleEnchantments = new ArrayList<>();
 			if (!emptyLists) {
-				enchantment.compatibleEnchantments.addAll(
-						ElementUtil.loadAllEnchantments(modElement.getWorkspace()).stream()
-								.map(e -> new net.mcreator.element.parts.Enchantment(modElement.getWorkspace(),
-										e.getName())).toList());
-				enchantment.excludeItems = _true;
+				if (_true) {
+					enchantment.incompatibleEnchantments.addAll(
+							ElementUtil.loadAllEnchantments(modElement.getWorkspace()).stream()
+									.map(e -> new net.mcreator.element.parts.Enchantment(modElement.getWorkspace(),
+											e.getName())).toList());
+				} else {
+					enchantment.incompatibleEnchantments.add(
+							new net.mcreator.element.parts.Enchantment(modElement.getWorkspace(),
+									"#minecraft:non_treasure"));
+				}
 			}
 			return enchantment;
 		} else if (ModElementType.PAINTING.equals(modElement.getType())) {
 			Painting painting = new Painting(modElement);
-			painting.texture = "test.png";
+			painting.texture = new TextureHolder(modElement.getWorkspace(), "other0");
 			painting.title = modElement.getName();
 			painting.author = modElement.getName() + " author";
 			painting.width = 16;
@@ -1436,7 +1455,7 @@ public class TestWorkspaceDataProvider {
 			return painting;
 		} else if (ModElementType.PARTICLE.equals(modElement.getType())) {
 			net.mcreator.element.types.Particle particle = new net.mcreator.element.types.Particle(modElement);
-			particle.texture = "particle1.png";
+			particle.texture = new TextureHolder(modElement.getWorkspace(), "particle1");
 			particle.width = 2.3;
 			particle.frameDuration = 2;
 			particle.height = 1.38;
@@ -1477,8 +1496,8 @@ public class TestWorkspaceDataProvider {
 			profession.actionSound = new Sound(modElement.getWorkspace(),
 					getRandomItem(random, ElementUtil.getAllSounds(modElement.getWorkspace())));
 			profession.hat = getRandomString(random, Arrays.asList("None", "Partial", "Full"));
-			profession.professionTextureFile = "test.png";
-			profession.zombifiedProfessionTextureFile = "test.png";
+			profession.professionTextureFile = "entityTx0.png";
+			profession.zombifiedProfessionTextureFile = "entityTx1.png";
 			return profession;
 		} else if (ModElementType.VILLAGERTRADE.equals(modElement.getType())) {
 			VillagerTrade villagerTrade = new VillagerTrade(modElement);
@@ -1603,8 +1622,10 @@ public class TestWorkspaceDataProvider {
 		livingEntity.spawnEggBaseColor = Color.red;
 		livingEntity.spawnEggDotColor = Color.green;
 		livingEntity.isBoss = _true;
-		livingEntity.creativeTab = new TabEntry(modElement.getWorkspace(),
-				getRandomDataListEntry(random, ElementUtil.loadAllTabs(modElement.getWorkspace())));
+		livingEntity.creativeTabs = emptyLists ?
+				List.of() :
+				ElementUtil.loadAllTabs(modElement.getWorkspace()).stream()
+						.map(e -> new TabEntry(modElement.getWorkspace(), e)).toList();
 		livingEntity.bossBarColor = getRandomItem(random,
 				new String[] { "PINK", "BLUE", "RED", "GREEN", "YELLOW", "PURPLE", "WHITE" });
 		livingEntity.bossBarType = getRandomItem(random,
@@ -1659,9 +1680,8 @@ public class TestWorkspaceDataProvider {
 		livingEntity.canControlStrafe = !_true;
 		livingEntity.canControlForward = _true;
 		livingEntity.guiBoundTo = getRandomItem(random, ListUtils.merge(Collections.singleton("<NONE>"),
-				modElement.getWorkspace().getModElements().stream()
-						.filter(var -> var.getType() == ModElementType.GUI).map(ModElement::getName)
-						.collect(Collectors.toList())));
+				modElement.getWorkspace().getModElements().stream().filter(var -> var.getType() == ModElementType.GUI)
+						.map(ModElement::getName).collect(Collectors.toList())));
 		livingEntity.mobDrop = new MItemBlock(modElement.getWorkspace(),
 				getRandomMCItem(random, blocksAndItems).getName());
 		livingEntity.livingSound = new Sound(modElement.getWorkspace(),
@@ -1750,7 +1770,7 @@ public class TestWorkspaceDataProvider {
 			modelLayer = new LivingEntity.ModelLayerEntry();
 			modelLayer.setWorkspace(modElement.getWorkspace());
 			modelLayer.model = "Default";
-			modelLayer.texture = "test.png";
+			modelLayer.texture = "entityTx0.png";
 			modelLayer.disableHurtOverlay = false;
 			modelLayer.glow = false;
 			modelLayer.condition = new Procedure("condition1");
@@ -1771,10 +1791,14 @@ public class TestWorkspaceDataProvider {
 			boolean _true, boolean emptyLists) {
 		Tool tool = new Tool(modElement);
 		tool.name = modElement.getName();
-		tool.creativeTab = new TabEntry(modElement.getWorkspace(),
-				getRandomDataListEntry(random, ElementUtil.loadAllTabs(modElement.getWorkspace())));
+		tool.creativeTabs = emptyLists ?
+				List.of() :
+				ElementUtil.loadAllTabs(modElement.getWorkspace()).stream()
+						.map(e -> new TabEntry(modElement.getWorkspace(), e)).toList();
 		tool.toolType = toolType;
-		tool.harvestLevel = 3;
+		tool.blockDropsTier = getRandomString(random,
+				Arrays.asList("WOOD", "STONE", "IRON", "DIAMOND", "GOLD", "NETHERITE"));
+		tool.additionalDropCondition = new Procedure("condition3");
 		tool.efficiency = 6.5;
 		tool.attackSpeed = 4.8;
 		tool.enchantability = 4;
@@ -1811,7 +1835,7 @@ public class TestWorkspaceDataProvider {
 		tool.onItemInInventoryTick = new Procedure("procedure6");
 		tool.onItemInUseTick = new Procedure("procedure7");
 		tool.onEntitySwing = new Procedure("procedure11");
-		tool.texture = "test";
+		tool.texture = new TextureHolder(modElement.getWorkspace(), "test");
 		tool.renderType = 0;
 		tool.customModelName = "Normal";
 		tool.blockingRenderType = 0;
@@ -1973,6 +1997,210 @@ public class TestWorkspaceDataProvider {
 		return source.stream()
 				.filter(e -> !(e.getName().equals("Blocks.AIR") || e.getName().equals("Blocks.VOID_AIR") || e.getName()
 						.equals("Blocks.CAVE_AIR"))).toList();
+	}
+
+	public static void provideAndGenerateSampleElements(Random random, Workspace workspace) {
+		// add sample procedures (used by test mod elements) if supported
+		if (workspace.getGeneratorStats().getModElementTypeCoverageInfo().get(ModElementType.PROCEDURE)
+				!= GeneratorStats.CoverageStatus.NONE) {
+			for (int i = 1; i <= 15; i++) {
+				ModElement me = new ModElement(workspace, "procedure" + i, ModElementType.PROCEDURE);
+				if (i == 1) {
+					me.putMetadata("dependencies", Arrays.asList(
+							Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity")));
+				} else {
+					me.putMetadata("dependencies",
+							Arrays.asList(Dependency.fromString("x:number/y:number/z:number/world:world")));
+				}
+
+				net.mcreator.element.types.Procedure procedure = new net.mcreator.element.types.Procedure(me);
+				procedure.skipDependencyRegeneration();
+				procedure.procedurexml = GTProcedureBlocks.wrapWithBaseTestXML("");
+
+				addGeneratableElementAndAssert(workspace, procedure);
+			}
+
+			for (int i = 1; i <= 4; i++) {
+				ModElement me = new ModElement(workspace, "condition" + i, ModElementType.PROCEDURE);
+				me.putMetadata("return_type", "LOGIC");
+				me.putMetadata("dependencies",
+						Arrays.asList(Dependency.fromString("x:number/y:number/z:number/world:world")));
+
+				net.mcreator.element.types.Procedure procedure = new net.mcreator.element.types.Procedure(me);
+				procedure.procedurexml = GTProcedureBlocks.wrapWithBaseTestXML(
+						"<block type=\"return_logic\"><value name=\"return\">"
+								+ "<block type=\"logic_boolean\"><field name=\"BOOL\">FALSE</field></block>"
+								+ "</value></block>");
+
+				addGeneratableElementAndAssert(workspace, procedure);
+			}
+
+			for (int i = 1; i <= 3; i++) {
+				ModElement me = new ModElement(workspace, "number" + i, ModElementType.PROCEDURE);
+				me.putMetadata("return_type", "NUMBER");
+				if (i == 3) {
+					me.putMetadata("dependencies", Collections.emptyList());
+				} else {
+					me.putMetadata("dependencies",
+							Arrays.asList(Dependency.fromString("x:number/y:number/z:number/world:world")));
+				}
+
+				net.mcreator.element.types.Procedure procedure = new net.mcreator.element.types.Procedure(me);
+				procedure.skipDependencyRegeneration();
+				procedure.procedurexml = GTProcedureBlocks.wrapWithBaseTestXML(
+						"<block type=\"return_number\"><value name=\"return\">"
+								+ "<block type=\"math_number\"><field name=\"NUM\">100</field></block>"
+								+ "</value></block>");
+
+				addGeneratableElementAndAssert(workspace, procedure);
+			}
+
+			for (int i = 1; i <= 4; i++) {
+				ModElement me = new ModElement(workspace, "string" + i, ModElementType.PROCEDURE);
+				me.putMetadata("return_type", "STRING");
+				me.putMetadata("dependencies",
+						Arrays.asList(Dependency.fromString("x:number/y:number/z:number/world:world")));
+
+				net.mcreator.element.types.Procedure procedure = new net.mcreator.element.types.Procedure(me);
+				procedure.skipDependencyRegeneration();
+				procedure.procedurexml = GTProcedureBlocks.wrapWithBaseTestXML(
+						"<block type=\"return_string\"><value name=\"return\">"
+								+ "<block type=\"text\"><field name=\"TEXT\">demo text</field></block>"
+								+ "</value></block>");
+
+				addGeneratableElementAndAssert(workspace, procedure);
+			}
+
+			for (int i = 1; i <= 2; i++) {
+				ModElement me = new ModElement(workspace, "itemstack" + i, ModElementType.PROCEDURE);
+				me.putMetadata("return_type", "ITEMSTACK");
+				me.putMetadata("dependencies",
+						Arrays.asList(Dependency.fromString("x:number/y:number/z:number/world:world")));
+
+				net.mcreator.element.types.Procedure procedure = new net.mcreator.element.types.Procedure(me);
+				procedure.skipDependencyRegeneration();
+				procedure.procedurexml = GTProcedureBlocks.wrapWithBaseTestXML(
+						"<block type=\"return_itemstack\"><value name=\"return\">"
+								+ "<block type=\"empty_itemstack\"></block></value></block>");
+
+				addGeneratableElementAndAssert(workspace, procedure);
+			}
+
+			for (int i = 1; i <= 1; i++) {
+				ModElement me = new ModElement(workspace, "actionresulttype" + i, ModElementType.PROCEDURE);
+				me.putMetadata("return_type", "ACTIONRESULTTYPE");
+				me.putMetadata("dependencies",
+						Arrays.asList(Dependency.fromString("x:number/y:number/z:number/world:world")));
+
+				net.mcreator.element.types.Procedure procedure = new net.mcreator.element.types.Procedure(me);
+				procedure.skipDependencyRegeneration();
+				procedure.procedurexml = GTProcedureBlocks.wrapWithBaseTestXML(
+						"<block type=\"return_actionresulttype\"><value name=\"return\">"
+								+ "<block type=\"action_result_type\"><field name=\"type\">SUCCESS</field></block>"
+								+ "</value></block>");
+
+				addGeneratableElementAndAssert(workspace, procedure);
+			}
+
+			for (int i = 1; i <= 1; i++) {
+				ModElement me = new ModElement(workspace, "entity" + i, ModElementType.PROCEDURE);
+				me.putMetadata("return_type", "ENTITY");
+				me.putMetadata("dependencies",
+						Arrays.asList(Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity")));
+
+				net.mcreator.element.types.Procedure procedure = new net.mcreator.element.types.Procedure(me);
+				procedure.skipDependencyRegeneration();
+				procedure.procedurexml = GTProcedureBlocks.wrapWithBaseTestXML(
+						"<block type=\"return_entity\"><value name=\"return\">"
+								+ "<block type=\"entity_from_deps\"></block></value></block>");
+
+				addGeneratableElementAndAssert(workspace, procedure);
+			}
+		}
+
+		// add sample recipes (used by test mod elements) if supported
+		if (workspace.getGeneratorStats().getModElementTypeCoverageInfo().get(ModElementType.RECIPE)
+				!= GeneratorStats.CoverageStatus.NONE) {
+			for (int i = 1; i <= 2; i++) {
+				ModElement me = new ModElement(workspace, "ExampleRecipe" + i, ModElementType.RECIPE);
+
+				Recipe recipe = new Recipe(me);
+				recipe.recipeType = "smelting";
+				recipe.smeltingInputStack = new MItemBlock(workspace,
+						getRandomMCItem(random, ElementUtil.loadBlocksAndItems(workspace)).getName());
+				recipe.smeltingReturnStack = new MItemBlock(workspace,
+						getRandomMCItem(random, ElementUtil.loadBlocksAndItems(workspace)).getName());
+				recipe.name = me.getRegistryName();
+				recipe.namespace = "mod";
+
+				addGeneratableElementAndAssert(workspace, recipe);
+			}
+		}
+
+		// add sample functions (used by test mod elements) if supported
+		if (workspace.getGeneratorStats().getModElementTypeCoverageInfo().get(ModElementType.FUNCTION)
+				!= GeneratorStats.CoverageStatus.NONE) {
+			for (int i = 1; i <= 2; i++) {
+				ModElement me = new ModElement(workspace, "ExampleFunction" + i, ModElementType.FUNCTION);
+
+				Function function = new Function(me);
+				function.code = "";
+				function.name = me.getRegistryName();
+				function.namespace = "mod";
+
+				addGeneratableElementAndAssert(workspace, function);
+			}
+		}
+
+		// add sample loot tables (used by test mod elements) if supported
+		if (workspace.getGeneratorStats().getModElementTypeCoverageInfo().get(ModElementType.LOOTTABLE)
+				!= GeneratorStats.CoverageStatus.NONE) {
+			for (int i = 1; i <= 2; i++) {
+				ModElement me = new ModElement(workspace, "ExampleLootTable" + i, ModElementType.LOOTTABLE);
+
+				LootTable lootTable = new LootTable(me);
+				lootTable.type = "Generic";
+				lootTable.name = me.getRegistryName();
+				lootTable.namespace = "mod";
+				lootTable.pools = Collections.emptyList();
+
+				addGeneratableElementAndAssert(workspace, lootTable);
+			}
+		}
+	}
+
+	public static Workspace createTestWorkspace(File directory, GeneratorConfiguration generatorConfiguration,
+			boolean fillWithResourcesAndData, boolean provideAndGenerateSampleElements, @Nullable Random random) {
+		WorkspaceSettings workspaceSettings = new WorkspaceSettings("test_mod");
+		workspaceSettings.setVersion("1.0.0");
+		workspaceSettings.setDescription("Test mod");
+		workspaceSettings.setAuthor("Unit tests");
+		workspaceSettings.setLicense("GPL 3.0");
+		workspaceSettings.setWebsiteURL("https://mcreator.net/");
+		workspaceSettings.setUpdateURL("https://mcreator.net/");
+		workspaceSettings.setModPicture("example");
+		workspaceSettings.setModName("Test mod");
+		workspaceSettings.setCurrentGenerator(generatorConfiguration.getGeneratorName());
+
+		Workspace workspace = Workspace.createWorkspace(new File(directory, "test_mod.mcreator"), workspaceSettings);
+
+		if (fillWithResourcesAndData)
+			fillWorkspaceWithResourcesAndData(workspace);
+
+		if (provideAndGenerateSampleElements)
+			provideAndGenerateSampleElements(random != null ? random : new Random(), workspace);
+
+		return workspace;
+	}
+
+	private static ModElement me(Workspace workspace, ModElementType<?> type, String suffix) {
+		return new ModElement(workspace, "Example" + type.getRegistryName() + suffix, type);
+	}
+
+	private static void addGeneratableElementAndAssert(Workspace workspace, GeneratableElement generatableElement) {
+		workspace.addModElement(generatableElement.getModElement());
+		assertTrue(workspace.getGenerator().generateElement(generatableElement));
+		workspace.getModElementManager().storeModElement(generatableElement);
 	}
 
 }

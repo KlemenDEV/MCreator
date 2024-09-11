@@ -27,7 +27,9 @@ import net.mcreator.ui.laf.themes.Theme;
 import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.util.FilenameUtilsPatched;
 import net.mcreator.util.image.ImageUtils;
+import net.mcreator.workspace.resources.CustomTexture;
 import net.mcreator.workspace.resources.Texture;
+import net.mcreator.workspace.resources.ExternalTexture;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -35,9 +37,7 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 public class TypedTextureSelectorDialog extends MCreatorDialog {
@@ -56,10 +56,16 @@ public class TypedTextureSelectorDialog extends MCreatorDialog {
 
 	private final MCreator mcreator;
 
+	private boolean loadExternalTextures = false;
+
 	public TypedTextureSelectorDialog(MCreator mcreator, TextureType type) {
 		super(mcreator);
 		this.type = type;
 		this.mcreator = mcreator;
+
+		if (type == TextureType.BLOCK || type == TextureType.ITEM) {
+			loadExternalTextures(true);
+		}
 
 		setModal(true);
 		setTitle(L10N.t("dialog.textures_selector.title", type));
@@ -113,6 +119,14 @@ public class TypedTextureSelectorDialog extends MCreatorDialog {
 		pno2.add(L10N.label("dialog.textures_selector.search"));
 		pno2.add(filterField);
 
+		JButton all = L10N.button("dialog.item_selector.all");
+		all.addActionListener(event -> filterField.setText(""));
+		JButton mods = L10N.button("dialog.item_selector.custom_elements");
+		mods.addActionListener(event -> filterField.setText("!minecraft"));
+
+		pno2.add(all);
+		pno2.add(mods);
+
 		JPanel pno = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 4));
 
 		JButton createTx2 = L10N.button("dialog.textures_selector.create_from_scratch");
@@ -138,27 +152,41 @@ public class TypedTextureSelectorDialog extends MCreatorDialog {
 		add(pn);
 	}
 
+	public TypedTextureSelectorDialog loadExternalTextures(boolean shouldLoad) {
+		this.loadExternalTextures = shouldLoad;
+		return this;
+	}
+
 	public TextureType getTextureType() {
 		return type;
 	}
 
-	@Override public void setVisible(boolean b) {
-		if (b)
+	@Override public void setVisible(boolean visible) {
+		if (visible) {
 			reloadList();
-		super.setVisible(b);
+		}
+
+		super.setVisible(visible);
 	}
 
 	private void reloadList() {
-		List<File> block = mcreator.getFolderManager().getTexturesList(type);
 		model.removeAllElements();
-		block.stream().filter(element -> element.getName().endsWith(".png"))
-				.forEach(e -> model.addElement(new Texture.Custom(type, e)));
+
+		// Load custom textures
+		CustomTexture.getTexturesOfType(mcreator.getWorkspace(), type).forEach(model::addElement);
+
+		if (loadExternalTextures) {
+			ExternalTexture.getTexturesOfType(mcreator.getWorkspace(), type).forEach(model::addElement);
+		}
+
 		list.setSelectedIndex(0);
-		if (block.isEmpty()) {
+
+		if (model.getSize() == 0) {
 			layout.show(center, "help");
 		} else {
 			layout.show(center, "list");
 		}
+
 		list.requestFocus();
 	}
 
@@ -240,8 +268,14 @@ public class TypedTextureSelectorDialog extends MCreatorDialog {
 		private void refilter() {
 			filterItems.clear();
 			String term = filterField.getText();
-			filterItems.addAll(items.stream().filter(item -> item.getTextureName().toLowerCase(Locale.ENGLISH)
-					.contains(term.toLowerCase(Locale.ENGLISH))).toList());
+			filterItems.addAll(items.stream().filter(item -> {
+				if (term.startsWith("!")) {
+					return !item.getTextureName().toLowerCase(Locale.ENGLISH)
+							.contains(term.substring(1).toLowerCase(Locale.ENGLISH));
+				} else {
+					return item.getTextureName().toLowerCase(Locale.ENGLISH).contains(term.toLowerCase(Locale.ENGLISH));
+				}
+			}).toList());
 			fireContentsChanged(this, 0, getSize());
 		}
 
