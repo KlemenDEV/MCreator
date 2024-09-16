@@ -92,6 +92,7 @@ public class MainToolBar extends JToolBar {
 
 		addSeparator(new Dimension(10, 4));
 
+		add(mcreator.actionRegistry.validateWorkspace);
 		add(mcreator.actionRegistry.regenerateCode);
 		add(mcreator.actionRegistry.buildWorkspace);
 

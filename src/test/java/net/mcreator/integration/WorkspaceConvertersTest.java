@@ -28,6 +28,7 @@ import net.mcreator.integration.ui.UITestUtil;
 import net.mcreator.io.FileIO;
 import net.mcreator.io.zip.ZipIO;
 import net.mcreator.ui.MCreator;
+import net.mcreator.ui.action.impl.workspace.ValidateWorkspaceAction;
 import net.mcreator.ui.modgui.ModElementGUI;
 import net.mcreator.workspace.Workspace;
 import net.mcreator.workspace.WorkspaceUtils;
@@ -120,7 +121,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 						assertTrue(workspace.getGenerator().generateElement(ge));
 
 						// test if the converted GE can be opened in the UI
-						ModElementGUI<?> modElementGUI = UITestUtil.openModElementGUIFor(mcreator, ge);
+						ModElementGUI<?> modElementGUI = ValidateWorkspaceAction.openModElementGUIForValidation(mcreator, ge);
+
+						assertNotNull(modElementGUI);
 
 						// test if UI validation is error free
 						UITestUtil.testIfValidationPasses(modElementGUI, false);

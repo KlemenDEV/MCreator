@@ -29,6 +29,7 @@ import net.mcreator.integration.IntegrationTestSetup;
 import net.mcreator.integration.TestWorkspaceDataProvider;
 import net.mcreator.preferences.PreferencesManager;
 import net.mcreator.ui.MCreator;
+import net.mcreator.ui.action.impl.workspace.ValidateWorkspaceAction;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.modgui.ModElementGUI;
 import net.mcreator.workspace.elements.ModElement;
@@ -119,7 +120,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 				assertNotNull(generatableElement);
 
-				ModElementGUI<?> modElementGUI = UITestUtil.openModElementGUIFor(mcreator, generatableElement);
+				ModElementGUI<?> modElementGUI = ValidateWorkspaceAction.openModElementGUIForValidation(mcreator,
+						generatableElement);
+
+				assertNotNull(modElementGUI);
 
 				// test if UI validation is error free
 				UITestUtil.testIfValidationPasses(modElementGUI, true);
