@@ -34,6 +34,7 @@ import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.util.image.ImageUtils;
 import net.mcreator.workspace.elements.ModElement;
 import net.mcreator.workspace.references.ModElementReference;
+import net.mcreator.workspace.references.ResourceReference;
 import net.mcreator.workspace.references.TextureReference;
 import net.mcreator.workspace.resources.Model;
 import net.mcreator.workspace.resources.TexturedModel;
@@ -187,6 +188,11 @@ import java.util.stream.Collectors;
 	public int minGenerateHeight;
 	public int maxGenerateHeight;
 
+	public String javaModelName;
+	//TODO: model texture
+	@ModElementReference @ResourceReference("animation")
+	public List<AnimationEntry> javaModelAnimations; //TODO: not implemented yet
+
 	private Block() {
 		this(null);
 	}
@@ -218,6 +224,8 @@ import java.util.stream.Collectors;
 		this.energyMaxReceive = 200;
 		this.energyMaxExtract = 200;
 		this.fluidCapacity = 8000;
+
+		this.javaModelName = "No model";
 	}
 
 	public int renderType() {
@@ -392,6 +400,25 @@ import java.util.stream.Collectors;
 
 	public TextureHolder getParticleTexture() {
 		return particleTexture == null || particleTexture.isEmpty() ? texture : particleTexture;
+	}
+
+	public boolean hasJavaModel() {
+		return javaModelName != null && !javaModelName.equals("No model");
+	}
+
+	@Nullable public Model getJavaModel() {
+		if (!hasJavaModel())
+			return null;
+		return Model.getModelByParams(getModElement().getWorkspace(), javaModelName, Model.Type.JAVA);
+	}
+
+	public static class AnimationEntry {
+
+		public Animation animation;
+		public double speed;
+
+		public Procedure condition;
+
 	}
 
 }

@@ -4,6 +4,9 @@ templates:
   - template: block/blockentity.java.ftl
     condition: hasInventory
     name: "@SRCROOT/@BASEPACKAGEPATH/block/entity/@NAMEBlockEntity.java"
+  - template: block/blockentityrenderer.java.ftl
+    name: "@SRCROOT/@BASEPACKAGEPATH/client/renderer/block/@NAMERenderer.java"
+    condition: hasJavaModel()
 
   # Worldgen
   - template: json/block_feature_biome_modifier.json.ftl

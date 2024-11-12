@@ -55,6 +55,7 @@ import net.mcreator.ui.procedure.ProcedureSelector;
 import net.mcreator.ui.procedure.StringListProcedureSelector;
 import net.mcreator.ui.validation.AggregatedValidationResult;
 import net.mcreator.ui.validation.ValidationGroup;
+import net.mcreator.ui.validation.component.VComboBox;
 import net.mcreator.ui.validation.component.VTextField;
 import net.mcreator.ui.validation.validators.CommaSeparatedNumbersValidator;
 import net.mcreator.ui.validation.validators.ConditionalTextFieldValidator;
@@ -253,6 +254,9 @@ public class BlockGUI extends ModElementGUI<Block> {
 	private final JSpinner fireSpreadSpeed = new JSpinner(new SpinnerNumberModel(0, 0, 1024, 1));
 
 	private final JCheckBox useLootTableForDrops = L10N.checkbox("elementgui.common.use_table_loot_drops");
+
+	private static final Model noJavaModel = new Model.BuiltInModel("No model");
+	private final VComboBox<Model> javaModel = new SearchableComboBox<>(new Model[] { noJavaModel });
 
 	public BlockGUI(MCreator mcreator, ModElement modElement, boolean editingMode) {
 		super(mcreator, modElement, editingMode);
@@ -885,7 +889,7 @@ public class BlockGUI extends ModElementGUI<Block> {
 
 		pane4.setOpaque(false);
 
-		JPanel invblock = new JPanel(new BorderLayout(10, 40));
+		JPanel invblock = new JPanel(new BorderLayout(10, 20));
 		invblock.setOpaque(false);
 
 		hasInventory.setOpaque(false);
@@ -1032,7 +1036,25 @@ public class BlockGUI extends ModElementGUI<Block> {
 				L10N.t("elementgui.block.settings_inventory"), 0, 0, getFont().deriveFont(12.0f),
 				Theme.current().getForegroundColor()));
 
-		invblock.add("Center", props);
+		invblock.add("West", props);
+
+		JPanel blockEntityJavaModel = new JPanel(new BorderLayout());
+		blockEntityJavaModel.setOpaque(false);
+
+		blockEntityJavaModel.add("North", PanelUtils.westAndCenterElement(
+				HelpUtils.wrapWithHelpButton(this.withEntry("block/block_entity_java_model"),
+						L10N.label("elementgui.block.block_entity_java_model")), javaModel, 20, 2));
+
+		javaModel.setRenderer(new ModelComboBoxRenderer());
+		ComponentUtils.deriveFont(javaModel, 16);
+		ComponentUtils.deriveFont(javaModel, 16);
+
+		blockEntityJavaModel.setBorder(BorderFactory.createTitledBorder(
+				BorderFactory.createLineBorder(Theme.current().getForegroundColor(), 1),
+				L10N.t("elementgui.block.block_entity_java_model"), 0, 0, getFont().deriveFont(12.0f),
+				Theme.current().getForegroundColor()));
+
+		invblock.add("East", blockEntityJavaModel);
 
 		invblock.add("North", HelpUtils.wrapWithHelpButton(this.withEntry("block/has_inventory"), hasInventory));
 
@@ -1216,6 +1238,7 @@ public class BlockGUI extends ModElementGUI<Block> {
 		isFluidTank.setEnabled(hasInventory.isSelected());
 		fluidCapacity.setEnabled(hasInventory.isSelected());
 		fluidRestrictions.setEnabled(hasInventory.isSelected());
+		javaModel.setEnabled(hasInventory.isSelected());
 	}
 
 	private void refreshRedstoneEmitted() {
@@ -1297,6 +1320,11 @@ public class BlockGUI extends ModElementGUI<Block> {
 						Model.getModelsWithTextureMaps(mcreator.getWorkspace()).stream()
 								.filter(el -> el.getType() == Model.Type.JSON || el.getType() == Model.Type.OBJ)
 								.collect(Collectors.toList())));
+
+		ComboBoxUtil.updateComboBoxContents(javaModel, ListUtils.merge(Collections.singleton(noJavaModel),
+				Model.getModels(mcreator.getWorkspace()).stream()
+						.filter(el -> el.getType() == Model.Type.JAVA || el.getType() == Model.Type.MCREATOR)
+						.collect(Collectors.toList())));
 
 		ComboBoxUtil.updateComboBoxContents(aiPathNodeType,
 				Arrays.asList(ElementUtil.getDataListAsStringArray("pathnodetypes")), "DEFAULT");
@@ -1455,6 +1483,10 @@ public class BlockGUI extends ModElementGUI<Block> {
 			hasGravity.setEnabled(!isWaterloggable.isSelected());
 
 		updateSoundType();
+
+		Model _javaModel = block.getJavaModel();
+		if (_javaModel != null)
+			javaModel.setSelectedItem(_javaModel);
 	}
 
 	@Override public Block getElementFromGUI() {
@@ -1602,6 +1634,8 @@ public class BlockGUI extends ModElementGUI<Block> {
 		else if (model.equals(grassBlock))
 			block.renderType = 14;
 		block.customModelName = model.getReadableName();
+
+		block.javaModelName = (Objects.requireNonNull(javaModel.getSelectedItem())).getReadableName();
 
 		return block;
 	}
