@@ -34,6 +34,8 @@ public class UserCodeProcessor {
 
 	private static final Logger LOG = LogManager.getLogger(UserCodeProcessor.class);
 
+	public static final String MCREATOR_OFF_COMMENT = "//@mcreator:off";
+
 	private static final String USER_CODE_BLOCK_START = " Start of user code block ";
 	private static final String USER_CODE_BLOCK_END = " End of user code block ";
 
@@ -51,7 +53,7 @@ public class UserCodeProcessor {
 		return newCode;
 	}
 
-	private static String processUserCode(@Nullable String currentCode, String newCode, String lineCommentStart) {
+	public static String processUserCode(@Nullable String currentCode, String newCode, String lineCommentStart) {
 		// If the new code does not contain user code blocks, we can return the new code
 		if (!newCode.contains(USER_CODE_BLOCK_START) || !newCode.contains(USER_CODE_BLOCK_END))
 			return newCode;

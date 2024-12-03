@@ -590,9 +590,16 @@ public class Generator implements IGenerator, Closeable {
 				if (formatAndOrganiseImports && !generatorFile.getFile().isFile())
 					FileIO.touchFile(generatorFile.getFile());
 
-				javaFiles.put(generatorFile.getFile(),
-						UserCodeProcessor.processUserCode(generatorFile.getFile(), generatorFile.contents(),
+				File file = generatorFile.getFile();
+				if (file.isFile()) {
+					String originalCode = FileIO.readFileToString(file);
+					if (!originalCode.strip().startsWith(UserCodeProcessor.MCREATOR_OFF_COMMENT)) {
+						javaFiles.put(file, UserCodeProcessor.processUserCode(originalCode, generatorFile.contents(),
 								generatorFile.getUsercodeComment()));
+					}
+				} else {
+					javaFiles.put(file, generatorFile.contents());
+				}
 			} else if (generatorFile.writer() == GeneratorFile.Writer.JSON) {
 				JSONWriter.writeJSONToFile(workspace, generatorFile.contents(), generatorFile.getFile());
 			} else if (generatorFile.writer() == GeneratorFile.Writer.FILE) {
