@@ -254,7 +254,7 @@ public final class MCreatorApplication {
 	}
 
 	/**
-	 * @param workspaceFile   File of the .mcreator workspace definition
+	 * @param workspaceFile File of the .mcreator workspace definition
 	 * @return MCreator if new instance, null if existing is open or open failed
 	 */
 	public MCreator openWorkspaceInMCreator(File workspaceFile) {
@@ -281,7 +281,7 @@ public final class MCreatorApplication {
 				AtomicReference<MCreator> openResult = new AtomicReference<>(null);
 
 				ThreadUtil.runOnSwingThreadAndWait(() -> {
-					MCreator mcreator = new MCreator(this, workspace);
+					MCreator mcreator = MCreator.create(this, workspace);
 					if (!this.openMCreators.contains(mcreator)) {
 						this.workspaceSelector.setVisible(false);
 						this.openMCreators.add(mcreator);

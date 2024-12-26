@@ -1,4 +1,5 @@
 _default: Attributes.ARMOR
+_mcreator_map_template: "@JavaModNameAttributes.@REGISTRYNAME"
 ARMOR: Attributes.ARMOR
 ARMOR_TOUGHNESS: Attributes.ARMOR_TOUGHNESS
 ATTACK_DAMAGE: Attributes.ATTACK_DAMAGE

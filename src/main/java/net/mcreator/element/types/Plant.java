@@ -24,10 +24,7 @@ import net.mcreator.element.GeneratableElement;
 import net.mcreator.element.parts.*;
 import net.mcreator.element.parts.procedure.Procedure;
 import net.mcreator.element.parts.procedure.StringListProcedure;
-import net.mcreator.element.types.interfaces.IBlock;
-import net.mcreator.element.types.interfaces.IBlockWithBoundingBox;
-import net.mcreator.element.types.interfaces.IItemWithModel;
-import net.mcreator.element.types.interfaces.ITabContainedElement;
+import net.mcreator.element.types.interfaces.*;
 import net.mcreator.generator.GeneratorFlavor;
 import net.mcreator.minecraft.MCItem;
 import net.mcreator.ui.workspace.resources.TextureType;
@@ -44,7 +41,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused") public class Plant extends GeneratableElement
-		implements IBlock, IItemWithModel, ITabContainedElement, IBlockWithBoundingBox {
+		implements IBlock, IItemWithModel, ITabContainedElement, ISpecialInfoHolder, IBlockWithBoundingBox {
 
 	public int renderType;
 	@TextureReference(TextureType.BLOCK) public TextureHolder texture;
@@ -62,6 +59,11 @@ import java.util.stream.Collectors;
 	@ModElementReference public String suspiciousStewEffect;
 	public int suspiciousStewDuration;
 
+	public double secondaryTreeChance;
+	@ModElementReference public ConfiguredFeatureEntry[] trees;
+	@ModElementReference public ConfiguredFeatureEntry[] flowerTrees;
+	@ModElementReference public ConfiguredFeatureEntry[] megaTrees;
+
 	public String growapableSpawnType;
 	public int growapableMaxHeight;
 
@@ -71,12 +73,13 @@ import java.util.stream.Collectors;
 
 	public String name;
 	public StringListProcedure specialInformation;
-	public List<TabEntry> creativeTabs;
+	@ModElementReference public List<TabEntry> creativeTabs;
 	public double hardness;
 	public double resistance;
 	public int luminance;
 	public boolean unbreakable;
 	public boolean isSolid;
+	public boolean isWaterloggable;
 
 	public boolean isCustomSoundType;
 	public StepSound soundOnStep;
@@ -162,10 +165,23 @@ import java.util.stream.Collectors;
 		this.patchSize = 64;
 
 		this.boundingBoxes = new ArrayList<>();
+
+		this.secondaryTreeChance = 0.1;
+		this.trees = new ConfiguredFeatureEntry[2];
+		this.flowerTrees = new ConfiguredFeatureEntry[2];
+		this.megaTrees = new ConfiguredFeatureEntry[2];
 	}
 
 	public boolean generateLootTable() {
 		return !useLootTableForDrops;
+	}
+
+	public boolean isWaterloggable() {
+		// Disable waterlogging for sapling with mega trees due to ghost water blocks when the tree fails to grow
+		if ("sapling".equals(plantType) && (megaTrees[0] != null || megaTrees[1] != null)) {
+			return false;
+		}
+		return isWaterloggable;
 	}
 
 	@Override public Model getItemModel() {
@@ -230,6 +246,10 @@ import java.util.stream.Collectors;
 
 	@Override public List<MCItem> getCreativeTabItems() {
 		return providedMCItems();
+	}
+
+	@Override public StringListProcedure getSpecialInfoProcedure() {
+		return specialInformation;
 	}
 
 	public TextureHolder textureBottom() {

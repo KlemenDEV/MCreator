@@ -437,6 +437,17 @@ Blockly.Blocks['text_format_number'] = {
     }
 };
 
+Blockly.Blocks['text_new_line'] = {
+    init: function () {
+        this.appendDummyInput().appendField(javabridge.t("blockly.block.text_new_line"));
+        this.setInputsInline(true);
+        this.setPreviousStatement(false);
+        this.setNextStatement(false);
+        this.setOutput(true, 'String');
+        this.setColour('%{BKY_TEXTS_HUE}');
+    }
+};
+
 Blockly.Blocks['text_is_empty'] = {
     init: function () {
         this.appendValueInput('text').setCheck('String')
@@ -617,6 +628,17 @@ registerSimpleMutatorContainer(
     'blockstate_selector_mutator_container', 'blockly.block.blockstate_selector_mutator.container', 60);
 registerSimpleMutatorInput(
     'blockstate_selector_mutator_input', 'blockly.block.blockstate_selector_mutator.input', 60, true);
+
+// Mutator blocks for column feature mixin
+registerSimpleMutatorContainer(
+    'feature_block_column_mutator_container', 'blockly.block.feature_block_column_mutator.container', '#888888');
+registerSimpleMutatorInput(
+    'feature_block_column_mutator_input', 'blockly.block.feature_block_column_mutator.input', '#888888');
+
+// Mutator blocks for disk feature mixin
+registerSimpleMutatorContainer(
+    'feature_disk_mutator_container', 'blockly.block.feature_disk_mutator.container', '#888888');
+registerSimpleMutatorInput('feature_disk_mutator_input', 'blockly.block.feature_disk_mutator.input', '#888888');
 
 // Unregister blocks that we will register again below
 delete Blockly.Blocks['controls_flow_statements'];

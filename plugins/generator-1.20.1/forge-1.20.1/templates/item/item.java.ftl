@@ -36,10 +36,14 @@
 package ${package}.item;
 
 <#compress>
-public class ${name}Item extends Item {
+public class ${name}Item extends <#if data.isMusicDisc>Record</#if>Item {
 
 	public ${name}Item() {
+		<#if data.isMusicDisc>
+		super(${data.musicDiscAnalogOutput}, () -> ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("${data.musicDiscMusic}" )), new Item.Properties()
+		<#else>
 		super(new Item.Properties()
+		</#if>
 				<#if data.hasInventory()>
 				.stacksTo(1)
 				<#elseif data.damageCount != 0>
@@ -59,7 +63,11 @@ public class ${name}Item extends Item {
 					<#if data.isMeat>.meat()</#if>
 					.build())
 				</#if>
+		<#if data.isMusicDisc>
+		,${data.musicDiscLengthInTicks});
+		<#else>
 		);
+		</#if>
 	}
 
 	<#if data.hasNonDefaultAnimation()>
@@ -142,9 +150,10 @@ public class ${name}Item extends Item {
 	}
 	</#if>
 
-	<@addSpecialInformation data.specialInformation/>
+	<@addSpecialInformation data.specialInformation, "item." + modid + "." + registryname/>
 
-	<#if hasProcedure(data.onRightClickedInAir) || data.hasInventory() || (hasProcedure(data.onStoppedUsing) && (data.useDuration > 0)) || data.enableRanged>
+	<#assign shouldExplicitlyCallStartUsing = !data.isFood && (data.useDuration > 0)> <#-- ranged items handled in if below so no need to check for that here too -->
+	<#if hasProcedure(data.onRightClickedInAir) || data.hasInventory() || data.enableRanged || shouldExplicitlyCallStartUsing>
 	@Override public InteractionResultHolder<ItemStack> use(Level world, Player entity, InteractionHand hand) {
 		<#if data.enableRanged>
 		InteractionResultHolder<ItemStack> ar = InteractionResultHolder.fail(entity.getItemInHand(hand));
@@ -152,25 +161,23 @@ public class ${name}Item extends Item {
 		InteractionResultHolder<ItemStack> ar = super.use(world, entity, hand);
 		</#if>
 
-		<#if (hasProcedure(data.onStoppedUsing) && (data.useDuration > 0)) || data.enableRanged>
-			<#if data.enableRanged>
-				<#if hasProcedure(data.rangedUseCondition)>
-				if (<@procedureCode data.rangedUseCondition, {
-					"x": "entity.getX()",
-					"y": "entity.getY()",
-					"z": "entity.getZ()",
-					"world": "world",
-					"entity": "entity",
-					"itemstack": "ar.getObject()"
-				}, false/>)
-				</#if>
-				if (entity.getAbilities().instabuild || findAmmo(entity) != ItemStack.EMPTY) {
-					ar = InteractionResultHolder.success(entity.getItemInHand(hand));
-					entity.startUsingItem(hand);
-				}
-			<#else>
-				entity.startUsingItem(hand);
+		<#if data.enableRanged>
+			<#if hasProcedure(data.rangedUseCondition)>
+			if (<@procedureCode data.rangedUseCondition, {
+				"x": "entity.getX()",
+				"y": "entity.getY()",
+				"z": "entity.getZ()",
+				"world": "world",
+				"entity": "entity",
+				"itemstack": "ar.getObject()"
+			}, false/>)
 			</#if>
+			if (entity.getAbilities().instabuild || findAmmo(entity) != ItemStack.EMPTY) {
+				ar = InteractionResultHolder.success(entity.getItemInHand(hand));
+				entity.startUsingItem(hand);
+			}
+		<#elseif shouldExplicitlyCallStartUsing>
+			entity.startUsingItem(hand);
 		</#if>
 
 		<#if data.hasInventory()>

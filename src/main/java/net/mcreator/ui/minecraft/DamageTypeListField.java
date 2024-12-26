@@ -20,6 +20,7 @@
 package net.mcreator.ui.minecraft;
 
 import net.mcreator.element.parts.DamageTypeEntry;
+import net.mcreator.generator.mapping.NameMapper;
 import net.mcreator.minecraft.ElementUtil;
 import net.mcreator.minecraft.TagType;
 import net.mcreator.ui.MCreator;
@@ -28,13 +29,14 @@ import net.mcreator.ui.dialogs.AddTagDialog;
 import net.mcreator.ui.dialogs.DataListSelectorDialog;
 import net.mcreator.ui.init.L10N;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DamageTypeListField extends JItemListField<DamageTypeEntry> {
 
-	public DamageTypeListField(MCreator mcreator, boolean allowTags) {
-		super(mcreator, false, allowTags);
+	public DamageTypeListField(MCreator mcreator) {
+		super(mcreator);
 	}
 
 	@Override protected List<DamageTypeEntry> getElementsToAdd() {
@@ -55,6 +57,10 @@ public class DamageTypeListField extends JItemListField<DamageTypeEntry> {
 			tags.add(new DamageTypeEntry(mcreator.getWorkspace(), "#" + tag));
 
 		return tags;
+	}
+
+	@Nullable @Override protected DamageTypeEntry fromExternalToElement(String external) {
+		return new DamageTypeEntry(mcreator.getWorkspace(), NameMapper.EXTERNAL_PREFIX + external);
 	}
 
 }

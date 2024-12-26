@@ -29,6 +29,7 @@ import net.mcreator.ui.MCreator;
 import net.mcreator.ui.MCreatorApplication;
 import net.mcreator.ui.component.JStringListField;
 import net.mcreator.ui.component.SearchableComboBox;
+import net.mcreator.ui.component.TranslatedComboBox;
 import net.mcreator.ui.component.util.ComboBoxUtil;
 import net.mcreator.ui.component.util.ComponentUtils;
 import net.mcreator.ui.component.util.PanelUtils;
@@ -37,10 +38,7 @@ import net.mcreator.ui.help.HelpUtils;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.laf.renderer.ModelComboBoxRenderer;
 import net.mcreator.ui.laf.themes.Theme;
-import net.mcreator.ui.minecraft.DataListComboBox;
-import net.mcreator.ui.minecraft.MCItemHolder;
-import net.mcreator.ui.minecraft.TabListField;
-import net.mcreator.ui.minecraft.TextureSelectionButton;
+import net.mcreator.ui.minecraft.*;
 import net.mcreator.ui.minecraft.states.item.JItemPropertiesStatesList;
 import net.mcreator.ui.procedure.AbstractProcedureSelector;
 import net.mcreator.ui.procedure.LogicProcedureSelector;
@@ -65,7 +63,7 @@ import java.awt.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -77,7 +75,14 @@ public class ItemGUI extends ModElementGUI<Item> {
 
 	private final JSpinner stackSize = new JSpinner(new SpinnerNumberModel(64, 1, 64, 1));
 	private final VTextField name = new VTextField(20);
-	private final JComboBox<String> rarity = new JComboBox<>(new String[] { "COMMON", "UNCOMMON", "RARE", "EPIC" });
+	private final TranslatedComboBox rarity = new TranslatedComboBox(
+			//@formatter:off
+			Map.entry("COMMON", "elementgui.common.rarity_common"),
+			Map.entry("UNCOMMON", "elementgui.common.rarity_uncommon"),
+			Map.entry("RARE", "elementgui.common.rarity_rare"),
+			Map.entry("EPIC", "elementgui.common.rarity_epic")
+			//@formatter:on
+	);
 
 	private final MCItemHolder recipeRemainder = new MCItemHolder(mcreator, ElementUtil::loadBlocksAndItems);
 
@@ -123,11 +128,12 @@ public class ItemGUI extends ModElementGUI<Item> {
 	private ProcedureSelector onFinishUsingItem;
 
 	private final ValidationGroup page1group = new ValidationGroup();
+	private final ValidationGroup page5group = new ValidationGroup();
 
 	private final JSpinner damageVsEntity = new JSpinner(new SpinnerNumberModel(0, 0, 128000, 0.1));
 	private final JCheckBox enableMeleeDamage = new JCheckBox();
 
-	private final SearchableComboBox<String> guiBoundTo = new SearchableComboBox<>();
+	private SingleModElementSelector guiBoundTo;
 	private final JSpinner inventorySize = new JSpinner(new SpinnerNumberModel(9, 0, 256, 1));
 	private final JSpinner inventoryStackSize = new JSpinner(new SpinnerNumberModel(64, 1, 1024, 1));
 
@@ -137,9 +143,25 @@ public class ItemGUI extends ModElementGUI<Item> {
 	private final JSpinner saturation = new JSpinner(new SpinnerNumberModel(0.3, -1000, 1000, 0.1));
 	private final JCheckBox isMeat = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox isAlwaysEdible = L10N.checkbox("elementgui.common.enable");
-	private final JComboBox<String> animation = new JComboBox<>(
-			new String[] { "none", "eat", "block", "bow", "crossbow", "drink", "spear" });
+	private final TranslatedComboBox animation = new TranslatedComboBox(
+			//@formatter:off
+			Map.entry("none", "elementgui.item.item_animation_none"),
+			Map.entry("eat", "elementgui.item.item_animation_eat"),
+			Map.entry("block", "elementgui.item.item_animation_block"),
+			Map.entry("bow", "elementgui.item.item_animation_bow"),
+			Map.entry("crossbow", "elementgui.item.item_animation_crossbow"),
+			Map.entry("drink", "elementgui.item.item_animation_drink"),
+			Map.entry("spear", "elementgui.item.item_animation_spear")
+			//@formatter:on
+	);
 	private final MCItemHolder eatResultItem = new MCItemHolder(mcreator, ElementUtil::loadBlocksAndItems);
+
+	// Music disc parameters
+	private final JCheckBox isMusicDisc = L10N.checkbox("elementgui.common.enable");
+	private final SoundSelector musicDiscMusic = new SoundSelector(mcreator);
+	private final VTextField musicDiscDescription = new VTextField(20);
+	private final JSpinner musicDiscLengthInTicks = new JSpinner(new SpinnerNumberModel(100, 1, 20 * 3600, 1));
+	private final JSpinner musicDiscAnalogOutput = new JSpinner(new SpinnerNumberModel(0, 0, 15, 1));
 
 	public ItemGUI(MCreator mcreator, ModElement modElement, boolean editingMode) {
 		super(mcreator, modElement, editingMode);
@@ -196,10 +218,11 @@ public class ItemGUI extends ModElementGUI<Item> {
 
 		customProperties = new JItemPropertiesStatesList(mcreator, this);
 		customProperties.setPreferredSize(new Dimension(0, 0)); // prevent resizing beyond the editor tab
+		guiBoundTo = new SingleModElementSelector(mcreator, ModElementType.GUI);
 
-		guiBoundTo.addActionListener(e -> {
+		guiBoundTo.addEntrySelectedListener(e -> {
 			if (!isEditingMode()) {
-				String selected = guiBoundTo.getSelectedItem();
+				String selected = guiBoundTo.getEntry();
 				if (selected != null) {
 					ModElement element = mcreator.getWorkspace().getModElementByName(selected);
 					if (element != null) {
@@ -422,7 +445,38 @@ public class ItemGUI extends ModElementGUI<Item> {
 				L10N.label("elementgui.common.max_stack_size")));
 		inventoryProperties.add(inventoryStackSize);
 
-		updateRangedPanel();
+		JPanel musicDiscProperties = new JPanel(new GridLayout(5, 2, 35, 2));
+		musicDiscProperties.setBorder(BorderFactory.createTitledBorder(
+				BorderFactory.createLineBorder(Theme.current().getForegroundColor(), 1),
+				L10N.t("elementgui.item.section_musicdisc"), TitledBorder.LEADING, TitledBorder.DEFAULT_POSITION,
+				getFont(), Theme.current().getForegroundColor()));
+		musicDiscProperties.setOpaque(false);
+
+		musicDiscProperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("item/musicdisc"),
+				L10N.label("elementgui.item.musicdisc")));
+		musicDiscProperties.add(isMusicDisc);
+
+		musicDiscProperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("item/musicdisc_music"),
+				L10N.label("elementgui.item.musicdisc_music")));
+		musicDiscProperties.add(musicDiscMusic);
+
+		musicDiscProperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("item/musicdisc_description"),
+				L10N.label("elementgui.item.musicdisc_description")));
+		musicDiscProperties.add(musicDiscDescription);
+
+		musicDiscProperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("item/musicdisc_length"),
+				L10N.label("elementgui.item.musicdisc_length")));
+		musicDiscProperties.add(musicDiscLengthInTicks);
+
+		musicDiscProperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("item/musicdisc_analog_output"),
+				L10N.label("elementgui.item.musicdisc_analog_output")));
+		musicDiscProperties.add(musicDiscAnalogOutput);
+
+		ComponentUtils.deriveFont(musicDiscDescription, 16);
+
+		updateMusicDiscPanel();
+
+		isMusicDisc.addActionListener(e -> updateMusicDiscPanel());
 
 		JPanel rangedProperties = new JPanel(new GridLayout(5, 2, 2, 2));
 		rangedProperties.setOpaque(false);
@@ -452,6 +506,8 @@ public class ItemGUI extends ModElementGUI<Item> {
 		rangedItemChargesPower.setOpaque(false);
 		rangedProperties.add(rangedItemChargesPower);
 
+		updateRangedPanel();
+
 		shootConstantly.addActionListener((e) -> {
 			rangedItemChargesPower.setEnabled(!shootConstantly.isSelected());
 			if (shootConstantly.isSelected())
@@ -470,8 +526,9 @@ public class ItemGUI extends ModElementGUI<Item> {
 				L10N.t("elementgui.item.ranged_properties"), TitledBorder.LEADING, TitledBorder.DEFAULT_POSITION,
 				getFont(), Theme.current().getForegroundColor()));
 
-		advancedProperties.add("Center", PanelUtils.totalCenterInPanel(
-				PanelUtils.centerAndEastElement(PanelUtils.pullElementUp(inventoryProperties), rangedPanel, 10, 10)));
+		advancedProperties.add("Center", PanelUtils.totalCenterInPanel(PanelUtils.centerAndEastElement(
+				PanelUtils.pullElementUp(PanelUtils.northAndCenterElement(inventoryProperties, musicDiscProperties)),
+				rangedPanel, 10, 10)));
 
 		texture.setValidator(new TileHolderValidator(texture));
 
@@ -479,6 +536,17 @@ public class ItemGUI extends ModElementGUI<Item> {
 
 		name.setValidator(new TextFieldValidator(name, L10N.t("elementgui.item.error_item_needs_name")));
 		name.enableRealtimeValidation();
+
+		musicDiscDescription.setValidator(new TextFieldValidator(musicDiscDescription,
+				L10N.t("elementgui.item.musicdisc.error_disc_needs_description")));
+		musicDiscDescription.enableRealtimeValidation();
+
+		musicDiscMusic.getVTextField().setValidator(new TextFieldValidator(musicDiscMusic.getVTextField(),
+				L10N.t("elementgui.item.musicdisc.error_needs_sound")));
+		musicDiscMusic.getVTextField().enableRealtimeValidation();
+
+		page5group.addValidationElement(musicDiscDescription);
+		page5group.addValidationElement(musicDiscMusic.getVTextField());
 
 		addPage(L10N.t("elementgui.common.page_visual"), pane2);
 		addPage(L10N.t("elementgui.item.page_item_states"), cipp, false);
@@ -491,8 +559,20 @@ public class ItemGUI extends ModElementGUI<Item> {
 			String readableNameFromModElement = StringUtils.machineToReadableName(modElement.getName());
 			name.setText(readableNameFromModElement);
 		}
+	}
 
-		updateFoodPanel();
+	private void updateMusicDiscPanel() {
+		if (isMusicDisc.isSelected()) {
+			musicDiscMusic.setEnabled(true);
+			musicDiscDescription.setEnabled(true);
+			musicDiscLengthInTicks.setEnabled(true);
+			musicDiscAnalogOutput.setEnabled(true);
+		} else {
+			musicDiscMusic.setEnabled(false);
+			musicDiscDescription.setEnabled(false);
+			musicDiscLengthInTicks.setEnabled(false);
+			musicDiscAnalogOutput.setEnabled(false);
+		}
 	}
 
 	private void updateFoodPanel() {
@@ -569,10 +649,6 @@ public class ItemGUI extends ModElementGUI<Item> {
 				Model.getModelsWithTextureMaps(mcreator.getWorkspace()).stream()
 						.filter(el -> el.getType() == Model.Type.JSON || el.getType() == Model.Type.OBJ)
 						.collect(Collectors.toList())));
-
-		ComboBoxUtil.updateComboBoxContents(guiBoundTo, ListUtils.merge(Collections.singleton("<NONE>"),
-				mcreator.getWorkspace().getModElements().stream().filter(var -> var.getType() == ModElementType.GUI)
-						.map(ModElement::getName).collect(Collectors.toList())), "<NONE>");
 	}
 
 	@Override protected AggregatedValidationResult validatePage(int page) {
@@ -582,6 +658,8 @@ public class ItemGUI extends ModElementGUI<Item> {
 			return customProperties.getValidationResult();
 		else if (page == 2)
 			return new AggregatedValidationResult(name);
+		else if (page == 4)
+			return new AggregatedValidationResult(page5group);
 		return new AggregatedValidationResult.PASS();
 	}
 
@@ -613,7 +691,7 @@ public class ItemGUI extends ModElementGUI<Item> {
 		glowCondition.setSelectedProcedure(item.glowCondition);
 		damageVsEntity.setValue(item.damageVsEntity);
 		enableMeleeDamage.setSelected(item.enableMeleeDamage);
-		guiBoundTo.setSelectedItem(item.guiBoundTo);
+		guiBoundTo.setEntry(item.guiBoundTo);
 		inventorySize.setValue(item.inventorySize);
 		inventoryStackSize.setValue(item.inventoryStackSize);
 		isFood.setSelected(item.isFood);
@@ -631,9 +709,15 @@ public class ItemGUI extends ModElementGUI<Item> {
 		projectile.setSelectedItem(item.projectile);
 		rangedUseCondition.setSelectedProcedure(item.rangedUseCondition);
 		onRangedItemUsed.setSelectedProcedure(item.onRangedItemUsed);
+		isMusicDisc.setSelected(item.isMusicDisc);
+		musicDiscMusic.setSound(item.musicDiscMusic);
+		musicDiscDescription.setText(item.musicDiscDescription);
+		musicDiscLengthInTicks.setValue(item.musicDiscLengthInTicks);
+		musicDiscAnalogOutput.setValue(item.musicDiscAnalogOutput);
 
 		updateFoodPanel();
 		updateRangedPanel();
+		updateMusicDiscPanel();
 		onStoppedUsing.setEnabled((int) useDuration.getValue() > 0);
 
 		Model model = item.getItemModel();
@@ -647,7 +731,7 @@ public class ItemGUI extends ModElementGUI<Item> {
 	@Override public Item getElementFromGUI() {
 		Item item = new Item(modElement);
 		item.name = name.getText();
-		item.rarity = (String) rarity.getSelectedItem();
+		item.rarity = rarity.getSelectedItem();
 		item.creativeTabs = creativeTabs.getListElements();
 		item.stackSize = (int) stackSize.getValue();
 		item.enchantability = (int) enchantability.getValue();
@@ -674,13 +758,13 @@ public class ItemGUI extends ModElementGUI<Item> {
 		item.enableMeleeDamage = enableMeleeDamage.isSelected();
 		item.inventorySize = (int) inventorySize.getValue();
 		item.inventoryStackSize = (int) inventoryStackSize.getValue();
-		item.guiBoundTo = guiBoundTo.getSelectedItem();
+		item.guiBoundTo = guiBoundTo.getEntry();
 		item.isFood = isFood.isSelected();
 		item.nutritionalValue = (int) nutritionalValue.getValue();
 		item.saturation = (double) saturation.getValue();
 		item.isMeat = isMeat.isSelected();
 		item.isAlwaysEdible = isAlwaysEdible.isSelected();
-		item.animation = (String) animation.getSelectedItem();
+		item.animation = animation.getSelectedItem();
 		item.onFinishUsingItem = onFinishUsingItem.getSelectedProcedure();
 		item.eatResultItem = eatResultItem.getBlock();
 		item.enableRanged = enableRanged.isSelected();
@@ -690,6 +774,11 @@ public class ItemGUI extends ModElementGUI<Item> {
 		item.projectile = new ProjectileEntry(mcreator.getWorkspace(), projectile.getSelectedItem());
 		item.onRangedItemUsed = onRangedItemUsed.getSelectedProcedure();
 		item.rangedUseCondition = rangedUseCondition.getSelectedProcedure();
+		item.isMusicDisc = isMusicDisc.isSelected();
+		item.musicDiscMusic = musicDiscMusic.getSound();
+		item.musicDiscDescription = musicDiscDescription.getText();
+		item.musicDiscLengthInTicks = (int) musicDiscLengthInTicks.getValue();
+		item.musicDiscAnalogOutput = (int) musicDiscAnalogOutput.getValue();
 
 		item.texture = texture.getTextureHolder();
 		item.renderType = Item.encodeModelType(Objects.requireNonNull(renderType.getSelectedItem()).getType());

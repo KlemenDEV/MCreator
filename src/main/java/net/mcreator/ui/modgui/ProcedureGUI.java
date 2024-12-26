@@ -26,7 +26,6 @@ import net.mcreator.generator.blockly.BlocklyBlockCodeGenerator;
 import net.mcreator.generator.blockly.OutputBlockCodeGenerator;
 import net.mcreator.generator.blockly.ProceduralBlockCodeGenerator;
 import net.mcreator.generator.template.TemplateGeneratorException;
-import net.mcreator.io.Transliteration;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.MCreatorApplication;
 import net.mcreator.ui.blockly.*;
@@ -39,7 +38,7 @@ import net.mcreator.ui.laf.themes.Theme;
 import net.mcreator.ui.validation.AggregatedValidationResult;
 import net.mcreator.ui.validation.Validator;
 import net.mcreator.ui.validation.component.VTextField;
-import net.mcreator.ui.validation.optionpane.OptionPaneValidatior;
+import net.mcreator.ui.validation.optionpane.OptionPaneValidator;
 import net.mcreator.ui.validation.validators.JavaMemberNameValidator;
 import net.mcreator.workspace.elements.ModElement;
 import net.mcreator.workspace.elements.VariableElement;
@@ -379,19 +378,19 @@ public class ProcedureGUI extends ModElementGUI<net.mcreator.element.types.Proce
 
 		addvar.addActionListener(e -> {
 			VariableElement element = NewVariableDialog.showNewVariableDialog(mcreator, false,
-					new OptionPaneValidatior() {
+					new OptionPaneValidator() {
 						@Override public Validator.ValidationResult validate(JComponent component) {
 							Validator validator = new JavaMemberNameValidator((VTextField) component, false, false);
-							String textname = Transliteration.transliterateString(((VTextField) component).getText());
+							String variableName = ((VTextField) component).getText();
 							for (int i = 0; i < localVars.getSize(); i++) {
 								String nameinrow = localVars.get(i).getName();
-								if (textname.equals(nameinrow))
+								if (variableName.equals(nameinrow))
 									return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
 											L10N.t("common.name_already_exists"));
 							}
 							for (Dependency dependency : dependenciesArrayList) {
 								String nameinrow = dependency.getName();
-								if (textname.equals(nameinrow))
+								if (variableName.equals(nameinrow))
 									return new ValidationResult(ValidationResultType.ERROR,
 											L10N.t("elementgui.procedure.name_already_exists_dep"));
 							}

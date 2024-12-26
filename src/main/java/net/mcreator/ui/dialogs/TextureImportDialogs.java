@@ -33,6 +33,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class TextureImportDialogs {
@@ -96,14 +97,16 @@ public class TextureImportDialogs {
 						L10N.t("dialog.textures_import.error_both_texture_files_not_selected"), null,
 						JOptionPane.ERROR_MESSAGE);
 			} else {
-				String namec = RegistryNameFixer.fix(
-						FilenameUtilsPatched.removeExtension(f1.get().getName().replace("layer_1", "")));
+				String namec = RegistryNameFixer.fix(FilenameUtilsPatched.removeExtension(
+						f1.get().getName().toLowerCase(Locale.ENGLISH).replace("layer_1", "")));
+				if (namec.endsWith("_"))
+					namec = namec.substring(0, namec.length() - 1);
 				File[] armor = mcreator.getFolderManager().getArmorTextureFilesForName(namec);
 				FileIO.copyFile(f1.get(), armor[0]);
 				FileIO.copyFile(f2.get(), armor[1]);
 
-				mcreator.mv.resourcesPan.workspacePanelTextures.reloadElements();
-				if (mcreator.mcreatorTabs.getCurrentTab().getContent() instanceof ModElementGUI<?> modElementGUI)
+				mcreator.reloadWorkspaceTabContents();
+				if (mcreator.getTabs().getCurrentTab().getContent() instanceof ModElementGUI<?> modElementGUI)
 					modElementGUI.reloadDataLists();
 			}
 	}
@@ -146,8 +149,8 @@ public class TextureImportDialogs {
 			FileIO.copyFile(textureFile, file);
 		});
 
-		mcreator.mv.resourcesPan.workspacePanelTextures.reloadElements();
-		if (mcreator.mcreatorTabs.getCurrentTab().getContent() instanceof ModElementGUI<?> modElementGUI)
+		mcreator.reloadWorkspaceTabContents();
+		if (mcreator.getTabs().getCurrentTab().getContent() instanceof ModElementGUI<?> modElementGUI)
 			modElementGUI.reloadDataLists();
 	}
 

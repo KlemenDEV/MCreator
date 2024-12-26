@@ -65,7 +65,7 @@ import static org.junit.jupiter.api.Assertions.*;
 		if (generatorConfiguration == null)
 			fail("Failed to load any Forge flavored generator for this unit test");
 
-		mcreator = new MCreator(null,
+		mcreator = MCreator.create(null,
 				TestWorkspaceDataProvider.createTestWorkspace(tempDir, generatorConfiguration, true, true, random));
 	}
 
@@ -129,6 +129,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 				// test UI -> GeneratableElement
 				generatableElement = modElementGUI.getElementFromGUI();
+
+				// close mod element GUI
+				modElementGUI.onViewClosed();
 
 				// Check if all workspace fields are not null after reading from GUI
 				IWorkspaceDependent.processWorkspaceDependentObjects(generatableElement,

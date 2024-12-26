@@ -30,11 +30,12 @@ import net.mcreator.generator.ListTemplate;
 import net.mcreator.io.FileIO;
 import net.mcreator.java.JavaConventions;
 import net.mcreator.minecraft.RegistryNameFixer;
-import net.mcreator.preferences.PreferencesManager;
-import net.mcreator.preferences.data.HiddenSection;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.action.UnregisteredAction;
-import net.mcreator.ui.component.*;
+import net.mcreator.ui.component.JEmptyBox;
+import net.mcreator.ui.component.JScrollablePopupMenu;
+import net.mcreator.ui.component.JSelectableList;
+import net.mcreator.ui.component.TransparentToolBar;
 import net.mcreator.ui.component.util.ComponentUtils;
 import net.mcreator.ui.component.util.EventButtonGroup;
 import net.mcreator.ui.component.util.ListUtil;
@@ -51,18 +52,24 @@ import net.mcreator.ui.modgui.ModElementGUI;
 import net.mcreator.ui.modgui.ModTypeDropdown;
 import net.mcreator.ui.validation.Validator;
 import net.mcreator.ui.validation.component.VTextField;
-import net.mcreator.ui.validation.optionpane.OptionPaneValidatior;
+import net.mcreator.ui.validation.optionpane.OptionPaneValidator;
 import net.mcreator.ui.validation.optionpane.VOptionPane;
 import net.mcreator.ui.validation.validators.ModElementNameValidator;
+import net.mcreator.ui.variants.modmaker.ModMaker;
 import net.mcreator.ui.workspace.breadcrumb.WorkspaceFolderBreadcrumb;
+import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.ui.workspace.resources.WorkspacePanelResources;
 import net.mcreator.util.ColorUtils;
 import net.mcreator.util.image.EmptyIcon;
 import net.mcreator.util.image.IconUtils;
+import net.mcreator.util.image.ImageUtils;
 import net.mcreator.workspace.elements.FolderElement;
 import net.mcreator.workspace.elements.IElement;
 import net.mcreator.workspace.elements.ModElement;
 import net.mcreator.workspace.references.ReferencesFinder;
+import net.mcreator.workspace.resources.CustomTexture;
+import net.mcreator.workspace.resources.Texture;
+import net.mcreator.workspace.settings.user.WorkspaceUserSettings;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
@@ -95,7 +102,7 @@ import java.util.stream.Collectors;
 
 	@Nullable private AbstractWorkspacePanel currentTabPanel = null;
 
-	private final MCreator mcreator;
+	private final ModMaker mcreator;
 
 	private final JButton upFolder;
 	private final JButton renameFolder;
@@ -134,7 +141,7 @@ import java.util.stream.Collectors;
 	public final JRadioButtonMenuItem sortName = new JRadioButtonMenuItem(L10N.t("workspace.elements.list.sort_name"));
 	private final JRadioButtonMenuItem sortType = new JRadioButtonMenuItem(L10N.t("workspace.elements.list.sort_type"));
 
-	private final OptionPaneValidatior folderNameValidator = new OptionPaneValidatior() {
+	private final OptionPaneValidator folderNameValidator = new OptionPaneValidator() {
 		@Override public ValidationResult validate(JComponent component) {
 			String folderName = ((JTextField) component).getText();
 
@@ -160,7 +167,7 @@ import java.util.stream.Collectors;
 
 	private final JTabbedPane subTabs;
 
-	public WorkspacePanel(final MCreator mcreator) {
+	public WorkspacePanel(final ModMaker mcreator) {
 		super(new BorderLayout(5, 5));
 		this.mcreator = mcreator;
 
@@ -285,7 +292,7 @@ import java.util.stream.Collectors;
 		sp.setBorder(BorderFactory.createEmptyBorder());
 
 		JPanel modElementsPanel = new JPanel(new BorderLayout(0, 0));
-		if (mcreator.getMainPanel() instanceof ImagePanel) {
+		if (mcreator.hasBackgroundImage()) {
 			modElementsPanel.setOpaque(false);
 		} else {
 			modElementsPanel.setBackground(Theme.current().getSecondAltBackgroundColor());
@@ -304,9 +311,9 @@ import java.util.stream.Collectors;
 					g.setFont(g.getFont().deriveFont(11f));
 					g.setColor(new Color(120, 120, 120));
 					if (currentTabPanel instanceof WorkspacePanelMods) {
-						g.drawString(L10N.t("workspace.elements.list.search_list"), 8, 19);
-					} else {
 						g.drawString(L10N.t("workspace.elements.list.search_folder"), 8, 19);
+					} else {
+						g.drawString(L10N.t("workspace.elements.list.search_list"), 8, 19);
 					}
 				}
 			}
@@ -402,12 +409,12 @@ import java.util.stream.Collectors;
 		JRadioButtonMenuItem tilesIcons = new JRadioButtonMenuItem(L10N.t("workspace.elements.list.tiles"));
 		tilesIcons.addActionListener(e -> {
 			if (tilesIcons.isSelected()) {
-				PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.set(HiddenSection.IconSize.TILES);
+				mcreator.getWorkspaceUserSettings().workspacePanelIconSize = WorkspaceUserSettings.IconSize.TILES;
 				updateElementListRenderer();
 			}
 		});
-		tilesIcons.setSelected(PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.get()
-				== HiddenSection.IconSize.TILES);
+		tilesIcons.setSelected(
+				mcreator.getWorkspaceUserSettings().workspacePanelIconSize == WorkspaceUserSettings.IconSize.TILES);
 		Arrays.stream(tilesIcons.getChangeListeners()).forEach(e -> e.stateChanged(new ChangeEvent(tilesIcons)));
 		ComponentUtils.deriveFont(tilesIcons, 12);
 		tilesIcons.setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 5));
@@ -415,12 +422,12 @@ import java.util.stream.Collectors;
 		JRadioButtonMenuItem largeIcons = new JRadioButtonMenuItem(L10N.t("workspace.elements.list.large"));
 		largeIcons.addActionListener(e -> {
 			if (largeIcons.isSelected()) {
-				PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.set(HiddenSection.IconSize.LARGE);
+				mcreator.getWorkspaceUserSettings().workspacePanelIconSize = WorkspaceUserSettings.IconSize.LARGE;
 				updateElementListRenderer();
 			}
 		});
-		largeIcons.setSelected(PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.get()
-				== HiddenSection.IconSize.LARGE);
+		largeIcons.setSelected(
+				mcreator.getWorkspaceUserSettings().workspacePanelIconSize == WorkspaceUserSettings.IconSize.LARGE);
 		Arrays.stream(largeIcons.getChangeListeners()).forEach(e -> e.stateChanged(new ChangeEvent(largeIcons)));
 		ComponentUtils.deriveFont(largeIcons, 12);
 		largeIcons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -428,12 +435,12 @@ import java.util.stream.Collectors;
 		JRadioButtonMenuItem mediumIcons = new JRadioButtonMenuItem(L10N.t("workspace.elements.list.medium"));
 		mediumIcons.addActionListener(e -> {
 			if (mediumIcons.isSelected()) {
-				PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.set(HiddenSection.IconSize.MEDIUM);
+				mcreator.getWorkspaceUserSettings().workspacePanelIconSize = WorkspaceUserSettings.IconSize.MEDIUM;
 				updateElementListRenderer();
 			}
 		});
-		mediumIcons.setSelected(PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.get()
-				== HiddenSection.IconSize.MEDIUM);
+		mediumIcons.setSelected(
+				mcreator.getWorkspaceUserSettings().workspacePanelIconSize == WorkspaceUserSettings.IconSize.MEDIUM);
 		Arrays.stream(mediumIcons.getChangeListeners()).forEach(e -> e.stateChanged(new ChangeEvent(mediumIcons)));
 		ComponentUtils.deriveFont(mediumIcons, 12);
 		mediumIcons.setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 5));
@@ -441,12 +448,12 @@ import java.util.stream.Collectors;
 		JRadioButtonMenuItem smallIcons = new JRadioButtonMenuItem(L10N.t("workspace.elements.list.small"));
 		smallIcons.addActionListener(e -> {
 			if (smallIcons.isSelected()) {
-				PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.set(HiddenSection.IconSize.SMALL);
+				mcreator.getWorkspaceUserSettings().workspacePanelIconSize = WorkspaceUserSettings.IconSize.SMALL;
 				updateElementListRenderer();
 			}
 		});
-		smallIcons.setSelected(PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.get()
-				== HiddenSection.IconSize.SMALL);
+		smallIcons.setSelected(
+				mcreator.getWorkspaceUserSettings().workspacePanelIconSize == WorkspaceUserSettings.IconSize.SMALL);
 		Arrays.stream(smallIcons.getChangeListeners()).forEach(e -> e.stateChanged(new ChangeEvent(smallIcons)));
 		ComponentUtils.deriveFont(smallIcons, 12);
 		smallIcons.setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 5));
@@ -454,12 +461,12 @@ import java.util.stream.Collectors;
 		JRadioButtonMenuItem listIcons = new JRadioButtonMenuItem(L10N.t("workspace.elements.list.list"));
 		listIcons.addActionListener(e -> {
 			if (listIcons.isSelected()) {
-				PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.set(HiddenSection.IconSize.LIST);
+				mcreator.getWorkspaceUserSettings().workspacePanelIconSize = WorkspaceUserSettings.IconSize.LIST;
 				updateElementListRenderer();
 			}
 		});
 		listIcons.setSelected(
-				PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.get() == HiddenSection.IconSize.LIST);
+				mcreator.getWorkspaceUserSettings().workspacePanelIconSize == WorkspaceUserSettings.IconSize.LIST);
 		Arrays.stream(listIcons.getChangeListeners()).forEach(e -> e.stateChanged(new ChangeEvent(listIcons)));
 		ComponentUtils.deriveFont(listIcons, 12);
 		listIcons.setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 5));
@@ -467,12 +474,12 @@ import java.util.stream.Collectors;
 		JRadioButtonMenuItem detailsIcons = new JRadioButtonMenuItem(L10N.t("workspace.elements.list.details"));
 		detailsIcons.addActionListener(e -> {
 			if (detailsIcons.isSelected()) {
-				PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.set(HiddenSection.IconSize.DETAILS);
+				mcreator.getWorkspaceUserSettings().workspacePanelIconSize = WorkspaceUserSettings.IconSize.DETAILS;
 				updateElementListRenderer();
 			}
 		});
-		detailsIcons.setSelected(PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.get()
-				== HiddenSection.IconSize.DETAILS);
+		detailsIcons.setSelected(
+				mcreator.getWorkspaceUserSettings().workspacePanelIconSize == WorkspaceUserSettings.IconSize.DETAILS);
 		Arrays.stream(detailsIcons.getChangeListeners()).forEach(e -> e.stateChanged(new ChangeEvent(detailsIcons)));
 		ComponentUtils.deriveFont(detailsIcons, 12);
 		detailsIcons.setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 5));
@@ -577,8 +584,8 @@ import java.util.stream.Collectors;
 		EventButtonGroup sortOne = new EventButtonGroup();
 		sortOne.addActionListener(e -> resort());
 		JRadioButtonMenuItem asc = new JRadioButtonMenuItem(L10N.t("workspace.elements.list.ascending"));
-		asc.setSelected(PreferencesManager.PREFERENCES.hidden.workspaceSortAscending.get());
-		desc.setSelected(!PreferencesManager.PREFERENCES.hidden.workspaceSortAscending.get());
+		asc.setSelected(mcreator.getWorkspaceUserSettings().workspacePanelSortAscending);
+		desc.setSelected(!mcreator.getWorkspaceUserSettings().workspacePanelSortAscending);
 		sortOne.add(asc);
 		sortOne.add(desc);
 		sortPopup.add(asc);
@@ -616,9 +623,9 @@ import java.util.stream.Collectors;
 
 		view.addActionListener(e -> viewPopup.show(view, 0, 23));
 
-		if (PreferencesManager.PREFERENCES.hidden.workspaceSortOrder.get() == HiddenSection.SortType.NAME) {
+		if (mcreator.getWorkspaceUserSettings().workspacePanelSortType == WorkspaceUserSettings.SortType.NAME) {
 			sortName.setSelected(true);
-		} else if (PreferencesManager.PREFERENCES.hidden.workspaceSortOrder.get() == HiddenSection.SortType.TYPE) {
+		} else if (mcreator.getWorkspaceUserSettings().workspacePanelSortType == WorkspaceUserSettings.SortType.TYPE) {
 			sortType.setSelected(true);
 		} else {
 			sortDateCreated.setSelected(true);
@@ -747,7 +754,7 @@ import java.util.stream.Collectors;
 		pne.add(but5a);
 
 		JPanel toolp;
-		if (mcreator.getMainPanel() instanceof ImagePanel) {
+		if (mcreator.hasBackgroundImage()) {
 			toolp = new JPanel(new BorderLayout(0, 0)) {
 				@Override public void paintComponent(Graphics g) {
 					g.setColor(ColorUtils.applyAlpha(Theme.current().getAltBackgroundColor(), 100));
@@ -919,20 +926,20 @@ import java.util.stream.Collectors;
 
 	private void resort() {
 		if (sortName.isSelected()) {
-			PreferencesManager.PREFERENCES.hidden.workspaceSortOrder.set(HiddenSection.SortType.NAME);
+			mcreator.getWorkspaceUserSettings().workspacePanelSortType = WorkspaceUserSettings.SortType.NAME;
 		} else if (sortType.isSelected()) {
-			PreferencesManager.PREFERENCES.hidden.workspaceSortOrder.set(HiddenSection.SortType.TYPE);
+			mcreator.getWorkspaceUserSettings().workspacePanelSortType = WorkspaceUserSettings.SortType.TYPE;
 		} else {
-			PreferencesManager.PREFERENCES.hidden.workspaceSortOrder.set(HiddenSection.SortType.CREATED);
+			mcreator.getWorkspaceUserSettings().workspacePanelSortType = WorkspaceUserSettings.SortType.CREATED;
 		}
 
-		PreferencesManager.PREFERENCES.hidden.workspaceSortAscending.set(!desc.isSelected());
+		mcreator.getWorkspaceUserSettings().workspacePanelSortAscending = !desc.isSelected();
 
 		sectionTabs.values().forEach(IReloadableFilterable::refilterElements);
 	}
 
 	private void updateElementListRenderer() {
-		switch (PreferencesManager.PREFERENCES.hidden.workspaceModElementIconSize.get()) {
+		switch (mcreator.getWorkspaceUserSettings().workspacePanelIconSize) {
 		case TILES -> {
 			list.setCellRenderer(new TilesModListRender());
 			list.setFixedCellHeight(72);
@@ -1068,7 +1075,7 @@ import java.util.stream.Collectors;
 					ProgressDialog.ProgressUnit p2 = new ProgressDialog.ProgressUnit(
 							L10N.t("workspace.elements.lock_modelement_rebuilding_workspace"));
 					dial.addProgressUnit(p2);
-					mcreator.actionRegistry.buildWorkspace.doAction();
+					mcreator.getActionRegistry().buildWorkspace.doAction();
 					p2.markStateOk();
 				}
 				dial.hideDialog();
@@ -1106,7 +1113,7 @@ import java.util.stream.Collectors;
 				String modName = VOptionPane.showInputDialog(mcreator,
 						L10N.t("workspace.elements.duplicate_message", mu.getName()),
 						L10N.t("workspace.elements.duplicate_element", mu.getName()), mu.getElementIcon(),
-						new OptionPaneValidatior() {
+						new OptionPaneValidator() {
 							@Override public Validator.ValidationResult validate(JComponent component) {
 								return new ModElementNameValidator(mcreator.getWorkspace(), (VTextField) component,
 										L10N.t("common.mod_element_name")).validate();
@@ -1267,7 +1274,7 @@ import java.util.stream.Collectors;
 					reloadElementsInCurrentTab();
 
 					if (buildNeeded.get())
-						mcreator.actionRegistry.buildWorkspace.doAction();
+						mcreator.getActionRegistry().buildWorkspace.doAction();
 				}
 			}
 		}
@@ -1513,9 +1520,23 @@ import java.util.stream.Collectors;
 									mcreator.getWorkspace().getModElements().size()));
 				}
 
-				if (mcreator.getWorkspaceSettings().getMCreatorDependencies().contains("mcreator_link")) {
+				Texture icon = CustomTexture.fromName(mcreator.getWorkspace(), TextureType.OTHER,
+						mcreator.getWorkspaceSettings().getModPicture());
+
+				if (icon != null) {
+					ImageIcon imageIcon = icon.getTextureIcon(mcreator.getWorkspace());
+					modElementsBar.setGradientColor(ColorUtils.applyAlpha(
+							ImageUtils.getAverageColor(ImageUtils.toBufferedImage(imageIcon.getImage())), 90));
+					elementsCount.setIcon(IconUtils.resize(imageIcon, 16));
+					modElementsBar.setFractionPoint(0.88f);
+				} else if (mcreator.getWorkspaceSettings().getMCreatorDependencies().contains("mcreator_link")) {
+					modElementsBar.setGradientColor(ColorUtils.applyAlpha(new Color(0xe69c32), 100));
 					elementsCount.setIcon(UIRES.get("16px.link"));
+					modElementsBar.setFractionPoint(0.88f);
 				} else {
+					modElementsBar.setGradientColor(
+							ColorUtils.applyAlpha(Theme.current().getInterfaceAccentColor(), 90));
+					modElementsBar.setFractionPoint(0.91f);
 					elementsCount.setIcon(new EmptyIcon(0, 0));
 				}
 			}

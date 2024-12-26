@@ -68,6 +68,8 @@ public class NewWorkspaceDialog extends MCreatorDialog {
 			UIRES.get("16px.spigot"));
 	private final JToggleButton datapack = new JToggleButton(L10N.t("dialog.new_workspace.datapack.toggle"),
 			UIRES.get("16px.datapack"));
+	private final JToggleButton resourcepack = new JToggleButton(L10N.t("dialog.new_workspace.resourcepack.toggle"),
+			UIRES.get("16px.resourcepack"));
 	private final JToggleButton addon = new JToggleButton(L10N.t("dialog.new_workspace.addon.toggle"),
 			UIRES.get("16px.bedrock"));
 
@@ -80,6 +82,7 @@ public class NewWorkspaceDialog extends MCreatorDialog {
 		AbstractWorkspacePanel quiltWorkspacePanel = new QuiltWorkspacePanel(this);
 		AbstractWorkspacePanel spigotWorkspacePanel = new SpigotWorkspacePanel(this);
 		AbstractWorkspacePanel datapackWorkspacePanel = new DatapackWorkspacePanel(this);
+		AbstractWorkspacePanel resourcepackWorkspacePanel = new ResourcepackWorkspacePanel(this);
 		AbstractWorkspacePanel addonWorkspacePanel = new AddonWorkspacePanel(this);
 
 		JPanel buttons = new JPanel();
@@ -135,7 +138,10 @@ public class NewWorkspaceDialog extends MCreatorDialog {
 		workspacePanels.add("quilt", PanelUtils.pullElementUp(quiltWorkspacePanel));
 		workspacePanels.add("spigot", PanelUtils.pullElementUp(spigotWorkspacePanel));
 		workspacePanels.add("datapack", PanelUtils.pullElementUp(datapackWorkspacePanel));
+		workspacePanels.add("resourcepack", PanelUtils.pullElementUp(resourcepackWorkspacePanel));
 		workspacePanels.add("addon", PanelUtils.pullElementUp(addonWorkspacePanel));
+
+		workspacePanels.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
 
 		JComponent center = PanelUtils.centerInPanel(workspacePanels);
 		center.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.current().getAltBackgroundColor()));
@@ -155,9 +161,7 @@ public class NewWorkspaceDialog extends MCreatorDialog {
 
 		forge.setHorizontalAlignment(SwingConstants.LEFT);
 		forge.setBackground(Theme.current().getBackgroundColor());
-		forge.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.current().getAltBackgroundColor()),
-				BorderFactory.createEmptyBorder(8, 8, 8, 30)));
+		forge.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 30));
 		buttonGroup.add(forge);
 		forge.addActionListener(e -> {
 			current = forgeWorkspacePanel;
@@ -166,9 +170,7 @@ public class NewWorkspaceDialog extends MCreatorDialog {
 
 		neoforge.setHorizontalAlignment(SwingConstants.LEFT);
 		neoforge.setBackground(Theme.current().getBackgroundColor());
-		neoforge.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.current().getAltBackgroundColor()),
-				BorderFactory.createEmptyBorder(8, 8, 8, 30)));
+		neoforge.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 30));
 		buttonGroup.add(neoforge);
 		neoforge.addActionListener(e -> {
 			current = neoforgeWorkspacePanel;
@@ -177,9 +179,7 @@ public class NewWorkspaceDialog extends MCreatorDialog {
 
 		fabric.setHorizontalAlignment(SwingConstants.LEFT);
 		fabric.setBackground(Theme.current().getBackgroundColor());
-		fabric.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.current().getAltBackgroundColor()),
-				BorderFactory.createEmptyBorder(8, 8, 8, 30)));
+		fabric.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 30));
 		buttonGroup.add(fabric);
 		fabric.addActionListener(e -> {
 			current = fabricWorkspacePanel;
@@ -188,9 +188,7 @@ public class NewWorkspaceDialog extends MCreatorDialog {
 
 		quilt.setHorizontalAlignment(SwingConstants.LEFT);
 		quilt.setBackground(Theme.current().getBackgroundColor());
-		quilt.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.current().getAltBackgroundColor()),
-				BorderFactory.createEmptyBorder(8, 8, 8, 30)));
+		quilt.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 30));
 		buttonGroup.add(quilt);
 		quilt.addActionListener(e -> {
 			current = quiltWorkspacePanel;
@@ -199,9 +197,7 @@ public class NewWorkspaceDialog extends MCreatorDialog {
 
 		spigot.setHorizontalAlignment(SwingConstants.LEFT);
 		spigot.setBackground(Theme.current().getBackgroundColor());
-		spigot.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.current().getAltBackgroundColor()),
-				BorderFactory.createEmptyBorder(8, 8, 8, 30)));
+		spigot.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 30));
 		buttonGroup.add(spigot);
 		spigot.addActionListener(e -> {
 			current = spigotWorkspacePanel;
@@ -210,39 +206,44 @@ public class NewWorkspaceDialog extends MCreatorDialog {
 
 		datapack.setHorizontalAlignment(SwingConstants.LEFT);
 		datapack.setBackground(Theme.current().getBackgroundColor());
-		datapack.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.current().getAltBackgroundColor()),
-				BorderFactory.createEmptyBorder(8, 8, 8, 30)));
+		datapack.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 30));
 		buttonGroup.add(datapack);
 		datapack.addActionListener(e -> {
 			current = datapackWorkspacePanel;
 			cardLayout.show(workspacePanels, "datapack");
 		});
 
+		resourcepack.setHorizontalAlignment(SwingConstants.LEFT);
+		resourcepack.setBackground(Theme.current().getBackgroundColor());
+		resourcepack.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 30));
+		buttonGroup.add(resourcepack);
+		resourcepack.addActionListener(e -> {
+			current = resourcepackWorkspacePanel;
+			cardLayout.show(workspacePanels, "resourcepack");
+		});
+
 		addon.setHorizontalAlignment(SwingConstants.LEFT);
 		addon.setBackground(Theme.current().getBackgroundColor());
-		addon.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createMatteBorder(0, 0, 1, 0, Theme.current().getAltBackgroundColor()),
-				BorderFactory.createEmptyBorder(8, 8, 8, 30)));
+		addon.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 30));
 		buttonGroup.add(addon);
 		addon.addActionListener(e -> {
 			current = addonWorkspacePanel;
 			cardLayout.show(workspacePanels, "addon");
 		});
 
-		JLabel wt = L10N.label("dialog.new_workspace.type");
-		ComponentUtils.deriveFont(wt, 10);
-		wt.setForeground(Theme.current().getAltForegroundColor());
-		wt.setBorder(BorderFactory.createEmptyBorder(8, 8, 3, 30));
-
-		workspaceType.add(wt);
+		workspaceType.add(separator("dialog.new_workspace.je_mod"));
 		workspaceType.add(neoforge);
 		workspaceType.add(forge);
 		workspaceType.add(fabric);
 		workspaceType.add(quilt);
-		workspaceType.add(spigot);
-		workspaceType.add(addon);
+		workspaceType.add(separator("dialog.new_workspace.je_dp"));
 		workspaceType.add(datapack);
+		workspaceType.add(separator("dialog.new_workspace.je_rp"));
+		workspaceType.add(resourcepack);
+		workspaceType.add(separator("dialog.new_workspace.be_addon"));
+		workspaceType.add(addon);
+		workspaceType.add(separator("dialog.new_workspace.je_plugin"));
+		workspaceType.add(spigot);
 
 		if (Generator.GENERATOR_CACHE.values().stream()
 				.noneMatch(gc -> gc.getGeneratorFlavor() == GeneratorFlavor.FORGE)) {
@@ -279,6 +280,11 @@ public class NewWorkspaceDialog extends MCreatorDialog {
 			disableType(datapack);
 		}
 
+		if (Generator.GENERATOR_CACHE.values().stream()
+				.noneMatch(gc -> gc.getGeneratorFlavor() == GeneratorFlavor.RESOURCEPACK)) {
+			disableType(resourcepack);
+		}
+
 		JComponent wrapPan = PanelUtils.northAndCenterElement(workspaceType, new JEmptyBox());
 		wrapPan.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, Theme.current().getAltBackgroundColor()));
 		add("West", wrapPan);
@@ -310,6 +316,14 @@ public class NewWorkspaceDialog extends MCreatorDialog {
 		setVisible(true);
 	}
 
+	private JLabel separator(String translationKey) {
+		JLabel wt = L10N.label(translationKey);
+		ComponentUtils.deriveFont(wt, 10);
+		wt.setForeground(Theme.current().getAltForegroundColor());
+		wt.setBorder(BorderFactory.createEmptyBorder(14, 8, 3, 30));
+		return wt;
+	}
+
 	private void selectType(GeneratorFlavor flavor) {
 		switch (flavor) {
 		case FORGE:
@@ -332,6 +346,9 @@ public class NewWorkspaceDialog extends MCreatorDialog {
 			break;
 		case DATAPACK:
 			datapack.doClick();
+			break;
+		case RESOURCEPACK:
+			resourcepack.doClick();
 			break;
 		}
 	}

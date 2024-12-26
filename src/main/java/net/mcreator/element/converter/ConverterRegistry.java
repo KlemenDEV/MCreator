@@ -49,16 +49,11 @@ import net.mcreator.element.converter.v2023_4.*;
 import net.mcreator.element.converter.v2024_1.AdvancementTriggerInverter;
 import net.mcreator.element.converter.v2024_1.ProcedureCustomDamageRemover;
 import net.mcreator.element.converter.v2024_1.TagModElementConverter;
-import net.mcreator.element.converter.v2024_2.BlockHarvestLevelConverter;
-import net.mcreator.element.converter.v2024_2.CallProcedureAtBlockConverter;
-import net.mcreator.element.converter.v2024_2.FeatureBlockstateSelectorConverter;
-import net.mcreator.element.converter.v2024_2.PotionEffectCategoryConverter;
-import net.mcreator.element.converter.v2024_2.HarvestLevelProceduresRemover;
-import net.mcreator.element.converter.v2024_2.ItemsCreativeTabsConverter;
-import net.mcreator.element.converter.v2024_2.ToolHarvestLevelConverter;
+import net.mcreator.element.converter.v2024_2.*;
 import net.mcreator.element.converter.v2024_3.EnchantmentDefinitionConverter;
 import net.mcreator.element.converter.v2024_3.PlantTypeProcedureRemover;
 import net.mcreator.element.converter.v2024_3.WorldDependencyAdder;
+import net.mcreator.element.converter.v2024_4.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -72,7 +67,8 @@ public class ConverterRegistry {
 		put(ModElementType.ADVANCEMENT, List.of(
 			new AchievementFixer(),
 			new AdvancementTextureConverter(),
-			new AdvancementTriggerInverter()
+			new AdvancementTriggerInverter(),
+			new AdvancementFunctionConverter()
 		));
 		put(ModElementType.ARMOR, List.of(
 			new ArmorTexturesConverter(),
@@ -84,7 +80,8 @@ public class ConverterRegistry {
 			new BiomeDefaultFeaturesConverter(),
 			new BiomeFrozenTopLayerConverter(),
 			new BiomeGenParametersConverter(),
-			new BiomeCustomFeaturesConverter()
+			new BiomeCustomFeaturesConverter(),
+			new BiomeFogColorConverter()
 		));
 		put(ModElementType.BLOCK, List.of(
 			new BlockLuminanceFixer(),
@@ -96,12 +93,14 @@ public class ConverterRegistry {
 			new BlockFeatureDimensionRestrictionConverter(),
 			new SpecialInformationConverter(),
 			new BlockHarvestLevelConverter(),
-			new ItemsCreativeTabsConverter()
+			new ItemsCreativeTabsConverter(),
+			new NoGUISelectedConverter()
 		));
 		put(ModElementType.DIMENSION, List.of(
 			new DimensionLuminanceFixer(),
 			new SpecialInformationConverter(),
-			new ItemsCreativeTabsConverter()
+			new ItemsCreativeTabsConverter(),
+			new DimensionSettingsConverter()
 		));
 		put(ModElementType.FLUID, List.of(
 			new FluidNameFixer(),
@@ -128,7 +127,8 @@ public class ConverterRegistry {
 			new EntitiesRangedAttackConverter(),
 			new WaterEntitiesConverter(),
 			new EntityGlowLayerConverter(),
-			new ItemsCreativeTabsConverter()
+			new ItemsCreativeTabsConverter(),
+			new NoGUISelectedConverter()
 		));
 		put(ModElementType.OVERLAY, List.of(
 			new OverlayCoordinateConverter(),
@@ -189,7 +189,8 @@ public class ConverterRegistry {
 			new ItemDispenseBehaviorToItemExtensionConverter(),
 			new SpecialInformationConverter(),
 			new ItemHasGlowConverter(),
-			new ItemsCreativeTabsConverter()
+			new ItemsCreativeTabsConverter(),
+			new NoGUISelectedConverter()
 		));
 		put(ModElementType.FEATURE, List.of(
 			new HugeFungusFeatureConverter(),
@@ -199,11 +200,6 @@ public class ConverterRegistry {
 		put(ModElementType.STRUCTURE, List.of(
 			new StructureToFeatureConverter(),
 			new StructureIgnoredBlocksConverter()
-		));
-		put(ModElementType.MUSICDISC, List.of(
-			new SpecialInformationConverter(),
-			new ItemHasGlowConverter(),
-			new ItemsCreativeTabsConverter()
 		));
 		put(ModElementType.TOOL, List.of(
 			new SpecialInformationConverter(),
@@ -223,6 +219,7 @@ public class ConverterRegistry {
 		put("fuel", new FuelToItemExtensionConverter());
 		put("rangeditem", new RangedItemToProjectileAndItemConverter());
 		put("tag", new TagModElementConverter());
+		put("musicdisc", new MusicDiscToItemConverter());
 	}};
 
 	public static List<IConverter> getConvertersForModElementType(ModElementType<?> modElementType) {

@@ -25,13 +25,11 @@ import net.mcreator.element.parts.*;
 import net.mcreator.element.parts.procedure.NumberProcedure;
 import net.mcreator.element.parts.procedure.Procedure;
 import net.mcreator.element.parts.procedure.StringListProcedure;
-import net.mcreator.element.types.interfaces.IBlock;
-import net.mcreator.element.types.interfaces.IBlockWithBoundingBox;
-import net.mcreator.element.types.interfaces.IItemWithModel;
-import net.mcreator.element.types.interfaces.ITabContainedElement;
+import net.mcreator.element.types.interfaces.*;
 import net.mcreator.generator.GeneratorFlavor;
 import net.mcreator.minecraft.MCItem;
 import net.mcreator.minecraft.MinecraftImageGenerator;
+import net.mcreator.ui.minecraft.states.PropertyDataWithValue;
 import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.util.image.ImageUtils;
 import net.mcreator.workspace.elements.ModElement;
@@ -41,6 +39,7 @@ import net.mcreator.workspace.resources.Model;
 import net.mcreator.workspace.resources.TexturedModel;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -49,7 +48,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @SuppressWarnings({ "unused", "NotNullFieldNotInitialized" }) public class Block extends GeneratableElement
-		implements IBlock, IItemWithModel, ITabContainedElement, IBlockWithBoundingBox {
+		implements IBlock, IItemWithModel, ITabContainedElement, ISpecialInfoHolder, IBlockWithBoundingBox {
 
 	@TextureReference(TextureType.BLOCK) public TextureHolder texture;
 	@TextureReference(TextureType.BLOCK) public TextureHolder textureTop;
@@ -79,13 +78,15 @@ import java.util.stream.Collectors;
 	public boolean disableOffset;
 	public List<BoxEntry> boundingBoxes;
 
+	public List<PropertyDataWithValue<?>> customProperties;
+
 	public String name;
 	public StringListProcedure specialInformation;
 	public double hardness;
 	public double resistance;
 	public boolean hasGravity;
 	public boolean isWaterloggable;
-	public List<TabEntry> creativeTabs;
+	@ModElementReference public List<TabEntry> creativeTabs;
 
 	@Nonnull public String destroyTool;
 	public MItemBlock customDrop;
@@ -143,7 +144,7 @@ import java.util.stream.Collectors;
 	public Procedure onBonemealSuccess;
 
 	public boolean hasInventory;
-	@ModElementReference(defaultValues = "<NONE>") public String guiBoundTo;
+	@ModElementReference @Nullable public String guiBoundTo;
 	public boolean openGUIOnRightClick;
 	public int inventorySize;
 	public int inventoryStackSize;
@@ -195,6 +196,8 @@ import java.util.stream.Collectors;
 
 		this.creativeTabs = new ArrayList<>();
 
+		this.customProperties = new ArrayList<>();
+
 		this.tintType = "No tint";
 		this.boundingBoxes = new ArrayList<>();
 		this.restrictionBiomes = new ArrayList<>();
@@ -240,7 +243,7 @@ import java.util.stream.Collectors;
 	}
 
 	public boolean shouldOpenGUIOnRightClick() {
-		return guiBoundTo != null && !guiBoundTo.equals("<NONE>") && openGUIOnRightClick;
+		return guiBoundTo != null && openGUIOnRightClick;
 	}
 
 	public boolean shouldScheduleTick() {
@@ -327,6 +330,10 @@ import java.util.stream.Collectors;
 
 	@Override public List<MCItem> getCreativeTabItems() {
 		return providedMCItems();
+	}
+
+	@Override public StringListProcedure getSpecialInfoProcedure() {
+		return specialInformation;
 	}
 
 	private Image getMainTexture() {

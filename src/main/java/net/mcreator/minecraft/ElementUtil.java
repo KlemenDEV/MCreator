@@ -24,12 +24,14 @@ import net.mcreator.element.ModElementType;
 import net.mcreator.element.parts.MItemBlock;
 import net.mcreator.element.types.LivingEntity;
 import net.mcreator.element.types.interfaces.IPOIProvider;
+import net.mcreator.generator.mapping.NameMapper;
 import net.mcreator.ui.minecraft.states.PropertyData;
 import net.mcreator.workspace.Workspace;
 import net.mcreator.workspace.elements.ModElement;
 import net.mcreator.workspace.elements.SoundElement;
 import net.mcreator.workspace.elements.VariableType;
 import net.mcreator.workspace.elements.VariableTypeLoader;
+import net.mcreator.workspace.resources.Animation;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -49,8 +51,12 @@ public class ElementUtil {
 	 * @param type The type that the entry has to match
 	 * @return A predicate that checks if the type matches the parameter
 	 */
-	public static Predicate<DataListEntry> typeMatches(String type) {
-		return e -> type.equals(e.getType());
+	public static Predicate<DataListEntry> typeMatches(String... type) {
+		if (type.length == 1) {
+			return e -> type[0].equals(e.getType());
+		} else {
+			return e -> Arrays.asList(type).contains(e.getType());
+		}
 	}
 
 	/**
@@ -88,24 +94,73 @@ public class ElementUtil {
 	}
 
 	/**
-	 * Loads all mod elements and all Minecraft elements (blocks and items), including elements
-	 * that are wildcard elements to subtypes (wood -&gt; oak wood, birch wood, ...)
+	 * Loads all items (also blocks if they have item representation), but without those
+	 * that are wildcard elements to subtypes (wood: oak wood, cherry wood, ...)
+	 * so only oak wood, cherry wood, ... are loaded, without wildcard wood element.
+	 * This will not load blocks without item representation (example fire, water, ...).
+	 *
+	 * @return All Blocks and Items from both Minecraft and custom elements with or without metadata
+	 */
+	public static List<MCItem> loadBlocksAndItems(Workspace workspace) {
+		List<MCItem> elements = new ArrayList<>();
+		workspace.getModElements().forEach(modElement -> elements.addAll(modElement.getMCItems()));
+		elements.addAll(
+				DataListLoader.loadDataList("blocksitems").stream().map(e -> (MCItem) e).filter(MCItem::hasNoSubtypes)
+						.toList());
+		return elements.stream().filter(typeMatches("block", "item")).filter(e -> e.isSupportedInWorkspace(workspace))
+				.collect(Collectors.toList());
+	}
+
+	/**
+	 * Loads all items (also blocks if they have item representation), including elements
+	 * that are wildcard elements to subtypes (wood: oak wood, cherry wood, ...).
+	 * This will not load blocks without item representation (example fire, water, ...).
 	 *
 	 * @return All Blocks and Items from both Minecraft and custom elements with or without metadata
 	 */
 	public static List<MCItem> loadBlocksAndItemsAndTags(Workspace workspace) {
 		List<MCItem> elements = new ArrayList<>();
 		workspace.getModElements().forEach(modElement -> elements.addAll(modElement.getMCItems()));
-		elements.addAll(
-				DataListLoader.loadDataList("blocksitems").stream().filter(e -> e.isSupportedInWorkspace(workspace))
-						.map(e -> (MCItem) e).toList());
-		return elements;
+		elements.addAll(DataListLoader.loadDataList("blocksitems").stream().map(e -> (MCItem) e).toList());
+		return elements.stream().filter(typeMatches("block", "item", "tag"))
+				.filter(e -> e.isSupportedInWorkspace(workspace)).collect(Collectors.toList());
 	}
 
 	/**
-	 * Loads all mod elements and all Minecraft elements (blocks and items), including elements
-	 * that are wildcard elements to subtypes (wood -&gt; oak wood, birch wood, ...)
-	 * This list also provides potions from both Minecraft elements and mod elements
+	 * Loads all blocks without those that are wildcard elements to subtypes (wood: oak wood, cherry wood, ...)
+	 * so only oak wood, cherry wood, ... are loaded, without wildcard wood element
+	 *
+	 * @return All Blocks from both Minecraft and custom elements with or without metadata
+	 */
+	public static List<MCItem> loadBlocks(Workspace workspace) {
+		List<MCItem> elements = new ArrayList<>();
+		workspace.getModElements().forEach(modElement -> elements.addAll(modElement.getMCItems()));
+		elements.addAll(
+				DataListLoader.loadDataList("blocksitems").stream().map(e -> (MCItem) e).filter(MCItem::hasNoSubtypes)
+						.toList());
+		return elements.stream().filter(typeMatches("block", "block_without_item"))
+				.filter(e -> e.isSupportedInWorkspace(workspace)).collect(Collectors.toList());
+	}
+
+	/**
+	 * Loads all mod elements and all Minecraft blocks, including those that
+	 * are wildcard elements to subtypes (wood: oak wood, cherry wood, ...)
+	 *
+	 * @return All Blocks from both Minecraft and custom elements with or without metadata
+	 */
+	public static List<MCItem> loadBlocksAndTags(Workspace workspace) {
+		List<MCItem> elements = new ArrayList<>();
+		workspace.getModElements().forEach(modElement -> elements.addAll(modElement.getMCItems()));
+		elements.addAll(DataListLoader.loadDataList("blocksitems").stream().map(e -> (MCItem) e).toList());
+		return elements.stream().filter(typeMatches("block", "block_without_item", "tag"))
+				.filter(e -> e.isSupportedInWorkspace(workspace)).collect(Collectors.toList());
+	}
+
+	/**
+	 * Loads all items (also blocks if they have item representation), including those
+	 * that are wildcard elements to subtypes (wood: oak wood, cherry wood, ...)
+	 * This list also provides potions from both Minecraft elements and mod elements.
+	 * This will not load blocks without item representation (example fire, water, ...).
 	 *
 	 * @return All Blocks and Items and Potions from both Minecraft and custom elements with or without metadata
 	 */
@@ -116,65 +171,17 @@ public class ElementUtil {
 	}
 
 	/**
-	 * Loads all mod elements and all Minecraft elements (blocks and items) without elements
-	 * that are wildcard elements to subtypes (wood -&gt; oak wood, birch wood, ...)
-	 * so only oak wood, birch wood, ... are loaded, without wildcard wood element
-	 * This list also provides potions from both Minecraft elements and mod elements
+	 * Loads all items (also blocks if they have item representation), without those
+	 * that are wildcard elements to subtypes (wood: oak wood, cherry wood, ...)
+	 * so only oak wood, cherry wood, ... are loaded, without wildcard wood element
+	 * This list also provides potions from both Minecraft elements and mod elements.
+	 * This will not load blocks without item representation (example fire, water, ...).
 	 *
 	 * @return All Blocks and Items and Potions from both Minecraft and custom elements with or without metadata
 	 */
 	public static List<MCItem> loadBlocksAndItemsAndPotions(Workspace workspace) {
 		List<MCItem> elements = loadBlocksAndItems(workspace);
 		loadAllPotions(workspace).forEach(potion -> elements.add(new MCItem.Potion(workspace, potion)));
-		return elements;
-	}
-
-	/**
-	 * Loads all mod elements and all Minecraft elements (blocks and items) without elements
-	 * that are wildcard elements to subtypes (wood -&gt; oak wood, birch wood, ...)
-	 * so only oak wood, birch wood, ... are loaded, without wildcard wood element
-	 *
-	 * @return All Blocks and Items from both Minecraft and custom elements with or without metadata
-	 */
-	public static List<MCItem> loadBlocksAndItems(Workspace workspace) {
-		List<MCItem> elements = new ArrayList<>();
-		workspace.getModElements().forEach(modElement -> elements.addAll(modElement.getMCItems()));
-		elements.addAll(
-				DataListLoader.loadDataList("blocksitems").stream().filter(e -> e.isSupportedInWorkspace(workspace))
-						.map(e -> (MCItem) e).filter(MCItem::hasNoSubtypes).toList());
-		return elements;
-	}
-
-	/**
-	 * Loads all mod elements and all Minecraft blocks without elements
-	 * that are wildcard elements to subtypes (wood -&gt; oak wood, birch wood, ...)
-	 * so only oak wood, birch wood, ... are loaded, without wildcard wood element
-	 *
-	 * @return All Blocks from both Minecraft and custom elements with or without metadata
-	 */
-	public static List<MCItem> loadBlocks(Workspace workspace) {
-		List<MCItem> elements = new ArrayList<>();
-		workspace.getModElements().forEach(modElement -> elements.addAll(
-				modElement.getMCItems().stream().filter(e -> e.getType().equals("block")).toList()));
-		elements.addAll(
-				DataListLoader.loadDataList("blocksitems").stream().filter(e -> e.isSupportedInWorkspace(workspace))
-						.filter(typeMatches("block")).map(e -> (MCItem) e).filter(MCItem::hasNoSubtypes).toList());
-		return elements;
-	}
-
-	/**
-	 * Loads all mod elements and all Minecraft blocks, including elements
-	 * that are wildcard elements to subtypes (wood -&gt; oak wood, birch wood, ...)
-	 *
-	 * @return All Blocks from both Minecraft and custom elements with or without metadata
-	 */
-	public static List<MCItem> loadBlocksAndTags(Workspace workspace) {
-		List<MCItem> elements = new ArrayList<>();
-		workspace.getModElements().forEach(modElement -> elements.addAll(
-				modElement.getMCItems().stream().filter(e -> e.getType().equals("block")).toList()));
-		elements.addAll(
-				DataListLoader.loadDataList("blocksitems").stream().filter(e -> e.isSupportedInWorkspace(workspace))
-						.filter(typeMatches("block")).map(e -> (MCItem) e).toList());
 		return elements;
 	}
 
@@ -203,6 +210,18 @@ public class ElementUtil {
 
 	public static List<DataListEntry> loadMapColors() {
 		return DataListLoader.loadDataList("mapcolors");
+	}
+
+	public static List<DataListEntry> loadAnimations(Workspace workspace) {
+		List<DataListEntry> animations = new ArrayList<>();
+		for (Animation animation : Animation.getAnimations(workspace)) {
+			for (String subanimation : animation.getSubanimations()) {
+				animations.add(
+						new DataListEntry.Dummy(NameMapper.MCREATOR_PREFIX + animation.getName() + "." + subanimation));
+			}
+		}
+		animations.addAll(DataListLoader.loadDataList("animations"));
+		return animations;
 	}
 
 	public static List<DataListEntry> loadAllEntities(Workspace workspace) {
@@ -238,8 +257,8 @@ public class ElementUtil {
 	public static List<String> loadEntityDataListFromCustomEntity(Workspace workspace, String entityName,
 			Class<? extends PropertyData<?>> type) {
 		if (entityName != null) {
-			LivingEntity entity = (LivingEntity) workspace.getModElementByName(entityName.replace("CUSTOM:", ""))
-					.getGeneratableElement();
+			LivingEntity entity = (LivingEntity) workspace.getModElementByName(
+					entityName.replace(NameMapper.MCREATOR_PREFIX, "")).getGeneratableElement();
 			if (entity != null) {
 				return entity.entityDataEntries.stream().filter(e -> e.property().getClass().equals(type))
 						.map(e -> e.property().getName()).toList();
@@ -264,6 +283,10 @@ public class ElementUtil {
 		return loadDataListAndElements(workspace, "villagerprofessions", false, null, "villagerprofession");
 	}
 
+	public static List<DataListEntry> loadAllAttributes(Workspace workspace) {
+		return loadDataListAndElements(workspace, "attributes", false, null, "attribute");
+	}
+
 	/**
 	 * Returns list of blocks attached to a POI for this workspace
 	 *
@@ -285,7 +308,7 @@ public class ElementUtil {
 	public static List<DataListEntry> getAllBooleanGameRules(Workspace workspace) {
 		List<DataListEntry> retval = getCustomElements(workspace, modelement -> {
 			if (modelement.getType() == ModElementType.GAMERULE)
-				return modelement.getMetadata("type").equals(VariableTypeLoader.BuiltInTypes.LOGIC.getName());
+				return VariableTypeLoader.BuiltInTypes.LOGIC.getName().equals(modelement.getMetadata("type"));
 			return false;
 		});
 
@@ -297,7 +320,7 @@ public class ElementUtil {
 	public static List<DataListEntry> getAllNumberGameRules(Workspace workspace) {
 		List<DataListEntry> retval = getCustomElements(workspace, modelement -> {
 			if (modelement.getType() == ModElementType.GAMERULE)
-				return modelement.getMetadata("type").equals(VariableTypeLoader.BuiltInTypes.NUMBER.getName());
+				return VariableTypeLoader.BuiltInTypes.NUMBER.getName().equals(modelement.getMetadata("type"));
 			return false;
 		});
 
@@ -325,7 +348,7 @@ public class ElementUtil {
 		ArrayList<String> retval = new ArrayList<>();
 
 		for (SoundElement soundElement : workspace.getSoundElements()) {
-			retval.add("CUSTOM:" + soundElement.getName());
+			retval.add(NameMapper.MCREATOR_PREFIX + soundElement.getName());
 		}
 
 		retval.addAll(DataListLoader.loadDataList("sounds").stream().sorted().map(DataListEntry::getName).toList());

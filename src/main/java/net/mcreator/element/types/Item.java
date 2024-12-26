@@ -23,10 +23,8 @@ import net.mcreator.element.parts.*;
 import net.mcreator.element.parts.procedure.LogicProcedure;
 import net.mcreator.element.parts.procedure.Procedure;
 import net.mcreator.element.parts.procedure.StringListProcedure;
-import net.mcreator.element.types.interfaces.IItem;
-import net.mcreator.element.types.interfaces.IItemWithModel;
-import net.mcreator.element.types.interfaces.IItemWithTexture;
-import net.mcreator.element.types.interfaces.ITabContainedElement;
+import net.mcreator.element.types.interfaces.*;
+import net.mcreator.generator.mapping.NameMapper;
 import net.mcreator.minecraft.DataListEntry;
 import net.mcreator.minecraft.DataListLoader;
 import net.mcreator.minecraft.MCItem;
@@ -47,7 +45,7 @@ import java.awt.image.BufferedImage;
 import java.util.*;
 
 @SuppressWarnings({ "unused", "NotNullFieldNotInitialized" }) public class Item extends GeneratableElement
-		implements IItem, IItemWithModel, ITabContainedElement, IItemWithTexture {
+		implements IItem, IItemWithModel, ITabContainedElement, ISpecialInfoHolder, IItemWithTexture {
 
 	public int renderType;
 	@TextureReference(TextureType.ITEM) public TextureHolder texture;
@@ -58,7 +56,7 @@ import java.util.*;
 
 	public String name;
 	public String rarity;
-	public List<TabEntry> creativeTabs;
+	@ModElementReference public List<TabEntry> creativeTabs;
 	public int stackSize;
 	public int enchantability;
 	public int useDuration;
@@ -77,7 +75,7 @@ import java.util.*;
 	public StringListProcedure specialInformation;
 	public LogicProcedure glowCondition;
 
-	@Nullable @ModElementReference(defaultValues = "<NONE>") public String guiBoundTo;
+	@Nullable @ModElementReference public String guiBoundTo;
 	public int inventorySize;
 	public int inventoryStackSize;
 
@@ -109,6 +107,13 @@ import java.util.*;
 	public boolean isMeat;
 	public boolean isAlwaysEdible;
 	public String animation;
+
+	// Music disc
+	public boolean isMusicDisc;
+	public Sound musicDiscMusic;
+	public String musicDiscDescription;
+	public int musicDiscLengthInTicks;
+	public int musicDiscAnalogOutput;
 
 	private Item() {
 		this(null);
@@ -159,6 +164,10 @@ import java.util.*;
 		return providedMCItems();
 	}
 
+	@Override public StringListProcedure getSpecialInfoProcedure() {
+		return specialInformation;
+	}
+
 	public boolean hasNormalModel() {
 		return decodeModelType(renderType) == Model.Type.BUILTIN && customModelName.equals("Normal");
 	}
@@ -172,7 +181,7 @@ import java.util.*;
 	}
 
 	public boolean hasInventory() {
-		return guiBoundTo != null && !guiBoundTo.isEmpty() && !guiBoundTo.equals("<NONE>");
+		return guiBoundTo != null && !guiBoundTo.isEmpty();
 	}
 
 	public boolean hasNonDefaultAnimation() {
@@ -206,8 +215,8 @@ import java.util.*;
 
 			model.stateMap = new StateMap();
 			state.stateMap.forEach((prop, value) -> {
-				if (customProperties.containsKey(prop.getName().replace("CUSTOM:", "")) || builtinProperties.contains(
-						prop.getName()))
+				if (customProperties.containsKey(prop.getName().replace(NameMapper.MCREATOR_PREFIX, ""))
+						|| builtinProperties.contains(prop.getName()))
 					model.stateMap.put(prop, value);
 			});
 

@@ -25,10 +25,7 @@ import net.mcreator.element.parts.TextureHolder;
 import net.mcreator.element.parts.procedure.LogicProcedure;
 import net.mcreator.element.parts.procedure.Procedure;
 import net.mcreator.element.parts.procedure.StringListProcedure;
-import net.mcreator.element.types.interfaces.IItem;
-import net.mcreator.element.types.interfaces.IItemWithModel;
-import net.mcreator.element.types.interfaces.IItemWithTexture;
-import net.mcreator.element.types.interfaces.ITabContainedElement;
+import net.mcreator.element.types.interfaces.*;
 import net.mcreator.minecraft.MCItem;
 import net.mcreator.ui.minecraft.states.PropertyData;
 import net.mcreator.ui.minecraft.states.StateMap;
@@ -45,7 +42,7 @@ import java.awt.image.BufferedImage;
 import java.util.*;
 
 @SuppressWarnings({ "unused", "NotNullFieldNotInitialized" }) public class Tool extends GeneratableElement
-		implements IItem, IItemWithModel, ITabContainedElement, IItemWithTexture {
+		implements IItem, IItemWithModel, ITabContainedElement, ISpecialInfoHolder, IItemWithTexture {
 
 	@Nonnull public String toolType;
 
@@ -57,7 +54,7 @@ import java.util.*;
 
 	public String name;
 	public StringListProcedure specialInformation;
-	public List<TabEntry> creativeTabs;
+	@ModElementReference public List<TabEntry> creativeTabs;
 	public double efficiency;
 	public double attackSpeed;
 	public int enchantability;
@@ -168,4 +165,9 @@ import java.util.*;
 	@Override public List<MCItem> getCreativeTabItems() {
 		return providedMCItems();
 	}
+
+	@Override public StringListProcedure getSpecialInfoProcedure() {
+		return specialInformation;
+	}
+
 }
