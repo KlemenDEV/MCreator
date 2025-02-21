@@ -121,7 +121,7 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 	private final JSpinner rangedAttackRadius = new JSpinner(new SpinnerNumberModel(10, 0, 1024, 0.1));
 
 	private final JSpinner spawningProbability = new JSpinner(new SpinnerNumberModel(20, 1, 1000, 1));
-	private final JMinMaxSpinner numberOfMobsPerGroup = new JMinMaxSpinner(4, 4, 1, 1000, 1);
+	private final JMinMaxSpinner numberOfMobsPerGroup = new JMinMaxSpinner(4, 4, 1, 1000, 1).allowEqualValues();
 
 	private final JSpinner modelWidth = new JSpinner(new SpinnerNumberModel(0.6, 0, 1024, 0.1));
 	private final JSpinner modelHeight = new JSpinner(new SpinnerNumberModel(1.8, 0, 1024, 0.1));
@@ -307,7 +307,7 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 
 	@Override protected void initGUI() {
 		onStruckByLightning = new ProcedureSelector(this.withEntry("entity/when_struck_by_lightning"), mcreator,
-				L10N.t("elementgui.living_entity.event_struck_by_lightning"),
+				L10N.t("elementgui.living_entity.event_struck_by_lightning"), AbstractProcedureSelector.Side.SERVER,
 				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity"));
 		whenMobFalls = new ProcedureSelector(this.withEntry("entity/when_falls"), mcreator,
 				L10N.t("elementgui.living_entity.event_mob_falls"), Dependency.fromString(
@@ -316,9 +316,9 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 				L10N.t("elementgui.living_entity.event_mob_dies"), Dependency.fromString(
 				"x:number/y:number/z:number/world:world/entity:entity/sourceentity:entity/immediatesourceentity:entity/damagesource:damagesource"));
 		whenMobIsHurt = new ProcedureSelector(this.withEntry("entity/when_hurt"), mcreator,
-				L10N.t("elementgui.living_entity.event_mob_is_hurt"), VariableTypeLoader.BuiltInTypes.LOGIC,
-				Dependency.fromString(
-						"x:number/y:number/z:number/world:world/entity:entity/sourceentity:entity/immediatesourceentity:entity/damagesource:damagesource")).makeReturnValueOptional();
+				L10N.t("elementgui.living_entity.event_mob_is_hurt"), AbstractProcedureSelector.Side.SERVER, true,
+				VariableTypeLoader.BuiltInTypes.LOGIC, Dependency.fromString(
+				"x:number/y:number/z:number/world:world/entity:entity/sourceentity:entity/immediatesourceentity:entity/damagesource:damagesource")).makeReturnValueOptional();
 		onRightClickedOn = new ProcedureSelector(this.withEntry("entity/when_right_clicked"), mcreator,
 				L10N.t("elementgui.living_entity.event_mob_right_clicked"),
 				VariableTypeLoader.BuiltInTypes.ACTIONRESULTTYPE, Dependency.fromString(
@@ -333,7 +333,7 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 				L10N.t("elementgui.living_entity.event_player_collides_with"),
 				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity/sourceentity:entity"));
 		onInitialSpawn = new ProcedureSelector(this.withEntry("entity/on_initial_spawn"), mcreator,
-				L10N.t("elementgui.living_entity.event_initial_spawn"),
+				L10N.t("elementgui.living_entity.event_initial_spawn"), AbstractProcedureSelector.Side.SERVER,
 				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity"));
 
 		spawningCondition = new ProcedureSelector(this.withEntry("entity/condition_natural_spawning"), mcreator,
@@ -375,8 +375,7 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 		breedTriggerItems = new MCItemListField(mcreator, ElementUtil::loadBlocksAndItemsAndTags, false, true);
 		entityDataList = new JEntityDataList(mcreator, this);
 		guiBoundTo = new SingleModElementSelector(mcreator, ModElementType.GUI);
-
-		numberOfMobsPerGroup.setAllowEqualValues(true);
+		guiBoundTo.setDefaultText(L10N.t("elementgui.common.no_gui"));
 
 		mobModelTexture = new TextureComboBox(mcreator, TextureType.ENTITY).requireValue(
 				"elementgui.living_entity.error_entity_model_needs_texture");

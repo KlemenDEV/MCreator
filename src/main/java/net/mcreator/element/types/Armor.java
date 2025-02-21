@@ -62,7 +62,7 @@ import java.util.*;
 	public Procedure onLeggingsTick;
 	public Procedure onBootsTick;
 
-	public List<TabEntry> creativeTabs;
+	@ModElementReference public List<TabEntry> creativeTabs;
 	@TextureReference(value = TextureType.ARMOR, files = { "%s_layer_1", "%s_layer_2" }) public String armorTextureFile;
 
 	public String helmetName;
@@ -138,6 +138,7 @@ import java.util.*;
 		super(element);
 
 		this.creativeTabs = new ArrayList<>();
+		this.repairItems = new ArrayList<>();
 
 		this.helmetModelName = "Default";
 		this.bodyModelName = "Default";
@@ -399,6 +400,13 @@ import java.util.*;
 
 	@Override public List<TabEntry> getCreativeTabs() {
 		return creativeTabs;
+	}
+
+	public List<String> getRepairItemsAsStringList() {
+		List<String> repairItems = new ArrayList<>();
+		for (MItemBlock repairItem : this.repairItems)
+			repairItems.add(repairItem.getUnmappedValue());
+		return repairItems;
 	}
 
 }

@@ -54,7 +54,7 @@ import java.util.*;
 
 	public String name;
 	public StringListProcedure specialInformation;
-	public List<TabEntry> creativeTabs;
+	@ModElementReference public List<TabEntry> creativeTabs;
 	public double efficiency;
 	public double attackSpeed;
 	public int enchantability;
@@ -89,6 +89,7 @@ import java.util.*;
 		super(element);
 
 		this.creativeTabs = new ArrayList<>();
+		this.repairItems = new ArrayList<>();
 
 		this.attackSpeed = 2.8;
 
@@ -168,6 +169,13 @@ import java.util.*;
 
 	@Override public StringListProcedure getSpecialInfoProcedure() {
 		return specialInformation;
+	}
+
+	public List<String> getRepairItemsAsStringList() {
+		List<String> repairItems = new ArrayList<>();
+		for (MItemBlock repairItem : this.repairItems)
+			repairItems.add(repairItem.getUnmappedValue());
+		return repairItems;
 	}
 
 }

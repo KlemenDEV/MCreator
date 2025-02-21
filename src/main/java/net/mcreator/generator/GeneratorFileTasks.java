@@ -84,6 +84,23 @@ public class GeneratorFileTasks {
 					}
 				}
 			}
+			case "provide_default_pack_icon" -> {
+				File to = new File(
+						GeneratorTokens.replaceTokens(generator.getWorkspace(), (String) ((Map<?, ?>) task).get("to")));
+				int w = Integer.parseInt(GeneratorTokens.replaceTokens(generator.getWorkspace(),
+						(String) ((Map<?, ?>) task).get("width")));
+				int h = Integer.parseInt(GeneratorTokens.replaceTokens(generator.getWorkspace(),
+						(String) ((Map<?, ?>) task).get("height")));
+				if (generator.getWorkspace().getFolderManager().isFileInWorkspace(to) && !to.isFile()) {
+					try {
+						BufferedImage resized = ImageUtils.toBufferedImage(
+								ImageUtils.resize(UIRES.getBuiltIn("fallback").getImage(), w, h));
+						ImageIO.write(resized, "png", to);
+					} catch (IOException e) {
+						generator.getLogger().warn("Failed to read image file for resizing", e);
+					}
+				}
+			}
 			case "copy_models" -> {
 				File to = new File(
 						GeneratorTokens.replaceTokens(generator.getWorkspace(), (String) ((Map<?, ?>) task).get("to")));
@@ -116,6 +133,15 @@ public class GeneratorFileTasks {
 										.limit(2) // we only copy fist two elements, we skip last one which is texture mapping if it exists
 										.forEach(f -> ModelUtils.copyOBJorMTLApplyTextureMapping(
 												generator.getWorkspace(), f, new File(to, f.getName()), model, prefix));
+							}
+						}
+						break;
+					case "OBJ_referencetextures":
+						for (Model model : modelList) {
+							if (model.getType() == Model.Type.OBJ) {
+								Arrays.stream(model.getFiles())
+										.limit(2) // we only copy fist two elements, we skip last one which is texture mapping if it exists
+										.forEach(f -> ModelUtils.copyOBJorMTLApplyTextureReferences(f, new File(to, f.getName())));
 							}
 						}
 						break;

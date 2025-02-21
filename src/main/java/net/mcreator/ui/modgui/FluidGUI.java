@@ -160,7 +160,7 @@ public class FluidGUI extends ModElementGUI<Fluid> {
 				L10N.t("elementgui.common.event_on_random_update"), ProcedureSelector.Side.CLIENT,
 				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity/blockstate:blockstate"));
 		onDestroyedByExplosion = new ProcedureSelector(this.withEntry("block/when_destroyed_explosion"), mcreator,
-				L10N.t("elementgui.block.event_on_block_destroyed_by_explosion"),
+				L10N.t("elementgui.block.event_on_block_destroyed_by_explosion"), ProcedureSelector.Side.SERVER,
 				Dependency.fromString("x:number/y:number/z:number/world:world"));
 		flowCondition = new ProcedureSelector(this.withEntry("fluid/flow_condition"), mcreator,
 				L10N.t("elementgui.fluid.event_flow_condition"), VariableTypeLoader.BuiltInTypes.LOGIC,
@@ -213,7 +213,7 @@ public class FluidGUI extends ModElementGUI<Fluid> {
 				L10N.label("elementgui.fluid.fog_color")));
 		visualSettings.add(fogColor);
 
-		JPanel fogProcedures = new JPanel(new GridLayout(2, 1, 2, 0));
+		JPanel fogProcedures = new JPanel(new GridLayout(2, 1, 2, 2));
 		fogProcedures.setOpaque(false);
 
 		fogProcedures.add(fogStartDistance);

@@ -174,7 +174,7 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 	private final JSpinner damageValueLeggings = new JSpinner(new SpinnerNumberModel(5, 0, 1024, 1));
 	private final JSpinner damageValueBody = new JSpinner(new SpinnerNumberModel(6, 0, 1024, 1));
 	private final JSpinner damageValueHelmet = new JSpinner(new SpinnerNumberModel(2, 0, 1024, 1));
-	private final JSpinner enchantability = new JSpinner(new SpinnerNumberModel(9, 0, 128000, 1));
+	private final JSpinner enchantability = new JSpinner(new SpinnerNumberModel(9, 1, 128000, 1));
 	private final JSpinner toughness = new JSpinner(new SpinnerNumberModel(0.0, 0, 1024, 0.1));
 	private final JSpinner knockbackResistance = new JSpinner(new SpinnerNumberModel(0.0, 0, 5.0, 0.1));
 
@@ -882,9 +882,9 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 	}
 
 	private void updateArmorTexturePreview() {
-		File[] armorTextures = mcreator.getFolderManager()
-				.getArmorTextureFilesForName(armorTextureFile.getTextureName());
-		if (armorTextures[0].isFile() && armorTextures[1].isFile()) {
+		String textureName = armorTextureFile.getTextureName();
+		File[] armorTextures = mcreator.getFolderManager().getArmorTextureFilesForName(textureName);
+		if (!textureName.isBlank() && armorTextures[0].isFile() && armorTextures[1].isFile()) {
 			ImageIcon bg1 = new ImageIcon(
 					ImageUtils.resize(new ImageIcon(armorTextures[0].getAbsolutePath()).getImage(),
 							64 * ARMOR_TEXTURE_SIZE_FACTOR, 32 * ARMOR_TEXTURE_SIZE_FACTOR));

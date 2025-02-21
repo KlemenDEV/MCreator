@@ -123,6 +123,11 @@ public class GeneratorSelector {
 				addStatusLabel(L10N.t(covpfx + "java_model_animations"),
 						stats.getBaseCoverageInfo().get("model_animations_java"), baseCoverageInfo);
 
+			if (generatorConfiguration.getGeneratorFlavor().getGamePlatform()
+					== GeneratorFlavor.GamePlatform.JAVAEDITION)
+				addStatusLabel(L10N.t(covpfx + "vanilla_resources"),
+						stats.getBaseCoverageInfo().get("vanilla_resources"), baseCoverageInfo);
+
 			genStats.add(
 					PanelUtils.northAndCenterElement(L10N.label("dialog.generator_selector.features"), baseCoverageInfo,
 							10, 10));
@@ -177,7 +182,9 @@ public class GeneratorSelector {
 		JScrollPane pane = new JScrollPane(statsPan);
 		pane.getVerticalScrollBar().setUnitIncrement(10);
 
-		mainPanel.add("Center", pane);
+		if (currentFlavor != GeneratorFlavor.RESOURCEPACK) {
+			mainPanel.add("Center", pane);
+		}
 
 		generator.addActionListener(e -> {
 			if (generator.getSelectedItem() instanceof GeneratorConfiguration generatorConfiguration)

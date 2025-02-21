@@ -87,7 +87,7 @@ import java.util.stream.Collectors;
 	public double resistance;
 	public boolean hasGravity;
 	public boolean isWaterloggable;
-	public List<TabEntry> creativeTabs;
+	@ModElementReference public List<TabEntry> creativeTabs;
 
 	@Nonnull public String destroyTool;
 	public MItemBlock customDrop;
@@ -153,6 +153,8 @@ import java.util.stream.Collectors;
 	public boolean inventoryComparatorPower;
 	public List<Integer> inventoryOutSlotIDs;
 	public List<Integer> inventoryInSlotIDs;
+	public Procedure inventoryAutomationTakeCondition;
+	public Procedure inventoryAutomationPlaceCondition;
 
 	public boolean hasEnergyStorage;
 	public int energyInitial;

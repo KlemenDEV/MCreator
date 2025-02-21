@@ -219,6 +219,7 @@ public class ItemGUI extends ModElementGUI<Item> {
 		customProperties = new JItemPropertiesStatesList(mcreator, this);
 		customProperties.setPreferredSize(new Dimension(0, 0)); // prevent resizing beyond the editor tab
 		guiBoundTo = new SingleModElementSelector(mcreator, ModElementType.GUI);
+		guiBoundTo.setDefaultText(L10N.t("elementgui.common.no_gui"));
 
 		guiBoundTo.addEntrySelectedListener(e -> {
 			if (!isEditingMode()) {
@@ -285,7 +286,7 @@ public class ItemGUI extends ModElementGUI<Item> {
 		cipp.setOpaque(false);
 		cipp.add("Center", customProperties);
 
-		JPanel subpane2 = new JPanel(new GridLayout(15, 2, 2, 2));
+		JPanel subpane2 = new JPanel(new GridLayout(15, 2, 65, 2));
 
 		ComponentUtils.deriveFont(name, 16);
 

@@ -95,6 +95,7 @@ public class PlantGUI extends ModElementGUI<Plant> {
 	private final JCheckBox hasTileEntity = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox emissiveRendering = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox isSolid = L10N.checkbox("elementgui.common.enable");
+	private final JCheckBox isWaterloggable = L10N.checkbox("elementgui.common.enable");
 
 	private final VTextField name = new VTextField(18);
 
@@ -115,7 +116,8 @@ public class PlantGUI extends ModElementGUI<Plant> {
 
 	private final MCItemHolder customDrop = new MCItemHolder(mcreator, ElementUtil::loadBlocksAndItems);
 
-	private final JComboBox<String> plantType = new JComboBox<>(new String[] { "normal", "double", "growapable" });
+	private final JComboBox<String> plantType = new JComboBox<>(
+			new String[] { "normal", "double", "growapable", "sapling" });
 	private final CardLayout plantTypesLayout = new CardLayout();
 	private final JPanel plantTypesCardPanel = new JPanel(plantTypesLayout);
 	private final JLabel plantTypeIndicator = new JLabel();
@@ -129,6 +131,16 @@ public class PlantGUI extends ModElementGUI<Plant> {
 	private final JSpinner suspiciousStewDuration = new JSpinner(new SpinnerNumberModel(100, 0, 100000, 1));
 
 	private final TabListField creativeTabs = new TabListField(mcreator);
+
+	// Sapling properties
+	private final JSpinner secondaryTreeChance = new JSpinner(new SpinnerNumberModel(0.1, 0, 1, 0.01));
+	private final SingleConfiguredFeatureField[] trees = new SingleConfiguredFeatureField[] {
+			new SingleConfiguredFeatureField(mcreator), new SingleConfiguredFeatureField(mcreator) };
+	private final SingleConfiguredFeatureField[] flowerTrees = new SingleConfiguredFeatureField[] {
+			new SingleConfiguredFeatureField(mcreator), new SingleConfiguredFeatureField(mcreator) };
+	private final SingleConfiguredFeatureField[] megaTrees = new SingleConfiguredFeatureField[] {
+			new SingleConfiguredFeatureField(mcreator), new SingleConfiguredFeatureField(mcreator) };
+
 	private final SearchableComboBox<Model> renderType = new SearchableComboBox<>(new Model[] { cross, crop });
 
 	private final JComboBox<String> offsetType = new JComboBox<>(new String[] { "XZ", "XYZ", "NONE" });
@@ -209,7 +221,7 @@ public class PlantGUI extends ModElementGUI<Plant> {
 				L10N.t("elementgui.plant.event_on_destroyed_by_player"),
 				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity/blockstate:blockstate"));
 		onDestroyedByExplosion = new ProcedureSelector(this.withEntry("block/when_destroyed_explosion"), mcreator,
-				L10N.t("elementgui.plant.event_on_destroyed_by_explosion"),
+				L10N.t("elementgui.plant.event_on_destroyed_by_explosion"), ProcedureSelector.Side.SERVER,
 				Dependency.fromString("x:number/y:number/z:number/world:world"));
 		onStartToDestroy = new ProcedureSelector(this.withEntry("block/when_destroy_start"), mcreator,
 				L10N.t("elementgui.plant.event_on_start_to_destroy"),
@@ -323,6 +335,7 @@ public class PlantGUI extends ModElementGUI<Plant> {
 
 		emissiveRendering.setOpaque(false);
 		isSolid.setOpaque(false);
+		isWaterloggable.setOpaque(false);
 
 		isReplaceable.setOpaque(false);
 		isBonemealable.setOpaque(false);
@@ -346,7 +359,7 @@ public class PlantGUI extends ModElementGUI<Plant> {
 		plantTypeIndicator.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
 
 		plantTypeSelector.add("Center", PanelUtils.northAndCenterElement(plantTypePanel, plantTypesCardPanel, 2, 2));
-		plantTypeSelector.add("East", plantTypeIndicator);
+		plantTypeSelector.add("East", PanelUtils.pullElementUp(plantTypeIndicator));
 		plantTypeSelector.setOpaque(false);
 
 		// Panel for static plants
@@ -375,9 +388,52 @@ public class PlantGUI extends ModElementGUI<Plant> {
 		JPanel doublePlantCard = new JPanel(new BorderLayout(15, 5));
 		doublePlantCard.setOpaque(false);
 
+		// Panel for saplings
+		JPanel saplingCard = new JPanel(new BorderLayout(15, 5));
+
+		JPanel saplingProperties = new JPanel(new GridLayout(5, 3, 2, 2));
+		saplingProperties.setOpaque(false);
+
+		saplingProperties.add(new JLabel());
+		saplingProperties.add(L10N.label("elementgui.plant.primary_trees"));
+		saplingProperties.add(L10N.label("elementgui.plant.secondary_trees"));
+
+		saplingProperties.add(
+				HelpUtils.wrapWithHelpButton(this.withEntry("plant/trees"), L10N.label("elementgui.plant.trees")));
+		saplingProperties.add(trees[0]);
+		saplingProperties.add(trees[1]);
+
+		saplingProperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("plant/flower_trees"),
+				L10N.label("elementgui.plant.flower_trees")));
+		saplingProperties.add(flowerTrees[0]);
+		saplingProperties.add(flowerTrees[1]);
+
+		saplingProperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("plant/mega_trees"),
+				L10N.label("elementgui.plant.mega_trees")));
+		saplingProperties.add(megaTrees[0]);
+		saplingProperties.add(megaTrees[1]);
+
+		saplingProperties.add(HelpUtils.wrapWithHelpButton(this.withEntry("plant/secondary_tree_chance"),
+				L10N.label("elementgui.plant.secondary_tree_chance")));
+		saplingProperties.add(new JLabel());
+		saplingProperties.add(secondaryTreeChance);
+
+		saplingProperties.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
+
+		for (int i = 0; i < 2; i++) {
+			trees[i].setPreferredSize(new Dimension(280, -1));
+			flowerTrees[i].setPreferredSize(new Dimension(280, -1));
+			megaTrees[i].setPreferredSize(new Dimension(280, -1));
+			megaTrees[i].addEntrySelectedListener(e -> updateWaterloggableSetting());
+		}
+
+		saplingCard.add("Center", PanelUtils.pullElementUp(saplingProperties));
+		saplingCard.setOpaque(false);
+
 		plantTypesCardPanel.add(staticPlantCard, "normal");
 		plantTypesCardPanel.add(growablePlantCard, "growapable");
 		plantTypesCardPanel.add(doublePlantCard, "double");
+		plantTypesCardPanel.add(saplingCard, "sapling");
 
 		plantType.addActionListener(e -> updatePlantType());
 
@@ -419,7 +475,7 @@ public class PlantGUI extends ModElementGUI<Plant> {
 			boundingBoxList.setEnabled(false);
 		}
 
-		JPanel selp = new JPanel(new GridLayout(9, 2, 5, 2));
+		JPanel selp = new JPanel(new GridLayout(10, 2, 5, 2));
 		selp.setBorder(BorderFactory.createTitledBorder(
 				BorderFactory.createLineBorder(Theme.current().getForegroundColor(), 1),
 				L10N.t("elementgui.common.properties_general"), TitledBorder.LEADING, TitledBorder.DEFAULT_POSITION,
@@ -483,6 +539,10 @@ public class PlantGUI extends ModElementGUI<Plant> {
 		selp.add(HelpUtils.wrapWithHelpButton(this.withEntry("plant/is_solid"),
 				L10N.label("elementgui.plant.is_solid")));
 		selp.add(isSolid);
+
+		selp.add(HelpUtils.wrapWithHelpButton(this.withEntry("block/is_waterloggable"),
+				L10N.label("elementgui.plant.is_waterloggable")));
+		selp.add(isWaterloggable);
 
 		selp2.add(HelpUtils.wrapWithHelpButton(this.withEntry("block/custom_drop"),
 				L10N.label("elementgui.common.custom_drop")));
@@ -723,6 +783,9 @@ public class PlantGUI extends ModElementGUI<Plant> {
 		texture.setVisible(false);
 		textureBottom.setVisible(false);
 
+		refreshBonemealProperties(); // disable settings if sapling is selected
+		updateWaterloggableSetting(); // disable waterlogging if sapling with mega trees is selected
+
 		if ("double".equals(plantType.getSelectedItem())) {
 			texture.setVisible(true);
 			textureBottom.setVisible(true);
@@ -733,9 +796,24 @@ public class PlantGUI extends ModElementGUI<Plant> {
 			renderType.setEnabled(true);
 		}
 
+		if (!isEditingMode()) {
+			if ("growapable".equals(plantType.getSelectedItem()) || "sapling".equals(plantType.getSelectedItem())) {
+				offsetType.setSelectedItem("NONE");
+			} else {
+				offsetType.setSelectedItem("XZ");
+			}
+		}
+
 		plantTypesLayout.show(plantTypesCardPanel, (String) plantType.getSelectedItem());
-		plantTypeIndicator.setIcon(
-				UIRES.get("plant_" + plantType.getSelectedItem().toString().replace("growapable", "growable")));
+		plantTypeIndicator.setIcon(UIRES.get(
+				"plant_" + plantType.getSelectedItem().toString().replace("growapable", "growable")
+						.replace("sapling", "normal")));
+
+		for (Component comp : plantTypesCardPanel.getComponents()) {
+			if (comp.isVisible()) {
+				plantTypesCardPanel.setPreferredSize(comp.getPreferredSize());
+			}
+		}
 	}
 
 	private void updateSoundType() {
@@ -757,9 +835,33 @@ public class PlantGUI extends ModElementGUI<Plant> {
 	}
 
 	private void refreshBonemealProperties() {
-		isBonemealTargetCondition.setEnabled(isBonemealable.isSelected());
-		bonemealSuccessCondition.setEnabled(isBonemealable.isSelected());
-		onBonemealSuccess.setEnabled(isBonemealable.isSelected());
+		boolean isSapling = "sapling".equals(plantType.getSelectedItem());
+		isBonemealable.setEnabled(!isSapling);
+		isBonemealTargetCondition.setEnabled(isBonemealable.isSelected() && !isSapling);
+		bonemealSuccessCondition.setEnabled(isBonemealable.isSelected() && !isSapling);
+		onBonemealSuccess.setEnabled(isBonemealable.isSelected() && !isSapling);
+	}
+
+	private void updateWaterloggableSetting() {
+		boolean canBeWaterlogged =
+				!"sapling".equals(plantType.getSelectedItem()) || (megaTrees[0].isEmpty() && megaTrees[1].isEmpty());
+		isWaterloggable.setEnabled(canBeWaterlogged);
+		if (!canBeWaterlogged)
+			isWaterloggable.setSelected(false);
+	}
+
+	private AggregatedValidationResult validateSaplingTrees() {
+		if (!"sapling".equals(plantType.getSelectedItem()))
+			return new AggregatedValidationResult.PASS();
+
+		for (int i = 0; i < 2; i++) {
+			if ((trees[i].getEntry() != null) || (flowerTrees[i].getEntry() != null) || (megaTrees[i].getEntry()
+					!= null)) {
+				return new AggregatedValidationResult.PASS();
+			}
+		}
+
+		return new AggregatedValidationResult.FAIL(L10N.t("elementgui.plant.error_sapling_needs_tree"));
 	}
 
 	@Override public void reloadDataLists() {
@@ -804,7 +906,7 @@ public class PlantGUI extends ModElementGUI<Plant> {
 
 	@Override protected AggregatedValidationResult validatePage(int page) {
 		if (page == 0)
-			return new AggregatedValidationResult(texture);
+			return new AggregatedValidationResult(new AggregatedValidationResult(texture), validateSaplingTrees());
 		else if (page == 2)
 			return new AggregatedValidationResult(page3group);
 		else if (page == 5)
@@ -835,6 +937,7 @@ public class PlantGUI extends ModElementGUI<Plant> {
 		frequencyOnChunks.setValue(plant.frequencyOnChunks);
 		emissiveRendering.setSelected(plant.emissiveRendering);
 		isSolid.setSelected(plant.isSolid);
+		isWaterloggable.setSelected(plant.isWaterloggable);
 		useLootTableForDrops.setSelected(plant.useLootTableForDrops);
 		customDrop.setBlock(plant.customDrop);
 		dropAmount.setValue(plant.dropAmount);
@@ -890,6 +993,13 @@ public class PlantGUI extends ModElementGUI<Plant> {
 		suspiciousStewEffect.setSelectedItem(plant.suspiciousStewEffect);
 		suspiciousStewDuration.setValue(plant.suspiciousStewDuration);
 
+		secondaryTreeChance.setValue(plant.secondaryTreeChance);
+		for (int i = 0; i < 2; i++) {
+			trees[i].setEntry(plant.trees[i]);
+			flowerTrees[i].setEntry(plant.flowerTrees[i]);
+			megaTrees[i].setEntry(plant.megaTrees[i]);
+		}
+
 		tintType.setSelectedItem(plant.tintType);
 		isItemTinted.setSelected(plant.isItemTinted);
 
@@ -900,7 +1010,6 @@ public class PlantGUI extends ModElementGUI<Plant> {
 
 		updatePlantType();
 		updateSoundType();
-		refreshBonemealProperties();
 	}
 
 	@Override public Plant getElementFromGUI() {
@@ -918,6 +1027,12 @@ public class PlantGUI extends ModElementGUI<Plant> {
 		plant.growapableMaxHeight = (int) growapableMaxHeight.getValue();
 		plant.suspiciousStewEffect = (String) suspiciousStewEffect.getSelectedItem();
 		plant.suspiciousStewDuration = (int) suspiciousStewDuration.getValue();
+		plant.secondaryTreeChance = (double) secondaryTreeChance.getValue();
+		for (int i = 0; i < 2; i++) {
+			plant.trees[i] = trees[i].getEntry();
+			plant.flowerTrees[i] = flowerTrees[i].getEntry();
+			plant.megaTrees[i] = megaTrees[i].getEntry();
+		}
 		plant.hardness = (double) hardness.getValue();
 		plant.resistance = (double) resistance.getValue();
 		plant.luminance = (int) luminance.getValue();
@@ -966,6 +1081,7 @@ public class PlantGUI extends ModElementGUI<Plant> {
 		plant.placingCondition = placingCondition.getSelectedProcedure();
 		plant.emissiveRendering = emissiveRendering.isSelected();
 		plant.isSolid = isSolid.isSelected();
+		plant.isWaterloggable = isWaterloggable.isSelected();
 		plant.isBonemealable = isBonemealable.isSelected();
 		plant.isBonemealTargetCondition = isBonemealTargetCondition.getSelectedProcedure();
 		plant.bonemealSuccessCondition = bonemealSuccessCondition.getSelectedProcedure();

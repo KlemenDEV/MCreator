@@ -93,7 +93,7 @@ package ${package}.fluid.types;
 					}
 					</#if>
 
-					public void modifyFogRender(Camera camera, FogRenderer.FogMode mode, float renderDistance, float partialTick, float nearDistance, float farDistance, FogShape shape) {
+					@Override public void modifyFogRender(Camera camera, FogRenderer.FogMode mode, float renderDistance, float partialTick, float nearDistance, float farDistance, FogShape shape) {
 						Entity entity = camera.getEntity();
 						Level world = entity.level();
 						RenderSystem.setShaderFogShape(FogShape.SPHERE);
@@ -106,6 +106,8 @@ package ${package}.fluid.types;
 						RenderSystem.setShaderFogEnd(
 							<#if hasProcedure(data.fogEndDistance)>
 								(float) <@procedureOBJToNumberCode data.fogEndDistance/>
+							<#elseif data.fogEndDistance.getFixedValue() gt 16>
+								Math.min(${data.fogEndDistance.getFixedValue()}f, renderDistance)
 							<#else>
 								${data.fogEndDistance.getFixedValue()}f
 							</#if>);

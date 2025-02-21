@@ -40,6 +40,7 @@ import net.mcreator.ui.laf.themes.Theme;
 import net.mcreator.ui.modgui.codeviewer.ModElementCodeViewer;
 import net.mcreator.ui.validation.AggregatedValidationResult;
 import net.mcreator.ui.validation.ValidationGroup;
+import net.mcreator.ui.variants.modmaker.ModMaker;
 import net.mcreator.ui.views.ViewBase;
 import net.mcreator.util.DesktopUtils;
 import net.mcreator.util.TestUtil;
@@ -146,9 +147,9 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 		this.tabIn = new MCreatorTabs.Tab(this, modElement);
 
 		ViewBase retval;
-		MCreatorTabs.Tab existing = mcreator.mcreatorTabs.showTabOrGetExisting(this.tabIn);
+		MCreatorTabs.Tab existing = mcreator.getTabs().showTabOrGetExisting(this.tabIn);
 		if (existing == null) {
-			mcreator.mcreatorTabs.addTab(this.tabIn);
+			mcreator.getTabs().addTab(this.tabIn);
 
 			this.tabIn.setTabShownListener(tab -> {
 				if (PreferencesManager.PREFERENCES.ui.autoReloadTabs.get()) {
@@ -557,8 +558,9 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 		GE element = getElementFromGUI();
 
 		// if new element, specify the folder of the mod element
-		if (!editingMode)
-			modElement.setParentFolder(Objects.requireNonNullElse(targetFolder, mcreator.mv.currentFolder));
+		if (!editingMode && mcreator instanceof ModMaker modMaker)
+			modElement.setParentFolder(
+					Objects.requireNonNullElse(targetFolder, modMaker.getWorkspacePanel().currentFolder));
 
 		// add mod element to the list, it will be only added for the first time, otherwise refreshed
 		// add it before generating so all references are loaded
@@ -596,7 +598,7 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 		// build if selected and needed
 		if ((Launcher.version.isDevelopment() || PreferencesManager.PREFERENCES.gradle.buildOnSave.get())
 				&& mcreator.getModElementManager().requiresElementGradleBuild(element)) {
-			mcreator.actionRegistry.buildWorkspace.doAction();
+			mcreator.getActionRegistry().buildWorkspace.doAction();
 		}
 
 		mcreator.getApplication().getAnalytics().trackEvent(
@@ -614,9 +616,9 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 
 		// handle tab changes
 		if (this.tabIn != null && closeTab)
-			mcreator.mcreatorTabs.closeTab(tabIn);
+			mcreator.getTabs().closeTab(tabIn);
 		else
-			mcreator.mcreatorTabs.getTabs().stream().filter(e -> e.getContent() == this)
+			mcreator.getTabs().getTabs().stream().filter(e -> e.getContent() == this)
 					.forEach(e -> e.setIcon(((ModElementGUI<?>) e.getContent()).getViewIcon()));
 	}
 
