@@ -23,6 +23,7 @@ import net.mcreator.io.zip.ZipIO;
 import net.mcreator.plugin.modapis.ModAPIImplementation;
 import net.mcreator.plugin.modapis.ModAPIManager;
 import net.mcreator.ui.workspace.resources.TextureType;
+import net.mcreator.util.TestUtil;
 import net.mcreator.util.image.EmptyIcon;
 import net.mcreator.workspace.Workspace;
 import org.apache.commons.io.FilenameUtils;
@@ -97,13 +98,22 @@ public final class ExternalTexture extends Texture {
 			String root = workspace.getGeneratorConfiguration()
 					.getSpecificRoot("vanilla_" + type.getID() + "_textures_dir");
 			if (vanillaResourcesJar != null && root != null) {
+				boolean found = false;
 				for (LibraryInfo libraryInfo : libraryInfos) {
 					File libraryFile = new File(libraryInfo.getLocationAsString());
 					if (libraryFile.isFile() && Pattern.compile(vanillaResourcesJar).matcher(libraryFile.getName())
 							.find()) {
 						loadTexturesFrom(libraryFile, "minecraft", root, type, textures);
+						found = true;
 						break;
 					}
+				}
+				// We don't log this warning in testing environment because GeneratorsTest already tests for this
+				// but this could still log false-positives for WorkspaceConvertersTest for workspaces using references
+				// because WorkspaceConvertersTest does not do full workspace setup (for performance reasons) and
+				// thus external textures are not loaded
+				if (!found && !TestUtil.isTestingEnvironment()) {
+					LOG.warn("Vanilla resources jar not found: {}", vanillaResourcesJar);
 				}
 			}
 

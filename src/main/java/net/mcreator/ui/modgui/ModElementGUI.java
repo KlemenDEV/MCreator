@@ -56,8 +56,8 @@ import java.awt.*;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewBase implements IHelpContext {
 
@@ -589,6 +589,7 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 
 		// save custom mod element (preview) picture if it has one
 		mcreator.getModElementManager().storeModElementPicture(element);
+		modElement.reloadElementIcon(); // force another reload here in case the image changed
 
 		// re-init mod element to pick up the new mod element picture and reload mcitems cache
 		modElement.reinit(mcreator.getWorkspace());
@@ -685,5 +686,7 @@ public abstract class ModElementGUI<GE extends GeneratableElement> extends ViewB
 			throw new RuntimeException(e);
 		}
 	}
+
+	@Override @Nullable public abstract URI contextURL() throws URISyntaxException;
 
 }

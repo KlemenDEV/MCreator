@@ -42,8 +42,8 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class WorkspacePanelModels extends AbstractResourcePanel<Model> {
 
@@ -151,6 +151,9 @@ public class WorkspacePanelModels extends AbstractResourcePanel<Model> {
 
 	private void editSelectedModelAnimations() {
 		Model model = elementList.getSelectedValue();
+		if (model == null) {
+			return;
+		}
 		if (model.getType() == Model.Type.JAVA) {
 			File file = model.getFile();
 			String code = FileIO.readFileToString(file);
@@ -176,8 +179,9 @@ public class WorkspacePanelModels extends AbstractResourcePanel<Model> {
 						workspacePanel.getMCreator(), null, model.getType() == Model.Type.JSON);
 				if (textureMappingMap != null) {
 					String data = TexturedModel.getJSONForTextureMapping(textureMappingMap);
-					FileIO.writeStringToFile(data, new File(workspacePanel.getMCreator().getFolderManager().getModelsDir(),
-							model.getFile().getName() + ".textures"));
+					FileIO.writeStringToFile(data,
+							new File(workspacePanel.getMCreator().getFolderManager().getModelsDir(),
+									model.getFile().getName() + ".textures"));
 				}
 			} else {
 				JOptionPane.showMessageDialog(workspacePanel.getMCreator(),

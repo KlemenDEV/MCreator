@@ -30,7 +30,6 @@ import net.mcreator.generator.ListTemplate;
 import net.mcreator.io.FileIO;
 import net.mcreator.java.JavaConventions;
 import net.mcreator.minecraft.RegistryNameFixer;
-import net.mcreator.ui.MCreator;
 import net.mcreator.ui.action.UnregisteredAction;
 import net.mcreator.ui.component.JEmptyBox;
 import net.mcreator.ui.component.JScrollablePopupMenu;
@@ -71,42 +70,33 @@ import net.mcreator.workspace.resources.CustomTexture;
 import net.mcreator.workspace.resources.Texture;
 import net.mcreator.workspace.settings.user.WorkspaceUserSettings;
 
-import javax.annotation.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("EqualsBetweenInconvertibleTypes") public class WorkspacePanel extends JPanel {
+@SuppressWarnings("EqualsBetweenInconvertibleTypes") public class WorkspacePanel extends AbstractMainWorkspacePanel {
 
 	private final FilterModel dml = new FilterModel();
-	public final JTextField search;
 
 	public FolderElement currentFolder;
 
 	public final JSelectableList<IElement> list;
 
-	private final Map<String, AbstractWorkspacePanel> sectionTabs = new HashMap<>();
-
 	public final WorkspacePanelResources resourcesPan;
-
-	@Nullable private AbstractWorkspacePanel currentTabPanel = null;
-
-	private final ModMaker mcreator;
 
 	private final JButton upFolder;
 	private final JButton renameFolder;
 
+	private final JLabel but1 = new JLabel(UIRES.get("wrk_add"));
 	private final JLabel but2 = new JLabel(UIRES.get("wrk_edit"));
 	private final JLabel but2a = new JLabel(UIRES.get("wrk_duplicate"));
 	private final JLabel but3 = new JLabel(UIRES.get("wrk_delete"));
@@ -165,11 +155,8 @@ import java.util.stream.Collectors;
 		}
 	};
 
-	private final JTabbedPane subTabs;
-
 	public WorkspacePanel(final ModMaker mcreator) {
-		super(new BorderLayout(5, 5));
-		this.mcreator = mcreator;
+		super(mcreator, new BorderLayout(3, 3));
 
 		this.currentFolder = mcreator.getWorkspace().getFoldersRoot();
 
@@ -204,7 +191,7 @@ import java.util.stream.Collectors;
 					}
 				}
 				mcreator.getWorkspace().markDirty();
-				sectionTabs.get("mods").reloadElements();
+				getVerticalTab("mods").reloadElements();
 			} else {
 				Toolkit.getDefaultToolkit().beep();
 			}
@@ -270,16 +257,33 @@ import java.util.stream.Collectors;
 
 		list.addKeyListener(new KeyAdapter() {
 			@Override public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_F && e.isControlDown() && e.isShiftDown()) {
-					searchModElementsUsages();
+				if (e.getKeyCode() == KeyEvent.VK_F && e.isControlDown()) {
+					if (e.isShiftDown()) {
+						searchModElementsUsages();
+					} else {
+						search.requestFocusInWindow();
+					}
+				} else if (e.getKeyCode() == KeyEvent.VK_N && e.isControlDown() && but1.isEnabled()) {
+					new ModTypeDropdown(mcreator).show(but1, but1.getWidth() + 5, -3);
+				} else if (e.getKeyCode() == KeyEvent.VK_L && e.isControlDown()) {
+					lockCode();
+				} else if (e.getKeyCode() == KeyEvent.VK_D && e.isControlDown()) {
+					duplicateCurrentlySelectedModElement();
 				} else if (e.getKeyCode() == KeyEvent.VK_DELETE) {
 					deleteCurrentlySelectedModElement();
 				} else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 					IElement selected = list.getSelectedValue();
+					var selectedLocation = list.indexToLocation(list.getSelectedIndex());
 					if (selected instanceof FolderElement) {
 						switchFolder((FolderElement) selected);
 					} else {
-						editCurrentlySelectedModElement((ModElement) selected, list, 0, 0);
+						if (e.isAltDown()) {
+							editCurrentlySelectedModElementAsCode((ModElement) selected, list, selectedLocation.x,
+									selectedLocation.y);
+						} else {
+							editCurrentlySelectedModElement((ModElement) selected, list, selectedLocation.x,
+									selectedLocation.y);
+						}
 					}
 				}
 			}
@@ -298,52 +302,15 @@ import java.util.stream.Collectors;
 			modElementsPanel.setBackground(Theme.current().getSecondAltBackgroundColor());
 		}
 
-		JPanel slo = new JPanel(new BorderLayout(0, 3));
-
 		JPanel se = new JPanel(new BorderLayout());
 
-		search = new JTextField(34) {
-			@Override public void paintComponent(Graphics g) {
-				super.paintComponent(g);
-				Graphics2D g2 = (Graphics2D) g;
-				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-				if (getText().isEmpty()) {
-					g.setFont(g.getFont().deriveFont(11f));
-					g.setColor(new Color(120, 120, 120));
-					if (currentTabPanel instanceof WorkspacePanelMods) {
-						g.drawString(L10N.t("workspace.elements.list.search_folder"), 8, 19);
-					} else {
-						g.drawString(L10N.t("workspace.elements.list.search_list"), 8, 19);
-					}
+		search.addKeyListener(new KeyAdapter() {
+			@Override public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_DOWN && list.getModel().getSize() > 0) {
+					list.clearSelection();
+					list.setSelectedIndex(0);
+					list.requestFocusInWindow();
 				}
-			}
-		};
-		search.addFocusListener(new FocusAdapter() {
-			@Override public void focusGained(FocusEvent e) {
-				super.focusGained(e);
-				if (e.getCause() == FocusEvent.Cause.MOUSE_EVENT) {
-					search.setText(null);
-				}
-			}
-		});
-
-		search.setToolTipText(L10N.t("workspace.elements.list.search.tooltip"));
-
-		ComponentUtils.deriveFont(search, 14);
-		search.setOpaque(false);
-
-		search.getDocument().addDocumentListener(new DocumentListener() {
-
-			@Override public void removeUpdate(DocumentEvent arg0) {
-				sectionTabs.values().forEach(IReloadableFilterable::refilterElements);
-			}
-
-			@Override public void insertUpdate(DocumentEvent arg0) {
-				sectionTabs.values().forEach(IReloadableFilterable::refilterElements);
-			}
-
-			@Override public void changedUpdate(DocumentEvent arg0) {
-				sectionTabs.values().forEach(IReloadableFilterable::refilterElements);
 			}
 		});
 
@@ -540,9 +507,7 @@ import java.util.stream.Collectors;
 		JPanel filterSort = new JPanel(new GridLayout(1, 2, 0, 0));
 		filterSort.setOpaque(false);
 
-		search.setBackground(ColorUtils.applyAlpha(search.getBackground(), 150));
 		search.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, filterSort);
-		search.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
 
 		JButton filter = L10N.button("workspace.elements.list.filter");
 		JButton sort = L10N.button("workspace.elements.list.sort");
@@ -631,10 +596,9 @@ import java.util.stream.Collectors;
 			sortDateCreated.setSelected(true);
 		}
 
-		slo.setOpaque(false);
 		se.setOpaque(false);
 
-		slo.add("North", se);
+		add("North", se);
 
 		mainp.setOpaque(false);
 
@@ -646,50 +610,9 @@ import java.util.stream.Collectors;
 		modElementsPanel.add("North", PanelUtils.northAndCenterElement(elementsBreadcrumb, detailsbar, 0, 0));
 		modElementsPanel.add("Center", mainp);
 
-		subTabs = new JTabbedPane(JTabbedPane.LEFT, JTabbedPane.SCROLL_TAB_LAYOUT) {
-			@Override protected void paintComponent(Graphics g) {
-				Graphics2D g2d = (Graphics2D) g.create();
-				g2d.setColor(Theme.current().getAltBackgroundColor());
-				g2d.setComposite(AlphaComposite.SrcOver.derive(0.45f));
-				g2d.fillRect(0, 0, getWidth(), getHeight());
-				g2d.dispose();
-				super.paintComponent(g);
-			}
-		};
-		subTabs.setOpaque(false);
-		subTabs.putClientProperty(FlatClientProperties.TABBED_PANE_TAB_ROTATION,
-				FlatClientProperties.TABBED_PANE_TAB_ROTATION_AUTO);
-		subTabs.setModel(new DefaultSingleSelectionModel() {
-			@Override public void setSelectedIndex(int index) {
-				if (subTabs.getComponentAt(index) instanceof AbstractWorkspacePanel tabComponent) {
-					if (tabComponent.canSwitchToSection()) {
-						currentTabPanel = tabComponent;
-					} else { // No permission to view the newly selected tab
-						return;
-					}
-				}
-
-				super.setSelectedIndex(index);
-				search.repaint();
-				reloadElementsInCurrentTab();
-				modElementsBar.setVisible(currentTabPanel instanceof WorkspacePanelMods);
-				subTabs.putClientProperty(FlatClientProperties.TABBED_PANE_SHOW_CONTENT_SEPARATOR,
-						!(currentTabPanel instanceof WorkspacePanelMods));
-			}
-		});
-
-		slo.add("Center", subTabs);
-
-		slo.setBorder(BorderFactory.createEmptyBorder());
-
-		add("Center", slo);
-
-		setOpaque(false);
-
 		JPanel pne = new JPanel(new GridLayout(8, 1, 6, 6));
 		pne.setOpaque(false);
 
-		JLabel but1 = new JLabel(UIRES.get("wrk_add"));
 		but1.addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
 				if (but1.isEnabled())
@@ -800,6 +723,7 @@ import java.util.stream.Collectors;
 		elementsBreadcrumb.reloadPath(currentFolder, ModElement.class);
 
 		JMenuItem openElement = new JMenuItem(L10N.t("workspace.elements.list.edit.open"));
+		openElement.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));
 		openElement.setFont(openElement.getFont().deriveFont(Font.BOLD));
 		openElement.addActionListener(e -> {
 			IElement selected = list.getSelectedValue();
@@ -809,14 +733,19 @@ import java.util.stream.Collectors;
 				editCurrentlySelectedModElement((ModElement) selected, list, 0, 0);
 		});
 
+		deleteElement.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
 		deleteElement.setIcon(UIRES.get("16px.clear"));
 		deleteElement.addActionListener(e -> deleteCurrentlySelectedModElement());
 
+		duplicateElement.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_DOWN_MASK));
 		duplicateElement.addActionListener(e -> duplicateCurrentlySelectedModElement());
 
+		searchElement.setAccelerator(
+				KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK));
 		searchElement.setIcon(UIRES.get("16px.search"));
 		searchElement.addActionListener(e -> searchModElementsUsages());
 
+		codeElement.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.ALT_DOWN_MASK));
 		codeElement.addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
 				super.mouseClicked(e);
@@ -831,6 +760,7 @@ import java.util.stream.Collectors;
 			}
 		});
 
+		lockElement.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, KeyEvent.CTRL_DOWN_MASK));
 		lockElement.addActionListener(e -> lockCode());
 
 		idElement.addActionListener(e -> editIDOfCurrentlySelectedModElement());
@@ -862,43 +792,10 @@ import java.util.stream.Collectors;
 		updateElementListRenderer();
 	}
 
-	/**
-	 * Adds a new section to this workspace as well as a vertical tab button on the left that switches
-	 * to the section panel when clicked.
-	 *
-	 * @param id      The unique identifier of the section used for reloading/filtering contained elements.
-	 * @param name    The name of the section shown in the workspace.
-	 * @param section The panel representing contents of the vertical tab being added.
-	 */
-	public void addVerticalTab(String id, String name, AbstractWorkspacePanel section) {
-		if (getVerticalTab(id) != null)
-			return;
-
-		sectionTabs.put(id, section);
-
-		if (section.isSupportedInWorkspace()) {
-			subTabs.addTab(name, section);
-		}
-	}
-
-	public AbstractWorkspacePanel getVerticalTab(String id) {
-		return sectionTabs.get(id);
-	}
-
-	public void switchToVerticalTab(AbstractWorkspacePanel panel) {
-		if (panel != null && panel.canSwitchToSection()) {
-			// Find the tab to switch to
-			for (int i = 0; i < subTabs.getTabCount(); i++) {
-				if (subTabs.getComponentAt(i) == panel) {
-					subTabs.setSelectedIndex(i);
-					break;
-				}
-			}
-		}
-	}
-
-	public void switchToVerticalTab(String id) {
-		switchToVerticalTab(sectionTabs.get(id));
+	@Override protected String getSearchPlaceholderText() {
+		return currentTabPanel instanceof WorkspacePanelMods ?
+				L10N.t("workspace.elements.list.search_folder") :
+				L10N.t("workspace.elements.list.search_list");
 	}
 
 	public void switchFolder(FolderElement switchTo) {
@@ -907,7 +804,7 @@ import java.util.stream.Collectors;
 
 		list.cancelDND();
 
-		sectionTabs.get("mods").reloadElements();
+		getVerticalTab("mods").reloadElements();
 
 		// reload breadcrumb
 		elementsBreadcrumb.reloadPath(currentFolder, ModElement.class);
@@ -935,7 +832,14 @@ import java.util.stream.Collectors;
 
 		mcreator.getWorkspaceUserSettings().workspacePanelSortAscending = !desc.isSelected();
 
-		sectionTabs.values().forEach(IReloadableFilterable::refilterElements);
+		refilterWorkspaceTab();
+	}
+
+	@Override protected void afterVerticalTabChanged() {
+		search.repaint();
+		modElementsBar.setVisible(currentTabPanel instanceof WorkspacePanelMods);
+		subTabs.putClientProperty(FlatClientProperties.TABBED_PANE_SHOW_CONTENT_SEPARATOR,
+				!(currentTabPanel instanceof WorkspacePanelMods));
 	}
 
 	private void updateElementListRenderer() {
@@ -1026,62 +930,66 @@ import java.util.stream.Collectors;
 	private void lockCode() {
 		List<IElement> selectedElements = list.getSelectedValuesList();
 
-		Object[] options = { L10N.t("workspace.elements.lock_modelement_lock_unlock"),
-				UIManager.getString("OptionPane.cancelButtonText") };
-		int n = JOptionPane.showOptionDialog(mcreator, L10N.t("workspace.elements.lock_modelement_message"),
-				L10N.t("workspace.elements.lock_modelement_confirm"), JOptionPane.YES_NO_CANCEL_OPTION,
-				JOptionPane.WARNING_MESSAGE, null, options, options[1]);
-		if (n == 0) {
-			ProgressDialog dial = new ProgressDialog(mcreator, L10N.t("workspace.elements.lock_modelement_title"));
-			Thread t = new Thread(() -> {
-				ProgressDialog.ProgressUnit p0 = new ProgressDialog.ProgressUnit(
-						L10N.t("workspace.elements.lock_modelement_locking_unlocking"));
-				dial.addProgressUnit(p0);
+		// Only show the dialog if current selection contains lockable elements
+		if (selectedElements.stream()
+				.anyMatch(i -> i instanceof ModElement me && !(me.getType() == ModElementType.CODE))) {
+			Object[] options = { L10N.t("workspace.elements.lock_modelement_lock_unlock"),
+					UIManager.getString("OptionPane.cancelButtonText") };
+			int n = JOptionPane.showOptionDialog(mcreator, L10N.t("workspace.elements.lock_modelement_message"),
+					L10N.t("workspace.elements.lock_modelement_confirm"), JOptionPane.YES_NO_CANCEL_OPTION,
+					JOptionPane.WARNING_MESSAGE, null, options, options[1]);
+			if (n == 0) {
+				ProgressDialog dial = new ProgressDialog(mcreator, L10N.t("workspace.elements.lock_modelement_title"));
+				Thread t = new Thread(() -> {
+					ProgressDialog.ProgressUnit p0 = new ProgressDialog.ProgressUnit(
+							L10N.t("workspace.elements.lock_modelement_locking_unlocking"));
+					dial.addProgressUnit(p0);
 
-				List<ModElement> elementsThatGotUnlocked = new ArrayList<>();
-				selectedElements.forEach(el -> {
-					if (el instanceof ModElement mu) {
-						if (mu.isCodeLocked()) {
-							mu.setCodeLock(false);
-							elementsThatGotUnlocked.add(mu); // code got unlocked, add to the list
-						} else {
-							mu.setCodeLock(true);
+					List<ModElement> elementsThatGotUnlocked = new ArrayList<>();
+					selectedElements.forEach(el -> {
+						if (el instanceof ModElement mu) {
+							if (mu.isCodeLocked()) {
+								mu.setCodeLock(false);
+								elementsThatGotUnlocked.add(mu); // code got unlocked, add to the list
+							} else {
+								mu.setCodeLock(true);
+							}
+
+							mcreator.getWorkspace().markDirty();
 						}
+					});
+					reloadWorkspaceTab();
 
-						mcreator.getWorkspace().markDirty();
-					}
-				});
-				reloadElementsInCurrentTab();
+					p0.markStateOk();
 
-				p0.markStateOk();
-
-				// if we have new unlocked elements, we recreate their code
-				if (!elementsThatGotUnlocked.isEmpty()) {
-					ProgressDialog.ProgressUnit p1 = new ProgressDialog.ProgressUnit(
-							L10N.t("workspace.elements.lock_modelement_regeneration"));
-					dial.addProgressUnit(p1);
-					int i = 0;
-					for (ModElement mod : elementsThatGotUnlocked) {
-						GeneratableElement generatableElement = mod.getGeneratableElement();
-						if (generatableElement != null) {
-							// generate mod element
-							mcreator.getGenerator().generateElement(generatableElement);
+					// if we have new unlocked elements, we recreate their code
+					if (!elementsThatGotUnlocked.isEmpty()) {
+						ProgressDialog.ProgressUnit p1 = new ProgressDialog.ProgressUnit(
+								L10N.t("workspace.elements.lock_modelement_regeneration"));
+						dial.addProgressUnit(p1);
+						int i = 0;
+						for (ModElement mod : elementsThatGotUnlocked) {
+							GeneratableElement generatableElement = mod.getGeneratableElement();
+							if (generatableElement != null) {
+								// generate mod element
+								mcreator.getGenerator().generateElement(generatableElement);
+							}
+							i++;
+							p1.setPercent((int) (i / (float) elementsThatGotUnlocked.size() * 100));
 						}
-						i++;
-						p1.setPercent((int) (i / (float) elementsThatGotUnlocked.size() * 100));
-					}
-					p1.markStateOk();
+						p1.markStateOk();
 
-					ProgressDialog.ProgressUnit p2 = new ProgressDialog.ProgressUnit(
-							L10N.t("workspace.elements.lock_modelement_rebuilding_workspace"));
-					dial.addProgressUnit(p2);
-					mcreator.getActionRegistry().buildWorkspace.doAction();
-					p2.markStateOk();
-				}
-				dial.hideDialog();
-			}, "CodeLock");
-			t.start();
-			dial.setVisible(true);
+						ProgressDialog.ProgressUnit p2 = new ProgressDialog.ProgressUnit(
+								L10N.t("workspace.elements.lock_modelement_rebuilding_workspace"));
+						dial.addProgressUnit(p2);
+						mcreator.getActionRegistry().buildWorkspace.doAction();
+						p2.markStateOk();
+					}
+					dial.hideDialog();
+				}, "CodeLock");
+				t.start();
+				dial.setVisible(true);
+			}
 		}
 	}
 
@@ -1119,7 +1027,7 @@ import java.util.stream.Collectors;
 										L10N.t("common.mod_element_name")).validate();
 							}
 						}, L10N.t("workspace.elements.duplicate"), UIManager.getString("OptionPane.cancelButtonText"),
-						null, breadcrumb.getInScrollPane(), null);
+						mu.getName(), breadcrumb.getInScrollPane(), null);
 				if (modName != null && !modName.isEmpty()) {
 					modName = JavaConventions.convertToValidClassName(modName);
 
@@ -1168,7 +1076,7 @@ import java.util.stream.Collectors;
 
 					mcreator.getWorkspace().addModElement(duplicateModElement);
 
-					reloadElementsInCurrentTab();
+					reloadWorkspaceTab();
 				}
 			}
 		}
@@ -1271,7 +1179,7 @@ import java.util.stream.Collectors;
 							folder.getParent().removeChild(folder);
 						}
 					});
-					reloadElementsInCurrentTab();
+					reloadWorkspaceTab();
 
 					if (buildNeeded.get())
 						mcreator.getActionRegistry().buildWorkspace.doAction();
@@ -1287,7 +1195,7 @@ import java.util.stream.Collectors;
 		if (name != null) {
 			currentFolder.addChild(new FolderElement(name, currentFolder));
 			mcreator.getWorkspace().markDirty();
-			sectionTabs.get("mods").reloadElements();
+			getVerticalTab("mods").reloadElements();
 		}
 	}
 
@@ -1298,17 +1206,8 @@ import java.util.stream.Collectors;
 			selected.setName(mcreator.getWorkspace(), newName);
 
 			mcreator.getWorkspace().markDirty();
-			sectionTabs.get("mods").reloadElements();
+			getVerticalTab("mods").reloadElements();
 		}
-	}
-
-	public synchronized void reloadElementsInCurrentTab() {
-		if (currentTabPanel != null)
-			currentTabPanel.reloadElements();
-	}
-
-	public MCreator getMCreator() {
-		return mcreator;
 	}
 
 	private class FilterModel extends DefaultListModel<IElement> {
@@ -1406,6 +1305,15 @@ import java.util.stream.Collectors;
 						return false;
 					}).toList());
 
+			if (!sortDateCreated.isSelected()) {
+				filterItems.sort(Comparator.comparing(IElement::getName));
+			}
+
+			if (desc.isSelected()) {
+				Collections.reverse(filterItems);
+			}
+
+			//noinspection FuseStreamOperations
 			List<ModElement> modElements = items.stream().filter(e -> e instanceof ModElement).map(e -> (ModElement) e)
 					.filter(item -> currentFolder.equals(item.getFolderPath()) || (flattenFolders
 							&& currentFolder.getRecursiveFolderChildren().stream()
@@ -1446,25 +1354,7 @@ import java.util.stream.Collectors;
 								return true;
 						return false;
 					}).collect(Collectors.toList());
-
-			if (!sortDateCreated.isSelected()) {
-				modElements.sort((a, b) -> {
-					if (sortType.isSelected()) {
-						return a.getType().getReadableName().compareTo(b.getType().getReadableName());
-					} else {
-						return a.getName().compareTo(b.getName());
-					}
-				});
-			}
-
-			if (!sortDateCreated.isSelected()) {
-				filterItems.sort(Comparator.comparing(IElement::getName));
-			}
-
-			if (desc.isSelected()) {
-				Collections.reverse(modElements);
-				Collections.reverse(filterItems);
-			}
+			modElements.sort(ModElement.getComparator(mcreator.getWorkspace(), modElements));
 
 			filterItems.addAll(modElements);
 

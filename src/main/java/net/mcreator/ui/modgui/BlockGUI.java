@@ -73,8 +73,8 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -189,7 +189,7 @@ public class BlockGUI extends ModElementGUI<Block> {
 
 	private final TabListField creativeTabs = new TabListField(mcreator);
 
-	private final JSpinner slipperiness = new JSpinner(new SpinnerNumberModel(0.6, 0.01, 5, 0.1));
+	private final JSpinner slipperiness = new JSpinner(new SpinnerNumberModel(0.6, 0.01, 5, 0.01));
 	private final JSpinner speedFactor = new JSpinner(new SpinnerNumberModel(1.0, -1000, 1000, 0.1));
 	private final JSpinner jumpFactor = new JSpinner(new SpinnerNumberModel(1.0, -1000, 1000, 0.1));
 
@@ -238,6 +238,8 @@ public class BlockGUI extends ModElementGUI<Block> {
 	private final JSpinner inventoryStackSize = new JSpinner(new SpinnerNumberModel(64, 1, 1024, 1));
 	private final JCheckBox inventoryDropWhenDestroyed = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox inventoryComparatorPower = L10N.checkbox("elementgui.common.enable");
+	private ProcedureSelector inventoryAutomationTakeCondition;
+	private ProcedureSelector inventoryAutomationPlaceCondition;
 
 	private final VTextField outSlotIDs = new VTextField(18);
 	private final VTextField inSlotIDs = new VTextField(18);
@@ -275,6 +277,7 @@ public class BlockGUI extends ModElementGUI<Block> {
 		material.setPrototypeDisplayValue(new DataListEntry.Dummy("No legacy material"));
 
 		guiBoundTo = new SingleModElementSelector(mcreator, ModElementType.GUI);
+		guiBoundTo.setDefaultText(L10N.t("elementgui.common.no_gui"));
 
 		blocksToReplace.setListElements(List.of(new MItemBlock(mcreator.getWorkspace(), "TAG:stone_ore_replaceables")));
 
@@ -296,7 +299,7 @@ public class BlockGUI extends ModElementGUI<Block> {
 				L10N.t("elementgui.block.event_on_block_destroyed_by_player"),
 				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity/blockstate:blockstate"));
 		onDestroyedByExplosion = new ProcedureSelector(this.withEntry("block/when_destroyed_explosion"), mcreator,
-				L10N.t("elementgui.block.event_on_block_destroyed_by_explosion"),
+				L10N.t("elementgui.block.event_on_block_destroyed_by_explosion"), ProcedureSelector.Side.SERVER,
 				Dependency.fromString("x:number/y:number/z:number/world:world"));
 		onStartToDestroy = new ProcedureSelector(this.withEntry("block/when_destroy_start"), mcreator,
 				L10N.t("elementgui.block.event_on_player_starts_destroy"),
@@ -353,6 +356,17 @@ public class BlockGUI extends ModElementGUI<Block> {
 				mcreator, L10N.t("elementgui.block.event_additional_harvest_condition"),
 				VariableTypeLoader.BuiltInTypes.LOGIC, Dependency.fromString(
 				"x:number/y:number/z:number/entity:entity/world:world/blockstate:blockstate")).setDefaultName(
+				L10N.t("condition.common.no_additional")).makeInline();
+
+		inventoryAutomationTakeCondition = new ProcedureSelector(
+				this.withEntry("block/inventory_automation_take_condition"), mcreator,
+				L10N.t("elementgui.block.inventory_automation_take_condition"), VariableTypeLoader.BuiltInTypes.LOGIC,
+				Dependency.fromString("index:number/itemstack:itemstack/direction:direction")).setDefaultName(
+				L10N.t("condition.common.no_additional")).makeInline();
+		inventoryAutomationPlaceCondition = new ProcedureSelector(
+				this.withEntry("block/inventory_automation_place_condition"), mcreator,
+				L10N.t("elementgui.block.inventory_automation_place_condition"), VariableTypeLoader.BuiltInTypes.LOGIC,
+				Dependency.fromString("index:number/itemstack:itemstack/direction:direction")).setDefaultName(
 				L10N.t("condition.common.no_additional")).makeInline();
 
 		blockStates = new JBlockPropertiesStatesList(mcreator, this, this::nonUserProvidedProperties);
@@ -514,7 +528,7 @@ public class BlockGUI extends ModElementGUI<Block> {
 		visualRenderingSettings.setOpaque(false);
 
 		visualRenderingSettings.add(HelpUtils.wrapWithHelpButton(this.withEntry("block/has_transparency"),
-				L10N.label("elementgui.block.has_trasparency")));
+				L10N.label("elementgui.block.has_transparency")));
 		visualRenderingSettings.add(hasTransparency);
 
 		visualRenderingSettings.add(HelpUtils.wrapWithHelpButton(this.withEntry("block/transparency_type"),
@@ -812,7 +826,7 @@ public class BlockGUI extends ModElementGUI<Block> {
 				L10N.label("elementgui.common.offset_type")));
 		advancedProperties.add(offsetType);
 
-		JComponent advancedWithCondition = PanelUtils.northAndCenterElement(advancedProperties, placingCondition, 5, 5);
+		JComponent advancedWithCondition = PanelUtils.northAndCenterElement(advancedProperties, placingCondition, 5, 2);
 
 		isWaterloggable.setOpaque(false);
 		canRedstoneConnect.setOpaque(false);
@@ -894,7 +908,7 @@ public class BlockGUI extends ModElementGUI<Block> {
 		inventoryDropWhenDestroyed.setSelected(true);
 		inventoryComparatorPower.setSelected(true);
 
-		JPanel props = new JPanel(new GridLayout(8, 2, 25, 2));
+		JPanel props = new JPanel(new GridLayout(8, 2, 0, 2));
 		props.setOpaque(false);
 
 		props.add(HelpUtils.wrapWithHelpButton(this.withEntry("block/bind_gui"),
@@ -1023,12 +1037,19 @@ public class BlockGUI extends ModElementGUI<Block> {
 		hasInventory.addActionListener(e -> refreshFieldsTileEntity());
 		refreshFieldsTileEntity();
 
-		props.setBorder(BorderFactory.createTitledBorder(
+		JPanel invpropsbottom = new JPanel(new GridLayout(2, 1, 0, 2));
+		invpropsbottom.setOpaque(false);
+		invpropsbottom.add(inventoryAutomationTakeCondition);
+		invpropsbottom.add(inventoryAutomationPlaceCondition);
+
+		JComponent invpropsall = PanelUtils.centerAndSouthElement(props, invpropsbottom, 2, 2);
+
+		invpropsall.setBorder(BorderFactory.createTitledBorder(
 				BorderFactory.createLineBorder(Theme.current().getForegroundColor(), 1),
 				L10N.t("elementgui.block.settings_inventory"), 0, 0, getFont().deriveFont(12.0f),
 				Theme.current().getForegroundColor()));
 
-		invblock.add("Center", props);
+		invblock.add("Center", invpropsall);
 
 		invblock.add("North", HelpUtils.wrapWithHelpButton(this.withEntry("block/has_inventory"), hasInventory));
 
@@ -1199,6 +1220,8 @@ public class BlockGUI extends ModElementGUI<Block> {
 
 	private void refreshFieldsTileEntity() {
 		inventorySize.setEnabled(hasInventory.isSelected());
+		inventoryAutomationTakeCondition.setEnabled(hasInventory.isSelected());
+		inventoryAutomationPlaceCondition.setEnabled(hasInventory.isSelected());
 		inventoryStackSize.setEnabled(hasInventory.isSelected());
 		inventoryDropWhenDestroyed.setEnabled(hasInventory.isSelected());
 		inventoryComparatorPower.setEnabled(hasInventory.isSelected());
@@ -1287,6 +1310,9 @@ public class BlockGUI extends ModElementGUI<Block> {
 		bonemealSuccessCondition.refreshListKeepSelected();
 		placingCondition.refreshListKeepSelected();
 		additionalHarvestCondition.refreshListKeepSelected();
+
+		inventoryAutomationTakeCondition.refreshListKeepSelected();
+		inventoryAutomationPlaceCondition.refreshListKeepSelected();
 
 		ComboBoxUtil.updateComboBoxContents(renderType,
 				ListUtils.merge(Arrays.asList(normal, singleTexture, cross, crop, grassBlock),
@@ -1402,6 +1428,8 @@ public class BlockGUI extends ModElementGUI<Block> {
 		useLootTableForDrops.setSelected(block.useLootTableForDrops);
 		openGUIOnRightClick.setSelected(block.openGUIOnRightClick);
 		inventoryDropWhenDestroyed.setSelected(block.inventoryDropWhenDestroyed);
+		inventoryAutomationTakeCondition.setSelectedProcedure(block.inventoryAutomationTakeCondition);
+		inventoryAutomationPlaceCondition.setSelectedProcedure(block.inventoryAutomationPlaceCondition);
 		inventoryComparatorPower.setSelected(block.inventoryComparatorPower);
 		inventorySize.setValue(block.inventorySize);
 		inventoryStackSize.setValue(block.inventoryStackSize);
@@ -1515,6 +1543,8 @@ public class BlockGUI extends ModElementGUI<Block> {
 		block.inventoryStackSize = (int) inventoryStackSize.getValue();
 		block.inventoryDropWhenDestroyed = inventoryDropWhenDestroyed.isSelected();
 		block.inventoryComparatorPower = inventoryComparatorPower.isSelected();
+		block.inventoryAutomationTakeCondition = inventoryAutomationTakeCondition.getSelectedProcedure();
+		block.inventoryAutomationPlaceCondition = inventoryAutomationPlaceCondition.getSelectedProcedure();
 		if (outSlotIDs.getText().isBlank())
 			block.inventoryOutSlotIDs = new ArrayList<>();
 		else

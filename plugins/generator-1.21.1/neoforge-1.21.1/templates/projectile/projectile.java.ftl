@@ -48,10 +48,14 @@ public class ${name}Entity extends AbstractArrow implements ItemSupplier {
 
 	public ${name}Entity(EntityType<? extends ${name}Entity> type, double x, double y, double z, Level world, @Nullable ItemStack firedFromWeapon) {
 		super(type, x, y, z, world, PROJECTILE_ITEM, firedFromWeapon);
+		if (firedFromWeapon != null)
+			setKnockback(EnchantmentHelper.getItemEnchantmentLevel(world.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.KNOCKBACK), firedFromWeapon));
 	}
 
 	public ${name}Entity(EntityType<? extends ${name}Entity> type, LivingEntity entity, Level world, @Nullable ItemStack firedFromWeapon) {
 		super(type, entity, world, PROJECTILE_ITEM, firedFromWeapon);
+		if (firedFromWeapon != null)
+			setKnockback(EnchantmentHelper.getItemEnchantmentLevel(world.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.KNOCKBACK), firedFromWeapon));
 	}
 
 	@Override @OnlyIn(Dist.CLIENT) public ItemStack getItem() {
@@ -78,6 +82,8 @@ public class ${name}Entity extends AbstractArrow implements ItemSupplier {
 			if (vec3.lengthSqr() > 0.0) {
 				livingEntity.push(vec3.x, 0.1, vec3.z);
 			}
+		} else { // knockback might be set by firedFromWeapon passed into constructor
+			super.doKnockback(livingEntity, damageSource);
 		}
 	}
 
@@ -85,7 +91,7 @@ public class ${name}Entity extends AbstractArrow implements ItemSupplier {
 	@Nullable @Override protected EntityHitResult findHitEntity(Vec3 projectilePosition, Vec3 deltaPosition) {
 		double d0 = Double.MAX_VALUE;
 		Entity entity = null;
-		AABB lookupBox = this.getBoundingBox().expandTowards(deltaPosition).inflate(1.0D);
+		AABB lookupBox = this.getBoundingBox();
 		for (Entity entity1 : this.level().getEntities(this, lookupBox, this::canHitEntity)) {
 			if (entity1 == this.getOwner()) continue;
 			AABB aabb = entity1.getBoundingBox();

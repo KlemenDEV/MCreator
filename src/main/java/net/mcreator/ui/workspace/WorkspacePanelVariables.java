@@ -49,8 +49,8 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 class WorkspacePanelVariables extends AbstractWorkspacePanel {
 
@@ -323,7 +323,7 @@ class WorkspacePanelVariables extends AbstractWorkspacePanel {
 
 	@Override public void refilterElements() {
 		try {
-			sorter.setRowFilter(RowFilter.regexFilter(workspacePanel.search.getText()));
+			sorter.setRowFilter(RowFilter.regexFilter(workspacePanel.getSearchTerm()));
 		} catch (Exception ignored) {
 		}
 	}

@@ -76,7 +76,7 @@ public class CodeErrorDialog {
 			} else if (FileIO.isFileOnFileList(moddefinitionfiles, problematicFile)) {
 				moddefinitionfileerrors = true;
 			} else {
-				LOG.warn("[ForgeGradleUtil] Error from non MCreator generated class!");
+				LOG.warn("Error from non MCreator generated class!");
 			}
 		}
 
@@ -126,7 +126,7 @@ public class CodeErrorDialog {
 		if (n == 0) {
 			mcreator.getTabs().showTab(mcreator.workspaceTab);
 			if (mcreator instanceof ModMaker modMaker)
-				modMaker.getWorkspacePanel().search.setText("f:err");
+				modMaker.getWorkspacePanel().setSearchTerm("f:err");
 		} else if (n == 1) {
 			mcreator.getTabs().showTab(mcreator.consoleTab);
 		} else if (n == 3) {

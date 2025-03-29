@@ -66,11 +66,7 @@ public final class ModMaker extends MCreator {
 		return ComponentUtils.applyPadding(workspacePanel, 5, true, true, true, true);
 	}
 
-	@Override public void reloadWorkspaceTabContentsImpl() {
-		workspacePanel.reloadElementsInCurrentTab();
-	}
-
-	public WorkspacePanel getWorkspacePanel() {
+	@Override public WorkspacePanel getWorkspacePanel() {
 		return workspacePanel;
 	}
 
