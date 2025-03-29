@@ -245,7 +245,7 @@ Blockly.Extensions.registerMutator('blockstate_selector_mutator', simpleRepeatin
 Blockly.Extensions.registerMutator('feature_block_column_mutator', simpleRepeatingInputMixin(
         'feature_block_column_mutator_container', 'feature_block_column_mutator_input', 'layer',
         function (thisBlock, inputName, index) {
-            thisBlock.appendValueInput(inputName + index).setCheck('BlockColumnLayer').setAlign(Blockly.Input.Align.RIGHT)
+            thisBlock.appendValueInput(inputName + index).setCheck('BlockColumnLayer').setAlign(Blockly.ALIGN_RIGHT)
                 .appendField(javabridge.t('blockly.block.' + thisBlock.type + '.input'));
         }),
     undefined, ['feature_block_column_mutator_input']);
@@ -254,7 +254,7 @@ Blockly.Extensions.registerMutator('feature_block_column_mutator', simpleRepeati
 Blockly.Extensions.registerMutator('disk_feature_mutator', simpleRepeatingInputMixin(
         'feature_disk_mutator_container', 'feature_disk_mutator_input', 'rule',
         function (thisBlock, inputName, index) {
-            thisBlock.appendValueInput(inputName + index).setCheck('DiskRule').setAlign(Blockly.Input.Align.RIGHT)
+            thisBlock.appendValueInput(inputName + index).setCheck('DiskRule').setAlign(Blockly.ALIGN_RIGHT)
                 .appendField(javabridge.t(
                     index == 0 ? 'blockly.block.feature_disk_mutator.try' : 'blockly.block.feature_disk_mutator.else_try'));
         }),
@@ -265,7 +265,7 @@ Blockly.Extensions.registerMutator('random_feature_selector_mutator', simpleRepe
         'feature_simple_random_mutator_container', 'feature_simple_random_mutator_input', 'feature',
         function (thisBlock, inputName, index) {
             thisBlock.appendValueInput(inputName + index).setCheck(['Feature', 'PlacedFeature'])
-                .setAlign(Blockly.Input.Align.RIGHT)
+                .setAlign(Blockly.ALIGN_RIGHT)
                 .appendField(javabridge.t(
                     index == 0 ? 'blockly.block.feature_random_selector.with_chance' : 'blockly.block.feature_random_selector.else_with_chance'
                 ))
