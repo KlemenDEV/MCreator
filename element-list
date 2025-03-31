@@ -27,6 +27,8 @@ net.mcreator.element.converter.v2023_4
 net.mcreator.element.converter.v2024_1
 net.mcreator.element.converter.v2024_2
 net.mcreator.element.converter.v2024_3
+net.mcreator.element.converter.v2024_4
+net.mcreator.element.converter.v2025_1
 net.mcreator.element.parts
 net.mcreator.element.parts.gui
 net.mcreator.element.parts.procedure
@@ -51,7 +53,9 @@ net.mcreator.io.writer
 net.mcreator.io.zip
 net.mcreator.java
 net.mcreator.java.debug
+net.mcreator.java.monitoring
 net.mcreator.minecraft
+net.mcreator.minecraft.resourcepack
 net.mcreator.plugin
 net.mcreator.plugin.events
 net.mcreator.plugin.events.ui
@@ -98,12 +102,15 @@ net.mcreator.ui.laf.renderer.elementlist
 net.mcreator.ui.laf.renderer.elementlist.special
 net.mcreator.ui.laf.themes
 net.mcreator.ui.minecraft
+net.mcreator.ui.minecraft.attributemodifiers
 net.mcreator.ui.minecraft.boundingboxes
+net.mcreator.ui.minecraft.entityanimations
 net.mcreator.ui.minecraft.jigsaw
 net.mcreator.ui.minecraft.loottable
 net.mcreator.ui.minecraft.modellayers
 net.mcreator.ui.minecraft.potions
 net.mcreator.ui.minecraft.recipemakers
+net.mcreator.ui.minecraft.recourcepack
 net.mcreator.ui.minecraft.spawntypes
 net.mcreator.ui.minecraft.states
 net.mcreator.ui.minecraft.states.block
@@ -118,6 +125,8 @@ net.mcreator.ui.validation
 net.mcreator.ui.validation.component
 net.mcreator.ui.validation.optionpane
 net.mcreator.ui.validation.validators
+net.mcreator.ui.variants.modmaker
+net.mcreator.ui.variants.resourcepackmaker
 net.mcreator.ui.views
 net.mcreator.ui.views.editor.image
 net.mcreator.ui.views.editor.image.action
@@ -151,3 +160,4 @@ net.mcreator.workspace.misc
 net.mcreator.workspace.references
 net.mcreator.workspace.resources
 net.mcreator.workspace.settings
+net.mcreator.workspace.settings.user
