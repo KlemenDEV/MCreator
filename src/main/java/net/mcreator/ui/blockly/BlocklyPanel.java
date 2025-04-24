@@ -38,6 +38,7 @@ import net.mcreator.ui.component.util.ThreadUtil;
 import net.mcreator.ui.init.BlocklyJavaScriptsLoader;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.laf.themes.Theme;
+import net.mcreator.util.TestUtil;
 import net.mcreator.workspace.elements.VariableElement;
 import net.mcreator.workspace.elements.VariableType;
 import net.mcreator.workspace.elements.VariableTypeLoader;
@@ -280,6 +281,7 @@ public class BlocklyPanel extends JFXPanel implements Closeable {
 			ThreadUtil.runOnFxThread(query);
 			return query.get();
 		} catch (InterruptedException | ExecutionException e) {
+			TestUtil.failIfTestingEnvironment();
 			LOG.error("Failed to execute: " + javaScript, e);
 		}
 		return null;
