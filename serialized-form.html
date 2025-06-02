@@ -1795,7 +1795,7 @@ loadScripts(document, 'script');</script>
 </li>
 <li class="block-list">
 <h5>entryListeners</h5>
-<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/function/Consumer.html" title="class or interface in java.util.function" class="external-link">Consumer</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JComponent.html" title="class or interface in javax.swing" class="external-link">JComponent</a>&gt;&gt; entryListeners</pre>
+<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="net/mcreator/ui/component/entries/JEntriesList.EntryRegisterListener.html" title="interface in net.mcreator.ui.component.entries">JEntriesList.EntryRegisterListener</a>&gt; entryListeners</pre>
 </li>
 <li class="block-list">
 <h5>gui</h5>
@@ -4219,6 +4219,50 @@ loadScripts(document, 'script');</script>
 </li>
 <li>
 <section class="serialized-package-container">
+<h2 title="Package">Package&nbsp;<a href="net/mcreator/ui/minecraft/blockentityanimations/package-summary.html">net.mcreator.ui.minecraft.blockentityanimations</a></h2>
+<ul class="block-list">
+<li>
+<section class="serialized-class-details" id="net.mcreator.ui.minecraft.blockentityanimations.JBlockEntityAnimationList">
+<h3>Class&nbsp;<a href="net/mcreator/ui/minecraft/blockentityanimations/JBlockEntityAnimationList.html" title="class in net.mcreator.ui.minecraft.blockentityanimations">net.mcreator.ui.minecraft.blockentityanimations.JBlockEntityAnimationList</a></h3>
+<div class="type-signature">class JBlockEntityAnimationList extends <a href="net/mcreator/ui/component/entries/JSimpleEntriesList.html" title="class in net.mcreator.ui.component.entries">JSimpleEntriesList</a>&lt;<a href="net/mcreator/ui/minecraft/blockentityanimations/JBlockEntityAnimationListEntry.html" title="class in net.mcreator.ui.minecraft.blockentityanimations">JBlockEntityAnimationListEntry</a>,<wbr><a href="net/mcreator/element/types/Block.AnimationEntry.html" title="class in net.mcreator.element.types">Block.AnimationEntry</a>&gt; implements <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a></div>
+</section>
+</li>
+<li>
+<section class="serialized-class-details" id="net.mcreator.ui.minecraft.blockentityanimations.JBlockEntityAnimationListEntry">
+<h3>Class&nbsp;<a href="net/mcreator/ui/minecraft/blockentityanimations/JBlockEntityAnimationListEntry.html" title="class in net.mcreator.ui.minecraft.blockentityanimations">net.mcreator.ui.minecraft.blockentityanimations.JBlockEntityAnimationListEntry</a></h3>
+<div class="type-signature">class JBlockEntityAnimationListEntry extends <a href="net/mcreator/ui/component/entries/JSimpleListEntry.html" title="class in net.mcreator.ui.component.entries">JSimpleListEntry</a>&lt;<a href="net/mcreator/element/types/Block.AnimationEntry.html" title="class in net.mcreator.element.types">Block.AnimationEntry</a>&gt; implements <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a></div>
+<ul class="block-list">
+<li>
+<section class="detail">
+<h4>Serialized Fields</h4>
+<ul class="block-list">
+<li class="block-list">
+<h5>animation</h5>
+<pre><a href="net/mcreator/ui/minecraft/DataListComboBox.html" title="class in net.mcreator.ui.minecraft">DataListComboBox</a> animation</pre>
+</li>
+<li class="block-list">
+<h5>condition</h5>
+<pre><a href="net/mcreator/ui/procedure/ProcedureSelector.html" title="class in net.mcreator.ui.procedure">ProcedureSelector</a> condition</pre>
+</li>
+<li class="block-list">
+<h5>mcreator</h5>
+<pre><a href="net/mcreator/ui/MCreator.html" title="class in net.mcreator.ui">MCreator</a> mcreator</pre>
+</li>
+<li class="block-list">
+<h5>speed</h5>
+<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JSpinner.html" title="class or interface in javax.swing" class="external-link">JSpinner</a> speed</pre>
+</li>
+</ul>
+</section>
+</li>
+</ul>
+</section>
+</li>
+</ul>
+</section>
+</li>
+<li>
+<section class="serialized-package-container">
 <h2 title="Package">Package&nbsp;<a href="net/mcreator/ui/minecraft/boundingboxes/package-summary.html">net.mcreator.ui.minecraft.boundingboxes</a></h2>
 <ul class="block-list">
 <li>
@@ -6256,6 +6300,10 @@ loadScripts(document, 'script');</script>
 <pre><a href="net/mcreator/ui/component/SearchableComboBox.html" title="class in net.mcreator.ui.component">SearchableComboBox</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt; aiPathNodeType</pre>
 </li>
 <li class="block-list">
+<h5>animations</h5>
+<pre><a href="net/mcreator/ui/minecraft/blockentityanimations/JBlockEntityAnimationList.html" title="class in net.mcreator.ui.minecraft.blockentityanimations">JBlockEntityAnimationList</a> animations</pre>
+</li>
+<li class="block-list">
 <h5>beaconColorModifier</h5>
 <pre><a href="net/mcreator/ui/component/JColor.html" title="class in net.mcreator.ui.component">JColor</a> beaconColorModifier</pre>
 </li>
@@ -6440,6 +6488,10 @@ loadScripts(document, 'script');</script>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JSpinner.html" title="class or interface in javax.swing" class="external-link">JSpinner</a> hardness</pre>
 </li>
 <li class="block-list">
+<h5>hasBlockItem</h5>
+<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JCheckBox.html" title="class or interface in javax.swing" class="external-link">JCheckBox</a> hasBlockItem</pre>
+</li>
+<li class="block-list">
 <h5>hasEnergyStorage</h5>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JCheckBox.html" title="class or interface in javax.swing" class="external-link">JCheckBox</a> hasEnergyStorage</pre>
 </li>
@@ -6462,6 +6514,10 @@ loadScripts(document, 'script');</script>
 <li class="block-list">
 <h5>ignitedByLava</h5>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JCheckBox.html" title="class or interface in javax.swing" class="external-link">JCheckBox</a> ignitedByLava</pre>
+</li>
+<li class="block-list">
+<h5>immuneToFire</h5>
+<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JCheckBox.html" title="class or interface in javax.swing" class="external-link">JCheckBox</a> immuneToFire</pre>
 </li>
 <li class="block-list">
 <h5>inSlotIDs</h5>
@@ -6538,6 +6594,10 @@ loadScripts(document, 'script');</script>
 <li class="block-list">
 <h5>luminance</h5>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JSpinner.html" title="class or interface in javax.swing" class="external-link">JSpinner</a> luminance</pre>
+</li>
+<li class="block-list">
+<h5>maxStackSize</h5>
+<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JSpinner.html" title="class or interface in javax.swing" class="external-link">JSpinner</a> maxStackSize</pre>
 </li>
 <li class="block-list">
 <h5>name</h5>
@@ -6650,6 +6710,10 @@ loadScripts(document, 'script');</script>
 <li class="block-list">
 <h5>plantsGrowOn</h5>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JCheckBox.html" title="class or interface in javax.swing" class="external-link">JCheckBox</a> plantsGrowOn</pre>
+</li>
+<li class="block-list">
+<h5>rarity</h5>
+<pre><a href="net/mcreator/ui/component/TranslatedComboBox.html" title="class in net.mcreator.ui.component">TranslatedComboBox</a> rarity</pre>
 </li>
 <li class="block-list">
 <h5>reactionToPushing</h5>
@@ -7312,6 +7376,10 @@ loadScripts(document, 'script');</script>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JCheckBox.html" title="class or interface in javax.swing" class="external-link">JCheckBox</a> hasFog</pre>
 </li>
 <li class="block-list">
+<h5>ignitedByLava</h5>
+<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JCheckBox.html" title="class or interface in javax.swing" class="external-link">JCheckBox</a> ignitedByLava</pre>
+</li>
+<li class="block-list">
 <h5>levelDecrease</h5>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JSpinner.html" title="class or interface in javax.swing" class="external-link">JSpinner</a> levelDecrease</pre>
 </li>
@@ -7614,6 +7682,10 @@ loadScripts(document, 'script');</script>
 <li class="block-list">
 <h5>guiBoundTo</h5>
 <pre><a href="net/mcreator/ui/minecraft/SingleModElementSelector.html" title="class in net.mcreator.ui.minecraft">SingleModElementSelector</a> guiBoundTo</pre>
+</li>
+<li class="block-list">
+<h5>guiTexture</h5>
+<pre><a href="net/mcreator/ui/minecraft/TextureSelectionButton.html" title="class in net.mcreator.ui.minecraft">TextureSelectionButton</a> guiTexture</pre>
 </li>
 <li class="block-list">
 <h5>immuneToFire</h5>
@@ -8336,6 +8408,10 @@ loadScripts(document, 'script');</script>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="net/mcreator/ui/modgui/ModElementGUIPage.html" title="class in net.mcreator.ui.modgui">ModElementGUIPage</a>&gt; pages</pre>
 </li>
 <li class="block-list">
+<h5>search</h5>
+<pre><a href="net/mcreator/ui/modgui/ModElementGUISearch.html" title="class in net.mcreator.ui.modgui">ModElementGUISearch</a> search</pre>
+</li>
+<li class="block-list">
 <h5>splitPane</h5>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JSplitPane.html" title="class or interface in javax.swing" class="external-link">JSplitPane</a> splitPane</pre>
 </li>
@@ -8346,6 +8422,25 @@ loadScripts(document, 'script');</script>
 <li class="block-list">
 <h5>targetFolder</h5>
 <pre><a href="net/mcreator/workspace/elements/FolderElement.html" title="class in net.mcreator.workspace.elements">FolderElement</a> targetFolder</pre>
+</li>
+</ul>
+</section>
+</li>
+</ul>
+</section>
+</li>
+<li>
+<section class="serialized-class-details" id="net.mcreator.ui.modgui.ModElementGUISearch">
+<h3>Class&nbsp;<a href="net/mcreator/ui/modgui/ModElementGUISearch.html" title="class in net.mcreator.ui.modgui">net.mcreator.ui.modgui.ModElementGUISearch</a></h3>
+<div class="type-signature">class ModElementGUISearch extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JTextField.html" title="class or interface in javax.swing" class="external-link">JTextField</a> implements <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a></div>
+<ul class="block-list">
+<li>
+<section class="detail">
+<h4>Serialized Fields</h4>
+<ul class="block-list">
+<li class="block-list">
+<h5>modElementGUI</h5>
+<pre><a href="net/mcreator/ui/modgui/ModElementGUI.html" title="class in net.mcreator.ui.modgui">ModElementGUI</a>&lt;?&gt; modElementGUI</pre>
 </li>
 </ul>
 </section>
@@ -8630,12 +8725,24 @@ loadScripts(document, 'script');</script>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JSpinner.html" title="class or interface in javax.swing" class="external-link">JSpinner</a> hardness</pre>
 </li>
 <li class="block-list">
+<h5>hasBlockItem</h5>
+<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JCheckBox.html" title="class or interface in javax.swing" class="external-link">JCheckBox</a> hasBlockItem</pre>
+</li>
+<li class="block-list">
 <h5>hasTileEntity</h5>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JCheckBox.html" title="class or interface in javax.swing" class="external-link">JCheckBox</a> hasTileEntity</pre>
 </li>
 <li class="block-list">
 <h5>hitSound</h5>
 <pre><a href="net/mcreator/ui/minecraft/SoundSelector.html" title="class in net.mcreator.ui.minecraft">SoundSelector</a> hitSound</pre>
+</li>
+<li class="block-list">
+<h5>ignitedByLava</h5>
+<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JCheckBox.html" title="class or interface in javax.swing" class="external-link">JCheckBox</a> ignitedByLava</pre>
+</li>
+<li class="block-list">
+<h5>immuneToFire</h5>
+<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JCheckBox.html" title="class or interface in javax.swing" class="external-link">JCheckBox</a> immuneToFire</pre>
 </li>
 <li class="block-list">
 <h5>isBonemealable</h5>
@@ -8672,6 +8779,10 @@ loadScripts(document, 'script');</script>
 <li class="block-list">
 <h5>luminance</h5>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JSpinner.html" title="class or interface in javax.swing" class="external-link">JSpinner</a> luminance</pre>
+</li>
+<li class="block-list">
+<h5>maxStackSize</h5>
+<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JSpinner.html" title="class or interface in javax.swing" class="external-link">JSpinner</a> maxStackSize</pre>
 </li>
 <li class="block-list">
 <h5>megaTrees</h5>
@@ -8772,6 +8883,10 @@ loadScripts(document, 'script');</script>
 <li class="block-list">
 <h5>plantTypesLayout</h5>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/awt/CardLayout.html" title="class or interface in java.awt" class="external-link">CardLayout</a> plantTypesLayout</pre>
+</li>
+<li class="block-list">
+<h5>rarity</h5>
+<pre><a href="net/mcreator/ui/component/TranslatedComboBox.html" title="class in net.mcreator.ui.component">TranslatedComboBox</a> rarity</pre>
 </li>
 <li class="block-list">
 <h5>renderType</h5>
@@ -8983,6 +9098,10 @@ loadScripts(document, 'script');</script>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="net/mcreator/ui/modgui/IBlocklyPanelHolder.BlocklyChangedListener.html" title="interface in net.mcreator.ui.modgui">IBlocklyPanelHolder.BlocklyChangedListener</a>&gt; blocklyChangedListeners</pre>
 </li>
 <li class="block-list">
+<h5>blocklyEditorToolbar</h5>
+<pre><a href="net/mcreator/ui/blockly/BlocklyEditorToolbar.html" title="class in net.mcreator.ui.blockly">BlocklyEditorToolbar</a> blocklyEditorToolbar</pre>
+</li>
+<li class="block-list">
 <h5>blocklyPanel</h5>
 <pre><a href="net/mcreator/ui/blockly/BlocklyPanel.html" title="class in net.mcreator.ui.blockly">BlocklyPanel</a> blocklyPanel</pre>
 </li>
@@ -9055,6 +9174,10 @@ loadScripts(document, 'script');</script>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JLabel.html" title="class or interface in javax.swing" class="external-link">JLabel</a> sideTriggerLabel</pre>
 </li>
 <li class="block-list">
+<h5>skipDependencyNullCheck</h5>
+<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JCheckBox.html" title="class or interface in javax.swing" class="external-link">JCheckBox</a> skipDependencyNullCheck</pre>
+</li>
+<li class="block-list">
 <h5>trigger</h5>
 <pre><a href="net/mcreator/blockly/data/ExternalTrigger.html" title="class in net.mcreator.blockly.data">ExternalTrigger</a> trigger</pre>
 </li>
@@ -9092,6 +9215,10 @@ loadScripts(document, 'script');</script>
 <li class="block-list">
 <h5>damage</h5>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JSpinner.html" title="class or interface in javax.swing" class="external-link">JSpinner</a> damage</pre>
+</li>
+<li class="block-list">
+<h5>disableGravity</h5>
+<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JCheckBox.html" title="class or interface in javax.swing" class="external-link">JCheckBox</a> disableGravity</pre>
 </li>
 <li class="block-list">
 <h5>igniteFire</h5>
@@ -9265,6 +9392,14 @@ loadScripts(document, 'script');</script>
 <pre><a href="net/mcreator/ui/minecraft/recipemakers/StoneCutterRecipeMaker.html" title="class in net.mcreator.ui.minecraft.recipemakers">StoneCutterRecipeMaker</a> stoneCutterRecipeMaker</pre>
 </li>
 <li class="block-list">
+<h5>unlockingItems</h5>
+<pre><a href="net/mcreator/ui/minecraft/MCItemListField.html" title="class in net.mcreator.ui.minecraft">MCItemListField</a> unlockingItems</pre>
+</li>
+<li class="block-list">
+<h5>unlockRecipePanel</h5>
+<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JComponent.html" title="class or interface in javax.swing" class="external-link">JComponent</a> unlockRecipePanel</pre>
+</li>
+<li class="block-list">
 <h5>xpReward</h5>
 <pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JSpinner.html" title="class or interface in javax.swing" class="external-link">JSpinner</a> xpReward</pre>
 </li>
@@ -9436,6 +9571,10 @@ loadScripts(document, 'script');</script>
 <li class="block-list">
 <h5>glowCondition</h5>
 <pre><a href="net/mcreator/ui/procedure/LogicProcedureSelector.html" title="class in net.mcreator.ui.procedure">LogicProcedureSelector</a> glowCondition</pre>
+</li>
+<li class="block-list">
+<h5>guiTexture</h5>
+<pre><a href="net/mcreator/ui/minecraft/TextureSelectionButton.html" title="class in net.mcreator.ui.minecraft">TextureSelectionButton</a> guiTexture</pre>
 </li>
 <li class="block-list">
 <h5>immuneToFire</h5>
@@ -10379,52 +10518,12 @@ loadScripts(document, 'script');</script>
 <h4>Serialized Fields</h4>
 <ul class="block-list">
 <li class="block-list">
-<h5>canvasRenderer</h5>
-<pre><a href="net/mcreator/ui/views/editor/image/canvas/CanvasRenderer.html" title="class in net.mcreator.ui.views.editor.image.canvas">CanvasRenderer</a> canvasRenderer</pre>
-</li>
-<li class="block-list">
-<h5>drawCustomPreview</h5>
-<pre>boolean drawCustomPreview</pre>
-</li>
-<li class="block-list">
-<h5>drawPreview</h5>
-<pre>boolean drawPreview</pre>
-</li>
-<li class="block-list">
-<h5>floatingLayer</h5>
-<pre><a href="net/mcreator/ui/views/editor/image/layer/Layer.html" title="class in net.mcreator.ui.views.editor.image.layer">Layer</a> floatingLayer</pre>
-</li>
-<li class="block-list">
 <h5>height</h5>
 <pre>int height</pre>
 </li>
 <li class="block-list">
-<h5>layerPanel</h5>
-<pre><a href="net/mcreator/ui/views/editor/image/layer/LayerPanel.html" title="class in net.mcreator.ui.views.editor.image.layer">LayerPanel</a> layerPanel</pre>
-</li>
-<li class="block-list">
-<h5>previewEvent</h5>
-<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/awt/event/MouseEvent.html" title="class or interface in java.awt.event" class="external-link">MouseEvent</a> previewEvent</pre>
-</li>
-<li class="block-list">
-<h5>previewImage</h5>
-<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/java/awt/Image.html" title="class or interface in java.awt" class="external-link">Image</a> previewImage</pre>
-</li>
-<li class="block-list">
 <h5>selection</h5>
 <pre><a href="net/mcreator/ui/views/editor/image/canvas/Selection.html" title="class in net.mcreator.ui.views.editor.image.canvas">Selection</a> selection</pre>
-</li>
-<li class="block-list">
-<h5>shape</h5>
-<pre><a href="net/mcreator/ui/views/editor/image/tool/tools/Shape.html" title="enum class in net.mcreator.ui.views.editor.image.tool.tools">Shape</a> shape</pre>
-</li>
-<li class="block-list">
-<h5>size</h5>
-<pre>int size</pre>
-</li>
-<li class="block-list">
-<h5>versionManager</h5>
-<pre><a href="net/mcreator/ui/views/editor/image/versioning/VersionManager.html" title="class in net.mcreator.ui.views.editor.image.versioning">VersionManager</a> versionManager</pre>
 </li>
 <li class="block-list">
 <h5>width</h5>
@@ -10821,6 +10920,32 @@ loadScripts(document, 'script');</script>
 </li>
 <li>
 <section class="serialized-package-container">
+<h2 title="Package">Package&nbsp;<a href="net/mcreator/ui/views/editor/image/metadata/package-summary.html">net.mcreator.ui.views.editor.image.metadata</a></h2>
+<ul class="block-list">
+<li>
+<section class="serialized-class-details" id="net.mcreator.ui.views.editor.image.metadata.MetadataOutdatedException">
+<h3>Exception Class&nbsp;<a href="net/mcreator/ui/views/editor/image/metadata/MetadataOutdatedException.html" title="class in net.mcreator.ui.views.editor.image.metadata">net.mcreator.ui.views.editor.image.metadata.MetadataOutdatedException</a></h3>
+<div class="type-signature">class MetadataOutdatedException extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Exception.html" title="class or interface in java.lang" class="external-link">Exception</a> implements <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a></div>
+<ul class="block-list">
+<li>
+<section class="detail">
+<h4>Serialized Fields</h4>
+<ul class="block-list">
+<li class="block-list">
+<h5>canvas</h5>
+<pre><a href="net/mcreator/ui/views/editor/image/canvas/Canvas.html" title="class in net.mcreator.ui.views.editor.image.canvas">Canvas</a> canvas</pre>
+</li>
+</ul>
+</section>
+</li>
+</ul>
+</section>
+</li>
+</ul>
+</section>
+</li>
+<li>
+<section class="serialized-package-container">
 <h2 title="Package">Package&nbsp;<a href="net/mcreator/ui/views/editor/image/tool/package-summary.html">net.mcreator.ui.views.editor.image.tool</a></h2>
 <ul class="block-list">
 <li>
@@ -11115,7 +11240,7 @@ loadScripts(document, 'script');</script>
 </li>
 <li class="block-list">
 <h5>sectionTabs</h5>
-<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="net/mcreator/ui/workspace/AbstractWorkspacePanel.html" title="class in net.mcreator.ui.workspace">AbstractWorkspacePanel</a>&gt; sectionTabs</pre>
+<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="net/mcreator/ui/workspace/AbstractWorkspacePanel.html" title="class in net.mcreator.ui.workspace">AbstractWorkspacePanel</a>&gt;,<wbr><a href="net/mcreator/ui/workspace/AbstractWorkspacePanel.html" title="class in net.mcreator.ui.workspace">AbstractWorkspacePanel</a>&gt; sectionTabs</pre>
 </li>
 <li class="block-list">
 <h5>subTabs</h5>
@@ -11511,7 +11636,7 @@ loadScripts(document, 'script');</script>
 <ul class="block-list">
 <li class="block-list">
 <h5>resourcePanels</h5>
-<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a>&gt; resourcePanels</pre>
+<pre><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;? extends <a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a>&gt;,<wbr><a href="https://docs.oracle.com/en/java/javase/21/docs/api/java.desktop/javax/swing/JPanel.html" title="class or interface in javax.swing" class="external-link">JPanel</a>&gt; resourcePanels</pre>
 </li>
 <li class="block-list">
 <h5>resourceTabs</h5>
