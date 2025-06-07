@@ -29,12 +29,15 @@ import net.mcreator.generator.template.TemplateGeneratorException;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.MCreatorApplication;
 import net.mcreator.ui.blockly.*;
+import net.mcreator.ui.component.CollapsiblePanel;
 import net.mcreator.ui.component.util.ComponentUtils;
 import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.dialogs.NewVariableDialog;
+import net.mcreator.ui.help.HelpUtils;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.init.UIRES;
 import net.mcreator.ui.laf.themes.Theme;
+import net.mcreator.ui.search.ISearchable;
 import net.mcreator.ui.validation.AggregatedValidationResult;
 import net.mcreator.ui.validation.Validator;
 import net.mcreator.ui.validation.component.VTextField;
@@ -58,11 +61,14 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.List;
 
-public class ProcedureGUI extends ModElementGUI<net.mcreator.element.types.Procedure> implements IBlocklyPanelHolder {
+public class ProcedureGUI extends ModElementGUI<net.mcreator.element.types.Procedure>
+		implements IBlocklyPanelHolder, ISearchable {
 
 	private static final Logger LOG = LogManager.getLogger(ProcedureGUI.class);
 
 	private final JPanel pane5 = new JPanel(new BorderLayout(0, 0));
+
+	private BlocklyEditorToolbar blocklyEditorToolbar;
 
 	private BlocklyPanel blocklyPanel;
 
@@ -95,6 +101,8 @@ public class ProcedureGUI extends ModElementGUI<net.mcreator.element.types.Proce
 	private final JLabel sideTriggerLabel = new JLabel();
 
 	private final CompileNotesPanel compileNotesPanel = new CompileNotesPanel();
+
+	private final JCheckBox skipDependencyNullCheck = L10N.checkbox("elementgui.common.enable");
 
 	private final List<BlocklyChangedListener> blocklyChangedListeners = new ArrayList<>();
 
@@ -253,6 +261,11 @@ public class ProcedureGUI extends ModElementGUI<net.mcreator.element.types.Proce
 				triggerDepsPan.setVisible(false);
 			}
 
+			if (skipDependencyNullCheck.isSelected()) {
+				compileNotesArrayList.add(new BlocklyCompileNote(BlocklyCompileNote.Type.WARNING,
+						L10N.t("elementgui.procedure.null_dependency_crash_warning")));
+			}
+
 			dependenciesArrayList.forEach(dependencies::addElement);
 
 			compileNotesPanel.updateCompileNotes(compileNotesArrayList);
@@ -292,6 +305,17 @@ public class ProcedureGUI extends ModElementGUI<net.mcreator.element.types.Proce
 	}
 
 	@Override protected void initGUI() {
+		skipDependencyNullCheck.setOpaque(false);
+
+		JPanel skipDependencyWrapper = new JPanel(new GridLayout(1, 2, 0, 2));
+		skipDependencyWrapper.setOpaque(false);
+		skipDependencyWrapper.add(HelpUtils.wrapWithHelpButton(this.withEntry("procedure/skip_dependency_null_check"),
+				L10N.label("elementgui.procedure.skip_dependency_null_check")));
+		skipDependencyWrapper.add(skipDependencyNullCheck);
+
+		CollapsiblePanel procedureSettings = new CollapsiblePanel(L10N.t("elementgui.procedure.additional_settings"),
+				PanelUtils.join(FlowLayout.LEFT, 1, 1, skipDependencyWrapper));
+
 		pane5.setOpaque(false);
 
 		localVarsList.setOpaque(false);
@@ -555,18 +579,20 @@ public class ProcedureGUI extends ModElementGUI<net.mcreator.element.types.Proce
 			}
 		});
 
+		skipDependencyNullCheck.addActionListener(e -> regenerateProcedure());
+
 		pane5.add("Center", blocklyPanel);
 
 		pane5.add("South", compileNotesPanel);
 
 		compileNotesPanel.setPreferredSize(new Dimension(0, 70));
 
-		BlocklyEditorToolbar blocklyEditorToolbar = new BlocklyEditorToolbar(mcreator, BlocklyEditorType.PROCEDURE,
-				blocklyPanel, this);
+		blocklyEditorToolbar = new BlocklyEditorToolbar(mcreator, BlocklyEditorType.PROCEDURE, blocklyPanel, this);
 		blocklyEditorToolbar.setTemplateLibButtonWidth(168);
 		pane5.add("North", blocklyEditorToolbar);
 
-		addPage(PanelUtils.gridElements(1, 1, pane5), false).lazyValidate(() -> {
+		addPage(PanelUtils.gridElements(1, 1, PanelUtils.centerAndSouthElement(pane5, procedureSettings)),
+				false).lazyValidate(() -> {
 			if (hasDependencyErrors)
 				return new AggregatedValidationResult.FAIL(
 						L10N.t("elementgui.procedure.external_trigger_does_not_provide_all_dependencies"));
@@ -615,6 +641,7 @@ public class ProcedureGUI extends ModElementGUI<net.mcreator.element.types.Proce
 	}
 
 	@Override public void openInEditingMode(net.mcreator.element.types.Procedure procedure) {
+		skipDependencyNullCheck.setSelected(procedure.skipDependencyNullCheck);
 		blocklyPanel.addTaskToRunAfterLoaded(() -> {
 			blocklyPanel.setXML(procedure.procedurexml);
 
@@ -625,6 +652,7 @@ public class ProcedureGUI extends ModElementGUI<net.mcreator.element.types.Proce
 
 	@Override public net.mcreator.element.types.Procedure getElementFromGUI() {
 		net.mcreator.element.types.Procedure procedure = new net.mcreator.element.types.Procedure(modElement);
+		procedure.skipDependencyNullCheck = skipDependencyNullCheck.isSelected();
 		procedure.procedurexml = blocklyPanel.getXML();
 		return procedure;
 	}
@@ -635,6 +663,13 @@ public class ProcedureGUI extends ModElementGUI<net.mcreator.element.types.Proce
 
 	@Override public @Nullable URI contextURL() throws URISyntaxException {
 		return new URI(MCreatorApplication.SERVER_DOMAIN + "/wiki/section/procedure-system");
+	}
+
+	@Override public void search(@Nullable String searchTerm) {
+		blocklyEditorToolbar.getSearchField().requestFocusInWindow();
+
+		if (searchTerm != null)
+			blocklyEditorToolbar.getSearchField().setText(searchTerm);
 	}
 
 }

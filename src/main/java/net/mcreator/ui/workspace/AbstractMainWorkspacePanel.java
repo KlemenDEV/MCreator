@@ -24,26 +24,28 @@ import net.mcreator.ui.MCreator;
 import net.mcreator.ui.component.util.ComponentUtils;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.laf.themes.Theme;
+import net.mcreator.ui.search.ITextFieldSearchable;
 import net.mcreator.util.ColorUtils;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class AbstractMainWorkspacePanel extends JPanel {
+public abstract class AbstractMainWorkspacePanel extends JPanel implements ITextFieldSearchable {
 
 	protected final MCreator mcreator;
 
 	protected final JTextField search;
 
 	protected final JTabbedPane subTabs;
-	protected final Map<String, AbstractWorkspacePanel> sectionTabs = new HashMap<>();
+	protected final Map<Class<? extends AbstractWorkspacePanel>, AbstractWorkspacePanel> sectionTabs = new HashMap<>();
 	@Nullable protected AbstractWorkspacePanel currentTabPanel = null;
 
 	public AbstractMainWorkspacePanel(MCreator mcreator, BorderLayout layout) {
@@ -150,11 +152,12 @@ public abstract class AbstractMainWorkspacePanel extends JPanel {
 	 * Adds a new section to this workspace as well as a vertical tab button on the left that switches
 	 * to the section panel when clicked.
 	 *
-	 * @param id      The unique identifier of the section used for reloading/filtering contained elements.
 	 * @param name    The name of the section shown in the workspace.
 	 * @param section The panel representing contents of the vertical tab being added.
 	 */
-	public void addVerticalTab(String id, String name, AbstractWorkspacePanel section) {
+	public void addVerticalTab(String name, AbstractWorkspacePanel section) {
+		Class<? extends AbstractWorkspacePanel> id = section.getClass();
+
 		if (getVerticalTab(id) != null)
 			return;
 
@@ -165,8 +168,9 @@ public abstract class AbstractMainWorkspacePanel extends JPanel {
 		}
 	}
 
-	public AbstractWorkspacePanel getVerticalTab(String id) {
-		return sectionTabs.get(id);
+	public <T extends AbstractWorkspacePanel> T getVerticalTab(Class<T> id) {
+		//noinspection unchecked
+		return (T) sectionTabs.get(id);
 	}
 
 	public void switchToVerticalTab(AbstractWorkspacePanel panel) {
@@ -195,6 +199,10 @@ public abstract class AbstractMainWorkspacePanel extends JPanel {
 
 	public synchronized void refilterWorkspaceTab() {
 		sectionTabs.values().forEach(IReloadableFilterable::refilterElements);
+	}
+
+	@Override public JTextComponent getSearchTextField() {
+		return search;
 	}
 
 }

@@ -50,6 +50,7 @@ import java.util.*;
 	public int renderType;
 	@TextureReference(TextureType.ITEM) public TextureHolder texture;
 	@Nonnull public String customModelName;
+	@TextureReference(TextureType.ITEM) public TextureHolder guiTexture;
 
 	@ModElementReference public Map<String, Procedure> customProperties;
 	@TextureReference(TextureType.ITEM) @ResourceReference("model") public List<StateEntry> states;
@@ -131,7 +132,7 @@ import java.util.*;
 
 		this.rarity = "COMMON";
 		this.inventorySize = 9;
-		this.inventoryStackSize = 64;
+		this.inventoryStackSize = 99;
 		this.saturation = 0.3f;
 		this.animation = "eat";
 
@@ -139,7 +140,11 @@ import java.util.*;
 	}
 
 	@Override public BufferedImage generateModElementPicture() {
-		return ImageUtils.resizeAndCrop(texture.getImage(TextureType.ITEM), 32);
+		if (hasGUITexture()) {
+			return ImageUtils.resizeAndCrop(guiTexture.getImage(TextureType.ITEM), 32);
+		} else {
+			return ImageUtils.resizeAndCrop(texture.getImage(TextureType.ITEM), 32);
+		}
 	}
 
 	@Override public Model getItemModel() {
@@ -172,6 +177,10 @@ import java.util.*;
 		return specialInformation;
 	}
 
+	public boolean hasGUITexture() {
+		return guiTexture != null && !guiTexture.isEmpty();
+	}
+
 	public boolean hasNormalModel() {
 		return decodeModelType(renderType) == Model.Type.BUILTIN && customModelName.equals("Normal");
 	}
@@ -192,12 +201,20 @@ import java.util.*;
 		return decodeModelType(renderType) == Model.Type.OBJ;
 	}
 
+	public boolean hasCustomJAVAModel() {
+		return decodeModelType(renderType) == Model.Type.JAVA;
+	}
+
 	public boolean hasInventory() {
 		return guiBoundTo != null && !guiBoundTo.isEmpty();
 	}
 
 	public boolean hasNonDefaultAnimation() {
 		return isFood ? !animation.equals("eat") : !animation.equals("none");
+	}
+
+	public boolean hasCustomFoodConsumable() {
+		return isFood && !(useDuration == 32 && (animation.equals("eat") || animation.equals("drink")));
 	}
 
 	public boolean hasEatResultItem() {
@@ -302,6 +319,9 @@ import java.util.*;
 			return decodeModelType(renderType) == Model.Type.OBJ;
 		}
 
+		public boolean hasCustomJAVAModel() {
+			return decodeModelType(renderType) == Model.Type.JAVA;
+		}
 	}
 
 	public static int encodeModelType(Model.Type modelType) {
@@ -309,6 +329,7 @@ import java.util.*;
 			case BUILTIN -> 0;
 			case JSON -> 1;
 			case OBJ -> 2;
+			case JAVA -> 3;
 			default -> throw new IllegalStateException("Unexpected value: " + modelType);
 		};
 	}
@@ -318,6 +339,7 @@ import java.util.*;
 			case 0 -> Model.Type.BUILTIN;
 			case 1 -> Model.Type.JSON;
 			case 2 -> Model.Type.OBJ;
+			case 3 -> Model.Type.JAVA;
 			default -> throw new IllegalStateException("Unexpected value: " + modelType);
 		};
 	}

@@ -84,7 +84,7 @@ public class ${name}Block extends ${getPlantClass(data.plantType)}Block
 				() -> BuiltInRegistries.SOUND_EVENT.getValue(ResourceLocation.parse("${data.hitSound}")),
 				() -> BuiltInRegistries.SOUND_EVENT.getValue(ResourceLocation.parse("${data.fallSound}"))
 			))
-		<#else>
+		<#elseif data.soundOnStep != "STONE">
 			.sound(SoundType.${data.soundOnStep})
 		</#if>
 		<#if data.unbreakable>
@@ -117,7 +117,13 @@ public class ${name}Block extends ${getPlantClass(data.plantType)}Block
 		<#if data.isReplaceable>
 		.replaceable()
 		</#if>
-		.offsetType(BlockBehaviour.OffsetType.${data.offsetType}).pushReaction(PushReaction.DESTROY)
+		<#if data.ignitedByLava>
+			.ignitedByLava()
+		</#if>
+		<#if data.offsetType != "NONE">
+			.offsetType(BlockBehaviour.OffsetType.${data.offsetType})
+		</#if>
+		.pushReaction(PushReaction.DESTROY)
 		);
 
 		<#if data.isWaterloggable()>
@@ -133,7 +139,8 @@ public class ${name}Block extends ${getPlantClass(data.plantType)}Block
 
 	@Override
 	public BlockState getStateForPlacement(BlockPlaceContext context) {
-		return super.getStateForPlacement(context).setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
+		BlockState state = super.getStateForPlacement(context);
+		return state == null ? null : state.setValue(WATERLOGGED, context.getLevel().getFluidState(context.getClickedPos()).getType() == Fluids.WATER);
 	}
 
 	@Override public FluidState getFluidState(BlockState state) {
@@ -182,6 +189,10 @@ public class ${name}Block extends ${getPlantClass(data.plantType)}Block
 	<#if data.creativePickItem?? && !data.creativePickItem.isEmpty()>
 	@Override public ItemStack getCloneItemStack(LevelReader world, BlockPos pos, BlockState state, boolean includeData, Player entity) {
 		return ${mappedMCItemToItemStackCode(data.creativePickItem, 1)};
+	}
+	<#elseif !data.hasBlockItem>
+	@Override public ItemStack getCloneItemStack(LevelReader world, BlockPos pos, BlockState state, boolean includeData, Player entity) {
+		return ItemStack.EMPTY;
 	}
 	</#if>
 
@@ -340,7 +351,7 @@ public class ${name}Block extends ${getPlantClass(data.plantType)}Block
 	@Override public boolean triggerEvent(BlockState state, Level world, BlockPos pos, int eventID, int eventParam) {
 		super.triggerEvent(state, world, pos, eventID, eventParam);
 		BlockEntity blockEntity = world.getBlockEntity(pos);
-		return blockEntity == null ? false : blockEntity.triggerEvent(eventID, eventParam);
+		return blockEntity != null && blockEntity.triggerEvent(eventID, eventParam);
 	}
 	</#if>
 
@@ -387,7 +398,13 @@ public class ${name}Block extends ${getPlantClass(data.plantType)}Block
 <#macro canPlaceOnList blockList condition>
 	<#if (blockList?size > 1) && condition>(</#if>
 	<#list blockList as canBePlacedOn>
-	groundState.is(${mappedBlockToBlock(canBePlacedOn)})<#sep>||
+	<#if canBePlacedOn.getUnmappedValue().startsWith("TAG:")>
+	groundState.is(BlockTags.create(ResourceLocation.parse("${canBePlacedOn.getUnmappedValue().replace("TAG:", "").replace("mod:", modid + ":")}")))
+	<#elseif canBePlacedOn.getMappedValue(1).startsWith("#")>
+	groundState.is(BlockTags.create(ResourceLocation.parse("${canBePlacedOn.getMappedValue(1)?remove_beginning("#")}")))
+	<#else>
+	groundState.is(${mappedBlockToBlock(canBePlacedOn)})
+	</#if><#sep>||
 	</#list><#if (blockList?size > 1) && condition>)</#if>
 </#macro>
 
