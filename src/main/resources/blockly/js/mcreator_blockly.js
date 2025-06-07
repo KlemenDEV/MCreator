@@ -119,7 +119,7 @@ function workspaceToXML() {
     }
 
     // Add variables child on top of DOM
-    const variablesElement = Blockly.Xml.variablesToDom(workspace.getAllVariables());
+    const variablesElement = Blockly.Xml.variablesToDom(workspace.getVariableMap().getAllVariables());
     if (variablesElement.hasChildNodes()) {
         treeXml.prepend(variablesElement);
     }
