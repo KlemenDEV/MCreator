@@ -26,7 +26,7 @@ import java.awt.*;
 
 public abstract class ViewBase extends JPanel {
 
-	protected MCreator mcreator;
+	protected final MCreator mcreator;
 
 	protected ViewBase(MCreator mcreator) {
 		super(new BorderLayout());
@@ -46,7 +46,7 @@ public abstract class ViewBase extends JPanel {
 	}
 
 	public ViewBase showView() {
-		mcreator.mcreatorTabs.addTab(new MCreatorTabs.Tab(this));
+		mcreator.getTabs().addTab(new MCreatorTabs.Tab(this));
 		return this;
 	}
 

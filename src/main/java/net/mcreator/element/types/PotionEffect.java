@@ -19,56 +19,88 @@
 package net.mcreator.element.types;
 
 import net.mcreator.element.GeneratableElement;
+import net.mcreator.element.parts.AttributeEntry;
+import net.mcreator.element.parts.Particle;
+import net.mcreator.element.parts.Sound;
+import net.mcreator.element.parts.TextureHolder;
 import net.mcreator.element.parts.procedure.Procedure;
 import net.mcreator.io.FileIO;
 import net.mcreator.minecraft.MinecraftImageGenerator;
 import net.mcreator.ui.workspace.resources.TextureType;
-import net.mcreator.util.FilenameUtilsPatched;
 import net.mcreator.workspace.elements.ModElement;
+import net.mcreator.workspace.references.ModElementReference;
 import net.mcreator.workspace.references.TextureReference;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import javax.swing.*;
+import javax.annotation.Nullable;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings("unused") public class PotionEffect extends GeneratableElement {
 
+	private static final Logger LOG = LogManager.getLogger(PotionEffect.class);
+
 	public String effectName;
-	@TextureReference(TextureType.EFFECT) public String icon;
+	@TextureReference(TextureType.EFFECT) public TextureHolder icon;
 	public Color color;
+	@Nullable public Particle particle;
+	public Sound onAddedSound;
 	public boolean isInstant;
-	public boolean isBad;
-	public boolean isBenefitical;
+	public String mobEffectCategory;
 	public boolean renderStatusInInventory;
 	public boolean renderStatusInHUD;
+	public boolean isCuredbyHoney;
+
+	@ModElementReference public List<AttributeModifierEntry> modifiers;
 
 	public Procedure onStarted;
 	public Procedure onActiveTick;
 	public Procedure onExpired;
 	public Procedure activeTickCondition;
+	public Procedure onMobHurt;
+	public Procedure onMobRemoved;
+
+	private PotionEffect() {
+		this(null);
+	}
 
 	public PotionEffect(ModElement element) {
 		super(element);
+
+		this.mobEffectCategory = "NEUTRAL";
+		modifiers = new ArrayList<>();
+	}
+
+	public static class AttributeModifierEntry {
+		public AttributeEntry attribute;
+		public double amount;
+		public String operation;
 	}
 
 	@Override public BufferedImage generateModElementPicture() {
-		return MinecraftImageGenerator.Preview.generatePotionEffectIcon(new ImageIcon(
-				getModElement().getWorkspace().getFolderManager()
-						.getTextureFile(FilenameUtilsPatched.removeExtension(icon), TextureType.EFFECT)
-						.toString()).getImage());
+		return MinecraftImageGenerator.Preview.generatePotionEffectIcon(icon.getImage(TextureType.EFFECT));
 	}
 
 	@Override public void finalizeModElementGeneration() {
-		File originalTextureFileLocation = getModElement().getWorkspace().getFolderManager()
-				.getTextureFile(FilenameUtilsPatched.removeExtension(icon), TextureType.EFFECT);
-		File newLocation = new File(
-				getModElement().getWorkspace().getFolderManager().getTexturesFolder(TextureType.EFFECT),
-				getModElement().getRegistryName() + ".png");
-		FileIO.copyFile(originalTextureFileLocation, newLocation);
+		try {
+			File newLocation = new File(
+					getModElement().getWorkspace().getFolderManager().getTexturesFolder(TextureType.EFFECT),
+					getModElement().getRegistryName() + ".png");
+			FileIO.copyFile(icon.toFile(TextureType.EFFECT), newLocation);
+		} catch (Exception e) {
+			LOG.error("Failed to copy potion effect icon", e);
+		}
 	}
 
 	public boolean hasCustomRenderer() {
 		return !renderStatusInHUD || !renderStatusInInventory;
+	}
+
+	public boolean hasCustomParticle() {
+		return particle != null && !isInstant;
 	}
 }

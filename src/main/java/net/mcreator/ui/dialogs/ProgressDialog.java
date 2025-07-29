@@ -19,6 +19,7 @@
 package net.mcreator.ui.dialogs;
 
 import com.formdev.flatlaf.ui.FlatLineBorder;
+import com.formdev.flatlaf.util.SystemInfo;
 import net.mcreator.io.OS;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.component.SquareLoaderIcon;
@@ -30,6 +31,8 @@ import net.mcreator.ui.laf.themes.Theme;
 import javax.annotation.Nullable;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,11 +51,16 @@ public class ProgressDialog extends MCreatorDialog {
 			this.mcreator = mcreatorInst;
 
 		setClosable(false);
+		setResizable(false);
 		setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
-		// If we use undecorated Dialog on Linux, the dialog contents flicker (#4757)
-		boolean customDecoration = OS.getOS() != OS.LINUX;
-		if (customDecoration) {
+		JScrollPane panes = new JScrollPane(progressUnits);
+		panes.setOpaque(false);
+		panes.getViewport().setOpaque(false);
+		panes.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 3));
+
+		// If we use undecorated Dialog on Linux or macOS, the dialog contents flicker (#4757)
+		if (OS.getOS() == OS.WINDOWS) {
 			setUndecorated(true);
 
 			JPanel contentPane = new JPanel() {
@@ -75,25 +83,34 @@ public class ProgressDialog extends MCreatorDialog {
 			titleLabel.setBorder(BorderFactory.createEmptyBorder(7, 10, 2, 10));
 			titleLabel.setForeground(Theme.current().getAltForegroundColor());
 			add("North", titleLabel);
+		} else if (OS.getOS() == OS.MAC
+				&& SystemInfo.isMacFullWindowContentSupported) { // on macOS, we use full window content instead
+			getRootPane().putClientProperty("apple.awt.fullWindowContent", true);
+			getRootPane().putClientProperty("apple.awt.transparentTitleBar", true);
+			getRootPane().putClientProperty("apple.awt.windowTitleVisible", false);
+			panes.setBorder(BorderFactory.createEmptyBorder(5 + 20, 10, 5, 3));
 		}
 
 		progressUnits.setCellRenderer(new Render());
 		progressUnits.setOpaque(false);
 		progressUnits.setBorder(null);
 
-		JScrollPane panes = new JScrollPane(progressUnits);
-		panes.setOpaque(false);
-		panes.getViewport().setOpaque(false);
-		panes.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 3));
-
 		add("Center", panes);
+
+		addWindowListener(new WindowAdapter() {
+			@Override public void windowClosed(WindowEvent e) {
+				super.windowClosed(e);
+				if (mcreator != null)
+					mcreator.getApplication().getTaskbarIntegration().clearState(mcreator);
+			}
+		});
 
 		setSize(450, 280);
 		setLocationRelativeTo(w);
 	}
 
 	public void hideDialog() {
-		ThreadUtil.runOnSwingThread(() -> setVisible(false));
+		ThreadUtil.runOnSwingThread(this::dispose);
 	}
 
 	@Override public void setTitle(String title) {
@@ -101,13 +118,6 @@ public class ProgressDialog extends MCreatorDialog {
 		// setTitle can be called before the titleLabel is initialized
 		if (titleLabel != null)
 			titleLabel.setText(title);
-	}
-
-	@Override public void setVisible(boolean visible) {
-		super.setVisible(visible);
-
-		if (!visible && mcreator != null)
-			mcreator.getApplication().getTaskbarIntegration().clearState(mcreator);
 	}
 
 	public void addProgressUnit(final ProgressUnit progressUnit) {
@@ -208,7 +218,8 @@ public class ProgressDialog extends MCreatorDialog {
 			JLabel status = new JLabel();
 			status.setText(ma.name);
 
-			if (ma.status == ProgressUnit.Status.LOADING) {
+			switch (ma.status) {
+			case LOADING -> {
 				JLabel status2 = new JLabel(LOADER_CACHE.computeIfAbsent(ma,
 						e -> new SquareLoaderIcon(list, 4, 1, Theme.current().getForegroundColor())));
 				status2.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 2));
@@ -218,12 +229,10 @@ public class ProgressDialog extends MCreatorDialog {
 				bar.setValue(ma.percent);
 				if (bar.getValue() > 0)
 					stap.add("West", PanelUtils.totalCenterInPanel(bar));
-			} else if (ma.status == ProgressUnit.Status.COMPLETE) {
-				stap.add("East", PanelUtils.centerInPanel(new JLabel(complete)));
-			} else if (ma.status == ProgressUnit.Status.ERROR) {
-				stap.add("East", PanelUtils.centerInPanel(new JLabel(remove)));
-			} else if (ma.status == ProgressUnit.Status.WARNING) {
-				stap.add("East", PanelUtils.centerInPanel(new JLabel(warning)));
+			}
+			case COMPLETE -> stap.add("East", PanelUtils.centerInPanel(new JLabel(complete)));
+			case ERROR -> stap.add("East", PanelUtils.centerInPanel(new JLabel(remove)));
+			case WARNING -> stap.add("East", PanelUtils.centerInPanel(new JLabel(warning)));
 			}
 
 			add("West", status);

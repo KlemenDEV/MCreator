@@ -28,8 +28,8 @@ import net.mcreator.io.FileIO;
 import net.mcreator.io.net.analytics.AnalyticsConstants;
 import net.mcreator.io.net.analytics.DeviceInfo;
 import net.mcreator.io.net.analytics.GoogleAnalytics;
-import net.mcreator.io.net.api.D8WebAPI;
 import net.mcreator.io.net.api.IWebAPI;
+import net.mcreator.io.net.api.MCreatorNetWebAPI;
 import net.mcreator.minecraft.DataListLoader;
 import net.mcreator.plugin.MCREvent;
 import net.mcreator.plugin.PluginLoader;
@@ -60,8 +60,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -70,7 +70,7 @@ public final class MCreatorApplication {
 
 	private static final Logger LOG = LogManager.getLogger("Application");
 
-	public static IWebAPI WEB_API = new D8WebAPI();
+	public static final IWebAPI WEB_API = new MCreatorNetWebAPI();
 	public static final String SERVER_DOMAIN = "https://mcreator.net";
 	public static boolean isInternet = true;
 
@@ -165,12 +165,12 @@ public final class MCreatorApplication {
 			for (String generator : fileNames) {
 				splashScreen.setProgress(70 + i * ((90 - 70) / fileNames.size()),
 						"Loading generators: " + generator.split("/")[0]);
-				LOG.info("Loading generator: " + generator);
+				LOG.info("Loading generator: {}", generator);
 				generator = generator.replace("/generator.yaml", "");
 				try {
 					Generator.GENERATOR_CACHE.put(generator, new GeneratorConfiguration(generator));
 				} catch (Exception e) {
-					LOG.error("Failed to load generator: " + generator, e);
+					LOG.error("Failed to load generator: {}", generator, e);
 				}
 				i++;
 			}
@@ -178,10 +178,10 @@ public final class MCreatorApplication {
 			splashScreen.setProgress(93, "Initiating user session");
 
 			deviceInfo = new DeviceInfo();
+			isInternet = MCreatorApplication.WEB_API.initAPI();
+
 			analytics = new GoogleAnalytics(deviceInfo);
 			analytics.trackPage(AnalyticsConstants.PAGE_LAUNCH);
-
-			isInternet = MCreatorApplication.WEB_API.initAPI();
 
 			discordClient = new DiscordClient();
 
@@ -203,20 +203,23 @@ public final class MCreatorApplication {
 				LOG.warn("Failed to register desktop handlers", e);
 			}
 
-			SwingUtilities.invokeLater(() -> {
+			ThreadUtil.runOnSwingThreadAndWait(() -> {
+				// Prepare workspace selector on swing thread before closing splash screen
 				workspaceSelector = new WorkspaceSelector(this, this::openWorkspaceInMCreator);
 
-				splashScreen.setVisible(false);
+				// Make sure splash screen is closed on the swing thread before we continue
+				splashScreen.dispose();
+			});
 
+			SwingUtilities.invokeLater(() -> {
 				boolean directLaunch = false;
 				if (!launchArguments.isEmpty()) {
-					String lastArg = launchArguments.get(launchArguments.size() - 1);
+					String lastArg = launchArguments.getLast();
 					if (lastArg.length() >= 2 && lastArg.charAt(0) == '"'
 							&& lastArg.charAt(lastArg.length() - 1) == '"')
 						lastArg = lastArg.substring(1, lastArg.length() - 1);
 					File passedFile = new File(lastArg);
 					if (passedFile.isFile() && passedFile.getName().endsWith(".mcreator")) {
-						splashScreen.setVisible(false);
 						MCreator mcreator = openWorkspaceInMCreator(passedFile);
 						StartupNotifications.handleStartupNotifications(mcreator);
 						directLaunch = true;
@@ -255,9 +258,20 @@ public final class MCreatorApplication {
 	 * @return MCreator if new instance, null if existing is open or open failed
 	 */
 	public MCreator openWorkspaceInMCreator(File workspaceFile) {
+		return openWorkspaceInMCreator(workspaceFile, false);
+	}
+
+	/**
+	 * @param workspaceFile   File of the .mcreator workspace definition
+	 * @param forceRegenerate If true, the workspace will be regenerated
+	 * @return MCreator if new instance, null if existing is open or open failed
+	 */
+	public MCreator openWorkspaceInMCreator(File workspaceFile, boolean forceRegenerate) {
 		this.workspaceSelector.setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		try {
 			Workspace workspace = Workspace.readFromFS(workspaceFile, this.workspaceSelector);
+			if (forceRegenerate)
+				workspace.requireRegenerate();
 			if (workspace.getMCreatorVersion() > Launcher.version.versionlong
 					&& !MCreatorVersionNumber.isBuildNumberDevelopment(workspace.getMCreatorVersion())) {
 				ThreadUtil.runOnSwingThreadAndWait(() -> JOptionPane.showMessageDialog(workspaceSelector,
@@ -267,7 +281,7 @@ public final class MCreatorApplication {
 				AtomicReference<MCreator> openResult = new AtomicReference<>(null);
 
 				ThreadUtil.runOnSwingThreadAndWait(() -> {
-					MCreator mcreator = new MCreator(this, workspace);
+					MCreator mcreator = MCreator.create(this, workspace);
 					if (!this.openMCreators.contains(mcreator)) {
 						this.workspaceSelector.setVisible(false);
 						this.openMCreators.add(mcreator);
@@ -346,7 +360,7 @@ public final class MCreatorApplication {
 			// create list copy, so we don't modify the list we iterate
 			List<MCreator> mcreatorsTmp = new ArrayList<>(openMCreators);
 			for (MCreator mcreator : mcreatorsTmp) {
-				LOG.info("Attempting to close MCreator window with workspace: " + mcreator.getWorkspace());
+				LOG.info("Attempting to close MCreator window with workspace: {}", mcreator.getWorkspace());
 				if (!mcreator.closeThisMCreator(false)) {
 					canNotClose.set(true);
 					return;
@@ -362,7 +376,7 @@ public final class MCreatorApplication {
 
 		discordClient.close(); // close discord client
 
-		// we close all windows and exit fx platform
+		// we dispose all windows and exit fx platform
 		try {
 			LOG.debug("Stopping AWT and FX threads");
 			Arrays.stream(Window.getWindows()).forEach(Window::dispose);

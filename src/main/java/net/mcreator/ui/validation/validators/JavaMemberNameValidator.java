@@ -24,8 +24,6 @@ import net.mcreator.ui.validation.Validator;
 import net.mcreator.ui.validation.component.VTextField;
 import net.mcreator.util.StringUtils;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
@@ -65,20 +63,21 @@ public class JavaMemberNameValidator implements Validator {
 			textField.setText(text);
 		}
 
-		if (!JavaConventions.isValidJavaIdentifier(textField.getText())) {
+		text = textField.getText();
+		if (!JavaConventions.isValidJavaIdentifier(text)) {
 			return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
 					L10N.t("validators.java_name.invalid_name"));
-		} else if (JavaConventions.isStringReservedJavaWord(textField.getText())) {
+		} else if (JavaConventions.isStringReservedJavaWord(text)) {
 			return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
 					L10N.t("validators.java_name.reserved_keywords"));
-		} else if (common_names.contains(textField.getText())) {
+		} else if (common_names.contains(text)) {
 			return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
 					L10N.t("validators.java_name.vanilla_names"));
-		} else if (JavaConventions.containsInvalidJavaNameCharacters(textField.getText())) {
-			return new Validator.ValidationResult(Validator.ValidationResultType.WARNING,
-					L10N.t("validators.java_name.characters_convertible"));
-		} else if (firstLetterUppercase && textField.getText() != null && !textField.getText().isEmpty()
-				&& !StringUtils.isUppercaseLetter(textField.getText().charAt(0))) {
+		} else if (JavaConventions.containsInvalidJavaNameCharacters(text)) {
+			return new Validator.ValidationResult(ValidationResultType.ERROR,
+					L10N.t("validators.java_name.characters_not_allowed"));
+		} else if (firstLetterUppercase && !text.isEmpty() && !StringUtils.isUppercaseLetter(
+				textField.getText().charAt(0))) {
 			return new Validator.ValidationResult(Validator.ValidationResultType.WARNING,
 					L10N.t("validators.java_names.upper_case_first_character"));
 		} else {
@@ -86,12 +85,11 @@ public class JavaMemberNameValidator implements Validator {
 		}
 	}
 
-	private static final Set<String> common_names = new HashSet<>(
-			Arrays.asList("Axe", "Pickaxe", "Spade", "Hoe", "Shovel", "Sword", "Shears", "FishingRod", "Compass",
-					"Clock", "Shield", "Overworld", "Nether", "World", "Living", "Mob", "Monster", "Animal", "End",
-					"Stairs", "Slab", "Fence", "Wall", "Leaves", "TrapDoor", "Pane", "Door", "FenceGate", "Creature",
-					"Item", "Block", "BoneMeal", "Diamond", "Ore", "Gem", "Gold", "Iron", "Stack", "Emerald", "Entity",
-					"Surface", "WoodButton", "StoneButton", "Flower", "Falling", "Furnace", "Bush", "Crop", "Structure",
-					"Blocks", "Items", "Biomes"));
+	private static final Set<String> common_names = Set.of("Axe", "Pickaxe", "Spade", "Hoe", "Shovel", "Sword",
+			"Shears", "FishingRod", "Compass", "Clock", "Shield", "Overworld", "Nether", "World", "Living", "Mob",
+			"Monster", "Animal", "End", "Stairs", "Slab", "Fence", "Wall", "Leaves", "TrapDoor", "Pane", "Door",
+			"FenceGate", "Creature", "Item", "Block", "BoneMeal", "Diamond", "Ore", "Gem", "Gold", "Iron", "Stack",
+			"Emerald", "Entity", "Surface", "WoodButton", "StoneButton", "Flower", "Falling", "Furnace", "Bush", "Crop",
+			"Structure", "Blocks", "Items", "Biomes", "Timer", "Direction", "Number", "Tool", "Console");
 
 }

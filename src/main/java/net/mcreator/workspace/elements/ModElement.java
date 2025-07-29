@@ -30,10 +30,12 @@ import net.mcreator.minecraft.MCItem;
 import net.mcreator.minecraft.RegistryNameFixer;
 import net.mcreator.workspace.IWorkspaceProvider;
 import net.mcreator.workspace.Workspace;
+import net.mcreator.workspace.settings.user.WorkspaceUserSettings;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.swing.*;
+import java.io.File;
 import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -43,14 +45,12 @@ public class ModElement implements Serializable, IWorkspaceProvider, IGeneratorP
 	private final String name;
 	private final String type;
 
-	private Integer sortid = null;
-
 	private boolean compiles = true;
 	private boolean locked_code = false;
 
 	@Nullable private String registry_name;
 
-	@Nullable private Map<String, Object> metadata = null;
+	@Nullable private LinkedHashMap<String, Object> metadata = null;
 
 	@Nullable private String path;
 
@@ -60,7 +60,7 @@ public class ModElement implements Serializable, IWorkspaceProvider, IGeneratorP
 
 	// current mod icon if not obtained from mcitem - used for recipes
 	// it is transient, so it does not get serialized
-	private transient ImageIcon elementIcon;
+	@Nullable private transient ImageIcon elementIcon;
 
 	// Workspace this ModElement is in
 	// it is transient, so it does not get serialized
@@ -86,7 +86,7 @@ public class ModElement implements Serializable, IWorkspaceProvider, IGeneratorP
 		this.registry_name = RegistryNameFixer.fromCamelCase(name);
 
 		if (mu.metadata != null) {
-			this.metadata = new HashMap<>(mu.metadata);
+			this.metadata = new LinkedHashMap<>(mu.metadata);
 
 			// remove files cache from metadata as otherwise on the first re-generation,
 			// files from original mod element (mu) will be deleted
@@ -125,11 +125,15 @@ public class ModElement implements Serializable, IWorkspaceProvider, IGeneratorP
 	}
 
 	public void reloadElementIcon() {
-		if (elementIcon != null && elementIcon.getImage() != null)
-			elementIcon.getImage().flush();
-
-		elementIcon = new ImageIcon(
+		File elementIconFile = new File(
 				workspace.getFolderManager().getModElementPicturesCacheDir().getAbsolutePath() + "/" + name + ".png");
+		if (elementIconFile.isFile()) {
+			if (elementIcon != null && elementIcon.getImage() != null)
+				elementIcon.getImage().flush();
+			elementIcon = new ImageIcon(elementIconFile.getAbsolutePath());
+		} else {
+			elementIcon = null;
+		}
 	}
 
 	@Override public @Nonnull Workspace getWorkspace() {
@@ -140,35 +144,36 @@ public class ModElement implements Serializable, IWorkspaceProvider, IGeneratorP
 		this.workspace = workspace;
 	}
 
-	public void setSortID(Integer sortid) {
-		this.sortid = sortid;
-	}
-
 	public ImageIcon getElementIcon() {
 		if (elementIcon != null && elementIcon.getImage() != null)
 			return elementIcon;
 		return null;
 	}
 
-	public ModElement putMetadata(String key, Object data) {
+	public void putMetadata(String key, @Nullable Object data) {
 		if (metadata == null)
-			metadata = new HashMap<>();
+			metadata = new LinkedHashMap<>();
 		metadata.put(key, data);
-
-		return this;
 	}
 
-	public ModElement clearMetadata() {
-		if (metadata != null)
-			metadata = new HashMap<>();
-
-		return this;
-	}
-
-	public Object getMetadata(String key) {
+	@Nullable public Object getMetadata(String key) {
 		if (metadata == null)
 			return null;
 		return metadata.get(key);
+	}
+
+	public List<File> getAssociatedFiles() {
+		if (this.getMetadata("files") instanceof List<?> fileList)
+			// filter by files in workspace (e.g. so one can not create .mcreator file that would delete files on computer when opened)
+			return fileList.stream().map(e -> new File(getWorkspaceFolder(), e.toString().replace("/", File.separator)))
+					.filter(workspace.getFolderManager()::isFileInWorkspace).toList();
+		return List.of();
+	}
+
+	public void setAssociatedFiles(List<File> files) {
+		this.putMetadata("files",
+				files.stream().map(e -> getFolderManager().getPathInWorkspace(e).replace(File.separator, "/"))
+						.toList());
 	}
 
 	@Override public String toString() {
@@ -215,16 +220,6 @@ public class ModElement implements Serializable, IWorkspaceProvider, IGeneratorP
 		if (this.getType() == ModElementType.CODE && !codeLock)
 			return;
 		this.locked_code = codeLock;
-	}
-
-	@Nonnull public Integer getSortID() {
-		if (sortid == null) {
-			this.sortid =
-					workspace.getModElements().stream().filter(e -> e.sortid != null).mapToInt(e -> e.sortid).max()
-							.orElse(0) + 1;
-		}
-
-		return sortid;
 	}
 
 	/**
@@ -291,7 +286,6 @@ public class ModElement implements Serializable, IWorkspaceProvider, IGeneratorP
 	@SuppressWarnings("unused") public void loadDataFrom(ModElement other) {
 		this.compiles = other.compiles;
 		this.locked_code = other.locked_code;
-		this.sortid = other.sortid;
 		this.registry_name = other.registry_name;
 		this.metadata = other.metadata;
 		this.mcItems = other.mcItems;
@@ -319,6 +313,28 @@ public class ModElement implements Serializable, IWorkspaceProvider, IGeneratorP
 
 			return gson.fromJson(json, ModElement.class);
 		}
+	}
+
+	public static Comparator<ModElement> getComparator(Workspace workspace, List<ModElement> originalOrder) {
+		return (a, b) -> {
+			if (workspace.getWorkspaceUserSettings().workspacePanelSortType == WorkspaceUserSettings.SortType.NAME) {
+				if (workspace.getWorkspaceUserSettings().workspacePanelSortAscending)
+					return a.getName().compareToIgnoreCase(b.getName());
+				else
+					return b.getName().compareToIgnoreCase(a.getName());
+			} else if (workspace.getWorkspaceUserSettings().workspacePanelSortType
+					== WorkspaceUserSettings.SortType.TYPE) {
+				if (workspace.getWorkspaceUserSettings().workspacePanelSortAscending)
+					return a.getType().getReadableName().compareTo(b.getType().getReadableName());
+				else
+					return b.getType().getReadableName().compareTo(a.getType().getReadableName());
+			} else {
+				if (workspace.getWorkspaceUserSettings().workspacePanelSortAscending)
+					return originalOrder.indexOf(a) - originalOrder.indexOf(b);
+				else
+					return originalOrder.indexOf(b) - originalOrder.indexOf(a);
+			}
+		};
 	}
 
 }

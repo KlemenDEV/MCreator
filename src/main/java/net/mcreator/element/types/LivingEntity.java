@@ -41,6 +41,7 @@ import net.mcreator.ui.blockly.BlocklyEditorType;
 import net.mcreator.ui.minecraft.states.PropertyDataWithValue;
 import net.mcreator.ui.modgui.LivingEntityGUI;
 import net.mcreator.ui.workspace.resources.TextureType;
+import net.mcreator.util.FilenameUtilsPatched;
 import net.mcreator.workspace.Workspace;
 import net.mcreator.workspace.elements.ModElement;
 import net.mcreator.workspace.references.ModElementReference;
@@ -53,8 +54,9 @@ import javax.annotation.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.List;
 import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @SuppressWarnings({ "unused", "NotNullFieldNotInitialized" }) public class LivingEntity extends GeneratableElement
 		implements IEntityWithModel, ITabContainedElement, ICommonType, IMCItemProvider {
@@ -73,13 +75,15 @@ import java.util.*;
 	@ModElementReference @TextureReference(TextureType.ENTITY) @ResourceReference("model")
 	public List<ModelLayerEntry> modelLayers;
 
+	@ModElementReference @ResourceReference("animation") public List<AnimationEntry> animations;
+
 	public double modelWidth, modelHeight, modelShadowSize;
 	public double mountedYOffset;
 
 	public boolean hasSpawnEgg;
 	public Color spawnEggBaseColor;
 	public Color spawnEggDotColor;
-	public TabEntry creativeTab;
+	@ModElementReference public List<TabEntry> creativeTabs;
 
 	public boolean isBoss;
 	public String bossBarColor;
@@ -109,7 +113,7 @@ import java.util.*;
 	public LogicProcedure pushedByFluids;
 	public boolean flyingMob;
 
-	@ModElementReference(defaultValues = "<NONE>") public String guiBoundTo;
+	@ModElementReference @Nullable public String guiBoundTo;
 	public int inventorySize;
 	public int inventoryStackSize;
 
@@ -139,6 +143,7 @@ import java.util.*;
 	public Sound hurtSound;
 	public Sound deathSound;
 	public Sound stepSound;
+	public Sound raidCelebrationSound;
 
 	public List<PropertyDataWithValue<?>> entityDataEntries;
 
@@ -175,6 +180,13 @@ import java.util.*;
 	public int maxNumberOfMobsPerGroup;
 	@ModElementReference public List<BiomeEntry> restrictionBiomes;
 	public boolean spawnInDungeons;
+	public int[] raidSpawnsCount;
+
+	public boolean sensitiveToVibration;
+	public List<GameEventEntry> vibrationalEvents;
+	public NumberProcedure vibrationSensitivityRadius;
+	public Procedure canReceiveVibrationCondition;
+	public Procedure onReceivedVibration;
 
 	private LivingEntity() {
 		this(null);
@@ -182,6 +194,8 @@ import java.util.*;
 
 	public LivingEntity(ModElement element) {
 		super(element);
+
+		this.creativeTabs = new ArrayList<>();
 
 		this.modelShadowSize = 0.5;
 		this.mobCreatureType = "UNDEFINED";
@@ -193,13 +207,19 @@ import java.util.*;
 		this.followRange = 16;
 
 		this.inventorySize = 9;
-		this.inventoryStackSize = 64;
+		this.inventoryStackSize = 99;
 
 		this.entityDataEntries = new ArrayList<>();
 		this.modelLayers = new ArrayList<>();
+
+		this.raidSpawnsCount = new int[] { 4, 3, 3, 4, 4, 4, 2 };
+
+		this.animations = new ArrayList<>();
+
+		this.vibrationalEvents = new ArrayList<>();
 	}
 
-	@Override public Model getEntityModel() {
+	@Override @Nullable public Model getEntityModel() {
 		Model.Type modelType = Model.Type.BUILTIN;
 		if (Arrays.stream(LivingEntityGUI.builtinmobmodels).map(Model::getReadableName).noneMatch(mobModelName::equals)
 				&& !mobModelName.equals("Zombie")) // legacy check as zombie was supported in the past
@@ -214,13 +234,15 @@ import java.util.*;
 			return List.of(BaseType.ENTITY);
 	}
 
-	@Override public TabEntry getCreativeTab() {
-		return creativeTab;
+	@Override public List<TabEntry> getCreativeTabs() {
+		return creativeTabs;
 	}
 
 	@Override public BufferedImage generateModElementPicture() {
-		return MinecraftImageGenerator.Preview.generateMobPreviewPicture(getModElement().getWorkspace(),
-				mobModelTexture, spawnEggBaseColor, spawnEggDotColor, hasSpawnEgg);
+		return MinecraftImageGenerator.Preview.generateMobPreviewPicture(new ImageIcon(
+				getModElement().getWorkspace().getFolderManager()
+						.getTextureFile(FilenameUtilsPatched.removeExtension(mobModelTexture), TextureType.ENTITY)
+						.getAbsolutePath()).getImage(), spawnEggBaseColor, spawnEggDotColor, hasSpawnEgg);
 	}
 
 	public boolean hasDrop() {
@@ -253,6 +275,7 @@ import java.util.*;
 					blocklyToJava.getGeneratedCode() :
 					"");
 			additionalData.put("aiblocks", blocklyToJava.getUsedBlocks());
+			additionalData.put("extra_templates_code", blocklyToJava.getExtraTemplatesCode());
 		};
 	}
 
@@ -274,10 +297,15 @@ import java.util.*;
 		return null;
 	}
 
+	public Set<String> getVibrationalEvents() {
+		return vibrationalEvents.stream().map(e -> e.getMappedValue(1)).collect(Collectors.toSet());
+	}
+
 	public static class ModelLayerEntry implements IWorkspaceDependent {
 
 		public String model;
 		@TextureReference(TextureType.ENTITY) public String texture;
+		public boolean disableHurtOverlay;
 		public boolean glow;
 		public Procedure condition;
 
@@ -295,6 +323,19 @@ import java.util.*;
 		@Override public @Nullable Workspace getWorkspace() {
 			return workspace;
 		}
+	}
+
+	public static class AnimationEntry {
+
+		public Animation animation;
+		public double speed;
+
+		public Procedure condition;
+
+		// Walking animation only
+		public boolean walking;
+		public double amplitude;
+
 	}
 
 }

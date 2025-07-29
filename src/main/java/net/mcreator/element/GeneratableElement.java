@@ -28,6 +28,7 @@ import net.mcreator.element.parts.IWorkspaceDependent;
 import net.mcreator.element.parts.procedure.RetvalProcedure;
 import net.mcreator.generator.template.IAdditionalTemplateDataProvider;
 import net.mcreator.ui.minecraft.states.StateMap;
+import net.mcreator.util.TestUtil;
 import net.mcreator.workspace.Workspace;
 import net.mcreator.workspace.elements.ModElement;
 import org.apache.logging.log4j.LogManager;
@@ -39,10 +40,11 @@ import java.awt.image.BufferedImage;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class GeneratableElement {
 
-	public static final int formatVersion = 60;
+	public static final int formatVersion = 79;
 
 	private static final Logger LOG = LogManager.getLogger("Generatable Element");
 
@@ -96,8 +98,9 @@ public abstract class GeneratableElement {
 				field.setAccessible(true);
 				try {
 					if (field.get(this) == null) {
-						LOG.warn("Field " + field.getName() + " of mod element " + this.element.getName()
-								+ " is null, but should not be. Assuming invalid generatable element.");
+						LOG.warn(
+								"Field {} of mod element {} is null, but should not be. Assuming invalid generatable element.",
+								field.getName(), this.element.getName());
 						return false;
 					}
 				} catch (IllegalAccessException ignored) {
@@ -118,7 +121,8 @@ public abstract class GeneratableElement {
 		private static final Gson gson;
 
 		static {
-			GsonBuilder gsonBuilder = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().setLenient();
+			GsonBuilder gsonBuilder = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting()
+					.setStrictness(Strictness.LENIENT);
 
 			RetvalProcedure.GSON_ADAPTERS.forEach(gsonBuilder::registerTypeAdapter);
 
@@ -149,12 +153,11 @@ public abstract class GeneratableElement {
 			// If GE was stored with newer FV, we can not deserialize it (we still allow this on development builds for testing purposes)
 			if (importedFormatVersion > formatVersion) {
 				if (Launcher.version.isDevelopment()) {
-					LOG.info("Mod element " + lastModElement.getName() + " was saved in FV " + importedFormatVersion
-							+ " but current FV is " + GeneratableElement.formatVersion + ". Things may not work well");
+					LOG.info("Mod element {} was saved in FV {} but current FV is " + GeneratableElement.formatVersion
+							+ ". Things may not work well", lastModElement.getName(), importedFormatVersion);
 				} else {
-					LOG.warn("Mod element " + lastModElement.getName() + " was saved in FV " + importedFormatVersion
-							+ " but current FV is " + GeneratableElement.formatVersion
-							+ " so we can not deserialize it");
+					LOG.warn("Mod element {} was saved in FV {} but current FV is " + GeneratableElement.formatVersion
+							+ " so we can not deserialize it", lastModElement.getName(), importedFormatVersion);
 					return null;
 				}
 			}
@@ -164,8 +167,8 @@ public abstract class GeneratableElement {
 
 				JsonObject jsonObject = jsonElement.getAsJsonObject().get("definition").getAsJsonObject();
 				if (jsonObject.keySet().isEmpty()) {
-					LOG.warn("Mod element " + lastModElement.getName() + " (" + modElementType
-							+ ") has no definition so we can not deserialize it");
+					LOG.warn("Mod element {} ({}) has no definition so we can not deserialize it",
+							lastModElement.getName(), modElementType);
 					return null;
 				}
 
@@ -182,12 +185,23 @@ public abstract class GeneratableElement {
 					List<IConverter> applicableConverters = converters.stream()
 							.filter(converter -> importedFormatVersion < converter.getVersionConvertingTo()).sorted()
 							.toList();
-					int currentFormatVersion = importedFormatVersion;
+					// If there are converters applicable to this mod element type, log the conversion
+					if (!applicableConverters.isEmpty()) {
+						LOG.debug("Converting {} ({}) from FV{} using: {}", lastModElement.getName(), modElementType,
+								importedFormatVersion, applicableConverters.stream()
+										.map(converter -> converter.getClass().getSimpleName() + " to FV"
+												+ converter.getVersionConvertingTo())
+										.collect(Collectors.joining(", ")));
+					}
 					for (IConverter converter : applicableConverters) {
-						LOG.debug("Converting " + lastModElement.getName() + " (" + modElementType + ") from FV"
-								+ currentFormatVersion + " to FV" + converter.getVersionConvertingTo() + " using "
-								+ converter.getClass().getSimpleName());
-						generatableElement = converter.convert(this.workspace, generatableElement, jsonElement);
+						try {
+							generatableElement = converter.convert(this.workspace, generatableElement, jsonElement);
+						} catch (Exception e) {
+							LOG.warn("Failed to convert mod element {} of type {} to FV{} using {}",
+									lastModElement.getName(), modElementType, converter.getVersionConvertingTo(),
+									converter.getClass().getSimpleName(), e);
+							TestUtil.failIfTestingEnvironment();
+						}
 
 						if (generatableElement == null
 								|| generatableElement.getClass() != modElementType.getModElementStorageClass()) {
@@ -195,7 +209,6 @@ public abstract class GeneratableElement {
 							return null;
 						} else {
 							generatableElement.conversionApplied = true;
-							currentFormatVersion = converter.getVersionConvertingTo();
 						}
 					}
 				}
@@ -205,18 +218,25 @@ public abstract class GeneratableElement {
 				IConverter converter = ConverterRegistry.getConverterForModElementType(modElementTypeString);
 				if (converter != null && importedFormatVersion < converter.getVersionConvertingTo()) {
 					try {
-						GeneratableElement result = converter.convert(this.workspace, new Unknown(lastModElement),
-								jsonElement);
+						GeneratableElement result = null;
+						try {
+							result = converter.convert(this.workspace, new Unknown(lastModElement), jsonElement);
+						} catch (Exception e2) {
+							LOG.warn("Failed to convert mod element {} of type {} to FV{} using {}",
+									lastModElement.getName(), modElementTypeString, converter.getVersionConvertingTo(),
+									converter.getClass().getSimpleName(), e2);
+							TestUtil.failIfTestingEnvironment();
+						}
 						ConverterUtils.convertElementToDifferentType(converter, lastModElement, result);
 					} catch (Exception e2) {
-						LOG.warn("Failed to convert mod element " + lastModElement.getName() + " of type "
-								+ modElementTypeString + " to a potential alternative.", e2);
+						LOG.warn("Failed to convert mod element {} of type {} to a potential alternative.",
+								lastModElement.getName(), modElementTypeString, e2);
 					}
 				}
 
 				return null;
 			} catch (Exception e) {
-				LOG.warn("Failed to deserialize mod element " + lastModElement.getName(), e);
+				LOG.warn("Failed to deserialize mod element {}", lastModElement.getName(), e);
 				return null;
 			}
 		}
@@ -231,8 +251,8 @@ public abstract class GeneratableElement {
 			JsonObject definition = gson.toJsonTree(modElement).getAsJsonObject();
 
 			if (definition.keySet().isEmpty()) {
-				LOG.warn("Mod element " + modElement.getModElement().getName() + " (" + modElement.getModElement()
-						.getType() + ") has no definition so we can't serialize it");
+				LOG.warn("Mod element {} ({}) has no definition so we can't serialize it",
+						modElement.getModElement().getName(), modElement.getModElement().getType());
 				return null;
 			}
 

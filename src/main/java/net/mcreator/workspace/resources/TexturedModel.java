@@ -20,9 +20,16 @@ package net.mcreator.workspace.resources;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.Strictness;
+import net.mcreator.element.parts.IWorkspaceDependent;
+import net.mcreator.element.parts.TextureHolder;
 import net.mcreator.io.FileIO;
 import net.mcreator.ui.init.L10N;
+import net.mcreator.workspace.Workspace;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,21 +37,23 @@ import java.util.Map;
 
 public class TexturedModel extends Model {
 
-	private static final Gson gson = new GsonBuilder().setLenient().setPrettyPrinting().create();
+	private static final Logger LOG = LogManager.getLogger(TexturedModel.class);
+
+	private static final Gson gson = new GsonBuilder().setStrictness(Strictness.LENIENT).setPrettyPrinting().create();
 
 	private TextureMapping textureMapping;
 
-	public TexturedModel(File file, TextureMapping textureMapping) {
+	protected TexturedModel(File file, TextureMapping textureMapping) throws ModelException {
 		super(file);
 		this.textureMapping = textureMapping;
 	}
 
-	public TexturedModel(File file, String textureMappingName) {
+	protected TexturedModel(Workspace workspace, File file, String textureMappingName) throws ModelException {
 		super(file);
-		Map<String, TextureMapping> textureMappingMap = getTextureMappingsForModel(this);
+		Map<String, TextureMapping> textureMappingMap = getTextureMappingsForModel(workspace, this);
 		if (textureMappingMap != null) {
 			this.textureMapping = textureMappingMap.get(textureMappingName);
-			if (this.textureMapping == null) // try to fallback to default if desired mapping is not found
+			if (this.textureMapping == null) // try to fall back to default if desired mapping is not found
 				this.textureMapping = textureMappingMap.get("default");
 		}
 	}
@@ -53,14 +62,17 @@ public class TexturedModel extends Model {
 		return textureMapping;
 	}
 
-	public static List<Model> getModelTextureMapVariations(Model m) {
+	public static List<Model> getModelTextureMapVariations(Workspace workspace, Model m) {
 		List<Model> variations = new ArrayList<>();
-		if (m.getType() != null && m.getFiles() != null && m.getFile() != null) {
-			Map<String, TextureMapping> textureMappingMap = getTextureMappingsForModel(m);
+		if (m.getFiles() != null && m.getFile() != null) {
+			Map<String, TextureMapping> textureMappingMap = getTextureMappingsForModel(workspace, m);
 			if (textureMappingMap != null) {
 				// we add all variations of texture mappings for model
 				for (TextureMapping mapping : textureMappingMap.values()) {
-					variations.add(new TexturedModel(m.getFile(), mapping));
+					try {
+						variations.add(new TexturedModel(m.getFile(), mapping));
+					} catch (ModelException ignored) {
+					}
 				}
 			} else {
 				variations.add(m);
@@ -69,18 +81,24 @@ public class TexturedModel extends Model {
 		return variations;
 	}
 
-	public static Map<String, TextureMapping> getTextureMappingsForModel(Model model) {
+	public static Map<String, TextureMapping> getTextureMappingsForModel(Workspace workspace, Model model) {
 		try {
 			if (model.type == Type.JSON && model.getFiles().length == 2) {
 				TextureMappings mappings = gson.fromJson(FileIO.readFileToString(model.getFiles()[1]),
 						TextureMappings.class);
+				IWorkspaceDependent.processWorkspaceDependentObjects(mappings,
+						workspaceDependent -> workspaceDependent.setWorkspace(workspace));
 				return mappings.mappings;
 			} else if (model.type == Type.OBJ && model.getFiles().length == 3) {
 				TextureMappings mappings = gson.fromJson(FileIO.readFileToString(model.getFiles()[2]),
 						TextureMappings.class);
+				IWorkspaceDependent.processWorkspaceDependentObjects(mappings,
+						workspaceDependent -> workspaceDependent.setWorkspace(workspace));
 				return mappings.mappings;
 			}
-		} catch (Exception ignored) {
+		} catch (Exception e) {
+			LOG.warn("Failed to load texture mappings for model: {}", model == null ? "null" : model.getReadableName(),
+					e);
 		}
 		return null;
 	}
@@ -93,11 +111,11 @@ public class TexturedModel extends Model {
 		return L10N.t("workspace.3dmodel.description", readableName, textureMapping.name);
 	}
 
-	@Override public String getReadableName() {
+	@Override @Nonnull public String getReadableName() {
 		if (textureMapping != null)
 			return readableName + ":" + textureMapping.name;
 		else
-			return null;
+			return super.getReadableName();
 	}
 
 	@Override public boolean equals(Object obj) {
@@ -113,26 +131,20 @@ public class TexturedModel extends Model {
 		return (this.getReadableName() + this.type.name() + this.textureMapping.name).hashCode();
 	}
 
-	private static class TextureMappings {
-		Map<String, TextureMapping> mappings;
+	private record TextureMappings(Map<String, TextureMapping> mappings) {}
 
-		TextureMappings(Map<String, TextureMapping> mappings) {
-			this.mappings = mappings;
-		}
-	}
-
-	public static class TextureMapping {
+	public static final class TextureMapping {
 
 		// key: texture id, value: texture resource location
-		private Map<String, String> map;
-		private String name;
+		private final Map<String, TextureHolder> map;
+		private final String name;
 
-		public TextureMapping(String name, Map<String, String> textureMap) {
+		public TextureMapping(String name, Map<String, TextureHolder> textureMap) {
 			this.map = textureMap;
 			this.name = name;
 		}
 
-		public Map<String, String> getTextureMap() {
+		public Map<String, TextureHolder> getTextureMap() {
 			return map;
 		}
 

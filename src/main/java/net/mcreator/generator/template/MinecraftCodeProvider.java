@@ -29,6 +29,7 @@ package net.mcreator.generator.template;
 
 import net.mcreator.io.zip.ZipIO;
 import net.mcreator.java.ProjectJarManager;
+import net.mcreator.util.TestUtil;
 import net.mcreator.workspace.Workspace;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -76,7 +77,8 @@ import java.util.Map;
 				return null;
 			} catch (Exception e) {
 				this.workspace.markFailingGradleDependencies();
-				LOG.error("Failed to load code provider for " + key, e);
+				LOG.error("Failed to load code provider for {}", key, e);
+				TestUtil.failIfTestingEnvironment();
 				return null;
 			}
 		});

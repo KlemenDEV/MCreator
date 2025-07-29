@@ -23,11 +23,9 @@ import net.mcreator.element.types.GUI;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.MCreatorApplication;
 import net.mcreator.ui.component.CollapsiblePanel;
-import net.mcreator.ui.component.util.ComponentUtils;
 import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.procedure.ProcedureSelector;
-import net.mcreator.ui.validation.AggregatedValidationResult;
 import net.mcreator.ui.wysiwyg.WYSIWYGEditor;
 import net.mcreator.workspace.elements.ModElement;
 
@@ -55,13 +53,13 @@ public class CustomGUIGUI extends ModElementGUI<GUI> {
 		editor = new WYSIWYGEditor(mcreator, true);
 
 		onOpen = new ProcedureSelector(this.withEntry("gui/gui_opened"), mcreator, L10N.t("elementgui.gui.gui_opened"),
-				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity/guistate:map"));
+				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity"));
 		onTick = new ProcedureSelector(this.withEntry("gui/gui_open_tick"), mcreator,
 				L10N.t("elementgui.gui.gui_open_ticks"),
-				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity/guistate:map"));
+				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity"));
 		onClosed = new ProcedureSelector(this.withEntry("gui/gui_closed"), mcreator,
 				L10N.t("elementgui.gui.gui_closed"),
-				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity/guistate:map"));
+				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity"));
 
 		CollapsiblePanel events = new CollapsiblePanel(L10N.t("elementgui.gui.gui_triggers"),
 				PanelUtils.join(FlowLayout.LEFT, 1, 1, PanelUtils.gridElements(1, 3, 5, 0, onOpen, onTick, onClosed)));
@@ -72,7 +70,7 @@ public class CustomGUIGUI extends ModElementGUI<GUI> {
 		main.add("Center", PanelUtils.centerAndSouthElement(editor, events, 0, 2));
 		main.add("East", editor.sidebar);
 
-		addPage(ComponentUtils.applyPadding(main, 5, true, true, true, true));
+		addPage(main);
 	}
 
 	@Override public void reloadDataLists() {
@@ -81,10 +79,6 @@ public class CustomGUIGUI extends ModElementGUI<GUI> {
 		onOpen.refreshListKeepSelected();
 		onTick.refreshListKeepSelected();
 		onClosed.refreshListKeepSelected();
-	}
-
-	@Override protected AggregatedValidationResult validatePage(int page) {
-		return new AggregatedValidationResult.PASS();
 	}
 
 	@Override public void openInEditingMode(GUI gui) {

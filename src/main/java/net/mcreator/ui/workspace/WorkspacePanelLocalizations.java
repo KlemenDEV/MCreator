@@ -49,9 +49,8 @@ import java.io.File;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
 
 class WorkspacePanelLocalizations extends AbstractWorkspacePanel {
 
@@ -70,7 +69,6 @@ class WorkspacePanelLocalizations extends AbstractWorkspacePanel {
 
 		pane = new JTabbedPane();
 		pane.setOpaque(false);
-		pane.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
 
 		changeListener = e -> {
 		};
@@ -117,7 +115,7 @@ class WorkspacePanelLocalizations extends AbstractWorkspacePanel {
 		sorters = new ArrayList<>();
 
 		for (var entry : workspacePanel.getMCreator().getWorkspace().getLanguageMap().entrySet()) {
-			ConcurrentHashMap<String, String> entries = entry.getValue();
+			LinkedHashMap<String, String> entries = entry.getValue();
 
 			JTable elements = new JTable(new DefaultTableModel(
 					new Object[] { L10N.t("workspace.localization.column_key"),
@@ -183,7 +181,7 @@ class WorkspacePanelLocalizations extends AbstractWorkspacePanel {
 			// we add the listener after the values are inserted
 			elements.getModel().addTableModelListener(e -> new Thread(() -> {
 				if (e.getType() == TableModelEvent.UPDATE) {
-					ConcurrentHashMap<String, String> keyValueMap = new ConcurrentHashMap<>();
+					LinkedHashMap<String, String> keyValueMap = new LinkedHashMap<>();
 					for (int i = 0; i < elements.getModel().getRowCount(); i++) {
 						keyValueMap.put((String) elements.getModel().getValueAt(i, 0),
 								(String) elements.getModel().getValueAt(i, 1));
@@ -193,6 +191,7 @@ class WorkspacePanelLocalizations extends AbstractWorkspacePanel {
 			}, "WorkspaceLocalizationsReload").start());
 
 			JScrollPane sp = new JScrollPane(elements);
+			sp.setBorder(BorderFactory.createEmptyBorder());
 			sp.setOpaque(false);
 			sp.getViewport().setOpaque(false);
 
@@ -303,14 +302,14 @@ class WorkspacePanelLocalizations extends AbstractWorkspacePanel {
 
 				File impFile = FileDialogs.getOpenDialog(workspacePanel.getMCreator(), new String[] { ".csv" });
 				if (impFile != null) {
-					ConcurrentHashMap<String, String> en_us = workspacePanel.getMCreator().getWorkspace()
-							.getLanguageMap().get("en_us");
+					LinkedHashMap<String, String> en_us = workspacePanel.getMCreator().getWorkspace().getLanguageMap()
+							.get("en_us");
 					CsvParserSettings settings = new CsvParserSettings();
 					settings.setDelimiterDetectionEnabled(true);
 					CsvParser parser = new CsvParser(settings);
 					List<String[]> rows = parser.parseAll(impFile, StandardCharsets.UTF_8);
 
-					ConcurrentHashMap<String, String> keyValueMap = new ConcurrentHashMap<>();
+					LinkedHashMap<String, String> keyValueMap = new LinkedHashMap<>();
 					for (String[] row : rows) {
 						if (row.length < 2)
 							continue;
@@ -372,7 +371,7 @@ class WorkspacePanelLocalizations extends AbstractWorkspacePanel {
 	}
 
 	private void newLocalizationDialog() {
-		Map<String, ConcurrentHashMap<String, String>> language_map = workspacePanel.getMCreator().getWorkspace()
+		Map<String, LinkedHashMap<String, String>> language_map = workspacePanel.getMCreator().getWorkspace()
 				.getLanguageMap();
 
 		Set<String> locales = new HashSet<>();
@@ -403,7 +402,7 @@ class WorkspacePanelLocalizations extends AbstractWorkspacePanel {
 					L10N.t("workspace.localization.language_copy"), L10N.t("workspace.localization.add_localization"),
 					JOptionPane.QUESTION_MESSAGE, null, language_map.keySet().toArray(), "en_us");
 			if (based_from_id != null) {
-				ConcurrentHashMap<String, String> en_us = language_map.get(based_from_id);
+				LinkedHashMap<String, String> en_us = language_map.get(based_from_id);
 				workspacePanel.getMCreator().getWorkspace().addLanguage(locale, en_us);
 				reloadElements();
 			}
@@ -417,7 +416,7 @@ class WorkspacePanelLocalizations extends AbstractWorkspacePanel {
 
 	@Override public void refilterElements() {
 		for (TableRowSorter<TableModel> sorter : sorters)
-			sorter.setRowFilter(RowFilter.regexFilter(workspacePanel.search.getText()));
+			sorter.setRowFilter(RowFilter.regexFilter(workspacePanel.getSearchTerm()));
 	}
 
 }

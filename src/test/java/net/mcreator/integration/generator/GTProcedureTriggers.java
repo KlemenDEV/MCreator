@@ -22,11 +22,14 @@ import net.mcreator.blockly.data.BlocklyLoader;
 import net.mcreator.blockly.data.ExternalTrigger;
 import net.mcreator.element.ModElementType;
 import net.mcreator.element.types.Procedure;
-import net.mcreator.generator.GeneratorStats;
+import net.mcreator.generator.GeneratorWrapper;
+import net.mcreator.minecraft.DataListEntry;
+import net.mcreator.minecraft.DataListLoader;
 import net.mcreator.workspace.Workspace;
 import net.mcreator.workspace.elements.ModElement;
 import org.apache.logging.log4j.Logger;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.fail;
@@ -34,15 +37,10 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class GTProcedureTriggers {
 
 	public static void runTest(Logger LOG, String generatorName, Workspace workspace) {
-		// silently skip procedure triggers not supported by this generator
-		if (workspace.getGeneratorStats().getModElementTypeCoverageInfo().get(ModElementType.PROCEDURE)
-				== GeneratorStats.CoverageStatus.NONE) {
-			return;
-		}
-
 		Set<String> generatorTriggers = workspace.getGeneratorStats().getProcedureTriggers();
 
-		for (ExternalTrigger externalTrigger : BlocklyLoader.INSTANCE.getExternalTriggerLoader().getExternalTrigers()) {
+		for (ExternalTrigger externalTrigger : BlocklyLoader.INSTANCE.getExternalTriggerLoader()
+				.getExternalTriggers()) {
 			if (!generatorTriggers.contains(externalTrigger.getID())) {
 				continue;
 			}
@@ -65,22 +63,72 @@ public class GTProcedureTriggers {
 					ModElementType.PROCEDURE);
 
 			Procedure procedure = new Procedure(modElement);
+
 			if (externalTrigger.dependencies_provided != null) {
-				procedure.getModElement().clearMetadata()
-						.putMetadata("dependencies", externalTrigger.dependencies_provided);
+				procedure.getModElement().putMetadata("dependencies", externalTrigger.dependencies_provided);
 				procedure.skipDependencyRegeneration();
 			}
-			procedure.procedurexml =
-					"<xml xmlns=\"https://developers.google.com/blockly/xml\"><block type=\"event_trigger\"><field name=\"trigger\">"
-							+ externalTrigger.getID() + "</field></block></xml>";
+
+			int additionalBlocks = 0;
+			final StringBuilder additionalXML = new StringBuilder();
+			if (externalTrigger.has_result) {
+				additionalXML.append("<next><block type=\"set_event_result\"><field name=\"result\">DENY</field>");
+				additionalBlocks++;
+			} else if (externalTrigger.cancelable) {
+				additionalXML.append("<next><block type=\"cancel_event\">");
+				additionalBlocks++;
+			}
+
+			List<DataListEntry> eventparameters = DataListLoader.loadDataList("eventparameters");
+			GeneratorWrapper generatorWrapper = new GeneratorWrapper(workspace.getGenerator());
+			for (DataListEntry entry : eventparameters) {
+				String parameter = entry.getName();
+				String requiredGlobalTrigger = generatorWrapper.map(parameter, "eventparameters", 2);
+				if (requiredGlobalTrigger.equals(externalTrigger.getID())) {
+					String type = entry.getType();
+					if (type.equals("number")) {
+						additionalXML.append("""
+								<next><block type="event_number_parameter_set">
+									<field name="eventparameter">%s</field>
+									<value name="value">
+										<block type="math_number">
+											<field name="NUM">1.234</field>
+										</block>
+									</value>
+								""".formatted(parameter));
+						additionalBlocks++;
+					} else if (type.equals("logic")) {
+						additionalXML.append("""
+								<next><block type="event_logic_parameter_set">
+									<field name="eventparameter">%s</field>
+									<value name="value">
+										<block type="logic_boolean">
+											<field name="BOOL">TRUE</field>
+										</block>
+									</value>
+								""".formatted(parameter));
+						additionalBlocks++;
+					}
+				}
+			}
+
+			additionalXML.append("</block></next>".repeat(additionalBlocks));
+
+			procedure.procedurexml = """
+					<xml xmlns="https://developers.google.com/blockly/xml">
+						<block type="event_trigger">
+							<field name="trigger">%s</field>
+							%s
+						</block>
+					</xml>
+					""".formatted(externalTrigger.getID(), additionalXML.toString());
 
 			try {
 				workspace.addModElement(modElement);
 				workspace.getGenerator().generateElement(procedure, true);
 				workspace.getModElementManager().storeModElement(procedure);
 			} catch (Throwable t) {
-				t.printStackTrace();
-				fail("[" + generatorName + "] Failed generating external trigger: " + externalTrigger.getID());
+				fail("[" + generatorName + "] Failed generating external trigger: " + externalTrigger.getID(), t);
 			}
 		}
 

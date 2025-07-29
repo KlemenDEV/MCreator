@@ -23,11 +23,13 @@ import net.mcreator.element.types.CustomElement;
 import net.mcreator.generator.GeneratorTemplate;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.ide.CodeEditorView;
-import net.mcreator.ui.validation.AggregatedValidationResult;
 import net.mcreator.ui.views.ViewBase;
 import net.mcreator.workspace.elements.ModElement;
 
+import javax.annotation.Nullable;
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 public class CustomElementGUI extends ModElementGUI<CustomElement> {
@@ -42,7 +44,7 @@ public class CustomElementGUI extends ModElementGUI<CustomElement> {
 		List<File> modElementFiles = mcreator.getGenerator().getModElementGeneratorTemplatesList(generatableElement)
 				.stream().map(GeneratorTemplate::getFile).toList();
 
-		File modElementFile = modElementFiles.get(0);
+		File modElementFile = modElementFiles.getFirst();
 
 		// this element was just created, generate its file
 		if (!editingMode) {
@@ -64,14 +66,14 @@ public class CustomElementGUI extends ModElementGUI<CustomElement> {
 	@Override protected void initGUI() {
 	}
 
-	@Override protected AggregatedValidationResult validatePage(int page) {
-		return new AggregatedValidationResult.PASS();
-	}
-
 	@Override public void openInEditingMode(CustomElement generatableElement) {
 	}
 
 	@Override public CustomElement getElementFromGUI() {
+		return null;
+	}
+
+	@Override @Nullable public URI contextURL() throws URISyntaxException {
 		return null;
 	}
 

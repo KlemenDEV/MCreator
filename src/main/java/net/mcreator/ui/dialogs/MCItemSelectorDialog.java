@@ -58,7 +58,11 @@ public class MCItemSelectorDialog extends SearchableSelectorDialog<MCItem> {
 		list.addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent evt) {
 				if (evt.getClickCount() == 2) {
-					setVisible(false);
+					int index = list.locationToIndex(evt.getPoint());
+					if (index > 0) {
+						list.setSelectedIndex(index);
+					}
+
 					dispose();
 					if (itemSelectedListener != null)
 						itemSelectedListener.actionPerformed(new ActionEvent(this, 0, ""));
@@ -71,7 +75,6 @@ public class MCItemSelectorDialog extends SearchableSelectorDialog<MCItem> {
 
 		JButton useSelectedButton = L10N.button("dialog.item_selector.use_selected");
 		useSelectedButton.addActionListener(e -> {
-			setVisible(false);
 			dispose();
 			if (itemSelectedListener != null)
 				itemSelectedListener.actionPerformed(new ActionEvent(this, 0, ""));
@@ -95,7 +98,6 @@ public class MCItemSelectorDialog extends SearchableSelectorDialog<MCItem> {
 					MCItem mcItem = new MCItem.Tag(mcreator.getWorkspace(), tag);
 					model.addElement(mcItem);
 					list.setSelectedValue(mcItem, true);
-					setVisible(false);
 					dispose();
 					if (itemSelectedListener != null)
 						itemSelectedListener.actionPerformed(new ActionEvent(this, 0, ""));
@@ -118,7 +120,7 @@ public class MCItemSelectorDialog extends SearchableSelectorDialog<MCItem> {
 
 		cancelButton.addActionListener(event -> {
 			list.clearSelection();
-			setVisible(false);
+			dispose();
 		});
 
 		JComponent top;
@@ -147,16 +149,10 @@ public class MCItemSelectorDialog extends SearchableSelectorDialog<MCItem> {
 
 		JPanel mainComponent = new JPanel(new BorderLayout());
 		mainComponent.add("North", top);
-
 		mainComponent.add("Center", new JScrollPane(list));
-
 		add("Center", mainComponent);
 
 		setSize(hasPotions ? 970 : 900, 425);
-
-		Dimension dim = getToolkit().getScreenSize();
-		Rectangle abounds = getBounds();
-		setLocation((dim.width - abounds.width) / 2, (dim.height - abounds.height) / 2);
 		setLocationRelativeTo(mcreator);
 
 		this.addWindowListener(new WindowAdapter() {

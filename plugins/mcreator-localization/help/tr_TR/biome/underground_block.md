@@ -1,5 +1,15 @@
-Bu parametre, zemin bloğu katmanının altındaki yeraltı bloğunu kontrol eder.
+Bu parametre katman kayasının altındaki yeraltı bloğunu kontrol eder.
 
-Genel olarak, burada çoğu biyom için vanilya veya özel kir kullanılır.
+Genellikle çoğu biyom için vanilya veya özel toprak kullanılır.
 
-Bu blok <b>minecraft:dirt</b> Bloklar etiketleri içinde etiketlenmelidir bitkilerin ve ağaçların biyomda düzgün bir şekilde ortaya çıkması için Forge modları için.
+Bu blok, bitki ve ağaçların yüzeyde düzgün bir şekilde ortaya çıkması için `minecraft:dirt` Blokları etiketlerinde etiketlenmelidir.
+
+Şu bloklar gibi karmaşık blokları kullanmaktan kaçının:
+
+* şeffaf bloklar
+* tam küp olmayan bloklar
+* entity varlığına, NBT etiketlerine veya envantere sahip bloklar
+* POI olarak kullanılan bloklar
+* işaretlenen bloklar
+
+Bu tür bloklar kullanırsanız, dünya oluşumu yavaş olur ve yüklenen dünya ciddi şekilde gecikebilir.

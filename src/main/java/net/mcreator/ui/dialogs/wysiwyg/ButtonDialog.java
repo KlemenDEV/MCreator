@@ -55,14 +55,14 @@ public class ButtonDialog extends AbstractWYSIWYGDialog<Button> {
 
 		ProcedureSelector eh = new ProcedureSelector(IHelpContext.NONE.withEntry("gui/on_button_clicked"),
 				editor.mcreator, L10N.t("dialog.gui.button_event_on_clicked"), ProcedureSelector.Side.BOTH, false,
-				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity/guistate:map"));
+				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity"));
 		eh.refreshList();
 
 		ProcedureSelector displayCondition = new ProcedureSelector(
 				IHelpContext.NONE.withEntry("gui/button_display_condition"), editor.mcreator,
 				L10N.t("dialog.gui.button_display_condition"), ProcedureSelector.Side.CLIENT, false,
 				VariableTypeLoader.BuiltInTypes.LOGIC,
-				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity/guistate:map"));
+				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity"));
 		displayCondition.refreshList();
 
 		options.add(PanelUtils.gridElements(1, 2, 5, 5, eh, displayCondition));
@@ -83,9 +83,9 @@ public class ButtonDialog extends AbstractWYSIWYGDialog<Button> {
 			displayCondition.setSelectedProcedure(button.displayCondition);
 		}
 
-		cancel.addActionListener(arg01 -> setVisible(false));
+		cancel.addActionListener(arg01 -> dispose());
 		ok.addActionListener(arg01 -> {
-			setVisible(false);
+			dispose();
 			String text = buttonText.getText();
 			if (button == null) {
 				String name = textToMachineName(editor.getComponentList(), "button_", text);

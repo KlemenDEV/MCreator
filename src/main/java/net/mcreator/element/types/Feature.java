@@ -39,17 +39,23 @@ import net.mcreator.workspace.references.ModElementReference;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("unused") public class Feature extends GeneratableElement implements ICommonType {
 
 	public static final String XML_BASE = "<xml xmlns=\"https://developers.google.com/blockly/xml\"><block type=\"feature_container\" deletable=\"false\" x=\"40\" y=\"40\"></block></xml>";
 
+	public boolean skipPlacement;
 	public String generationStep;
 	@ModElementReference public List<BiomeEntry> restrictionBiomes;
 	public Procedure generateCondition;
 	@BlocklyXML("features") public String featurexml;
+
+	private transient Boolean hasConfiguredFeature = null;
+
+	private Feature() {
+		this(null);
+	}
 
 	public Feature(ModElement element) {
 		super(element);
@@ -77,23 +83,49 @@ import java.util.List;
 			additionalData.put("configurationcode", blocklyToFeature.getFeatureConfigurationCode());
 			additionalData.put("featuretype", blocklyToFeature.getFeatureType());
 			additionalData.put("featureblocks", blocklyToFeature.getUsedBlocks());
+			additionalData.put("extra_templates_code", blocklyToFeature.getExtraTemplatesCode());
 
-			this.getModElement().clearMetadata().putMetadata("has_nbt_structure",
+			this.getModElement().putMetadata("has_nbt_structure",
 					blocklyToFeature.getUsedBlocks().contains("feature_custom_structure") ? true : null);
+			this.hasConfiguredFeature = !blocklyToFeature.getFeatureType().equals("configured_feature_reference");
 		};
 	}
 
+	public boolean hasConfiguredFeature() {
+		if (hasConfiguredFeature == null) {
+			try {
+				var blocklyToFeature = new BlocklyToFeature(this.getModElement().getWorkspace(), this.getModElement(),
+						this.featurexml, this.getModElement().getGenerator()
+						.getTemplateGeneratorFromName(BlocklyEditorType.FEATURE.registryName()));
+				this.hasConfiguredFeature = !blocklyToFeature.getFeatureType().equals("configured_feature_reference");
+			} catch (Exception e) {
+				return true; // Exception happened, so we don't cache the result
+			}
+		}
+
+		return hasConfiguredFeature;
+	}
+
 	public boolean hasGenerationConditions() {
-		return generateCondition != null;
+		return generateCondition != null && hasConfiguredFeature();
+	}
+
+	public boolean hasPlacedFeature() {
+		return !skipPlacement;
 	}
 
 	@Override public Collection<BaseType> getBaseTypesProvided() {
+		List<BaseType> baseTypes = new ArrayList<>();
+
+		if (hasConfiguredFeature())
+			baseTypes.add(BaseType.CONFIGUREDFEATURE);
+
 		if (getModElement().getGenerator().getGeneratorConfiguration().getGeneratorFlavor() == GeneratorFlavor.FABRIC)
-			return List.of(BaseType.FEATURE); // Fabric needs to be handled differently than Forge
+			baseTypes.add(BaseType.FEATURE); // Fabric needs to be handled differently than Forge
 		else if (hasGenerationConditions())
-			return List.of(BaseType.FEATURE);
-		else
-			return Collections.emptyList();
+			baseTypes.add(BaseType.FEATURE);
+
+		return baseTypes;
 	}
 
 }

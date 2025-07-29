@@ -18,21 +18,30 @@
 
 package net.mcreator.integration.generator;
 
-import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.Strictness;
+import net.mcreator.element.ModElementType;
+import net.mcreator.generator.Generator;
+import net.mcreator.generator.GeneratorFlavor;
+import net.mcreator.generator.GeneratorStats;
+import net.mcreator.generator.GeneratorUtils;
 import net.mcreator.generator.setup.WorkspaceGeneratorSetup;
-import net.mcreator.gradle.GradleDaemonUtils;
-import net.mcreator.gradle.GradleErrorCodes;
+import net.mcreator.gradle.GradleResultCode;
 import net.mcreator.integration.IntegrationTestSetup;
 import net.mcreator.integration.TestWorkspaceDataProvider;
 import net.mcreator.io.FileIO;
 import net.mcreator.io.writer.ClassWriter;
 import net.mcreator.plugin.PluginLoader;
 import net.mcreator.ui.MCreator;
+import net.mcreator.ui.gradle.GradleConsole;
+import net.mcreator.ui.workspace.resources.TextureType;
+import net.mcreator.util.TestUtil;
 import net.mcreator.workspace.Workspace;
-import net.mcreator.workspace.settings.WorkspaceSettings;
+import net.mcreator.workspace.resources.ExternalTexture;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.DynamicContainer;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,27 +50,32 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(IntegrationTestSetup.class) public class GeneratorsTest {
 
 	private static final Logger LOG = LogManager.getLogger("Generator Test");
 
-	public @TestFactory Stream<DynamicTest> testGenerators() {
+	public @TestFactory Stream<DynamicContainer> testGenerators() {
 		long rgenseed = System.currentTimeMillis();
 		Random random = new Random(rgenseed);
-		LOG.info("Random number generator seed: " + rgenseed);
+		LOG.info("Random number generator seed: {}", rgenseed);
 
-		Set<String> fileNames = PluginLoader.INSTANCE.getResources(Pattern.compile("generator\\.yaml"));
+		Set<String> fileNames;
+		if (System.getenv("MCREATOR_TEST_GENERATORS") != null) {
+			// comma separated to set, use stream oneliner
+			fileNames = Arrays.stream(System.getenv("MCREATOR_TEST_GENERATORS").split(","))
+					.map(generator -> generator + "/generator.yaml").collect(Collectors.toSet());
+		} else {
+			fileNames = PluginLoader.INSTANCE.getResources(Pattern.compile("generator\\.yaml"));
+		}
 
 		// Sort generators, so they are tested in predictable order
 		List<String> fileNamesSorted = fileNames.stream().sorted((a, b) -> {
@@ -75,115 +89,151 @@ import static org.junit.jupiter.api.Assertions.fail;
 			}
 		}).toList();
 
-		LOG.info("Generators found: " + fileNamesSorted);
+		LOG.info("Generators found: {}", fileNamesSorted);
 
-		return fileNamesSorted.stream().map(generatorFile -> {
-			final String generator = generatorFile.replace("/generator.yaml", "");
-			return DynamicTest.dynamicTest("Test generator: " + generator, () -> {
-				LOG.info("================");
-				LOG.info("TESTING GENERATOR " + generator);
+		return fileNamesSorted.stream()
+				.map(generatorFile -> Generator.GENERATOR_CACHE.get(generatorFile.replace("/generator.yaml", "")))
+				.filter(Objects::nonNull).map(generatorConfiguration -> {
+					String generator = generatorConfiguration.getGeneratorName();
 
-				// create temporary directory
-				File workspaceDir = Files.createTempDirectory("mcreator_test_workspace").toFile();
+					List<DynamicTest> tests = new ArrayList<>();
 
-				// we create a new workspace
-				WorkspaceSettings workspaceSettings = new WorkspaceSettings("test_mod");
-				workspaceSettings.setVersion("1.0.0");
-				workspaceSettings.setDescription("Test mod");
-				workspaceSettings.setAuthor("Unit tests");
-				workspaceSettings.setLicense("GPL 3.0");
-				workspaceSettings.setWebsiteURL("https://mcreator.net/");
-				workspaceSettings.setUpdateURL("https://mcreator.net/");
-				workspaceSettings.setModPicture("example");
-				workspaceSettings.setModName("Test mod");
-				workspaceSettings.setCurrentGenerator(generator);
-				Workspace workspace = Workspace.createWorkspace(new File(workspaceDir, "test_mod.mcreator"),
-						workspaceSettings);
+					AtomicReference<Workspace> workspace = new AtomicReference<>();
 
-				LOG.info("[" + generator + "] ----- Test workspace folder: " + workspace.getFolderManager()
-						.getWorkspaceFolder());
+					tests.add(DynamicTest.dynamicTest(generator + " - Workspace setup", () -> {
+						// create temporary directory
+						File workspaceDir = Files.createTempDirectory("mcreator_test_workspace").toFile();
 
-				TestWorkspaceDataProvider.fillWorkspaceWithTestData(workspace);
+						workspace.set(
+								TestWorkspaceDataProvider.createTestWorkspace(workspaceDir, generatorConfiguration,
+										true, false, random));
 
-				LOG.info("[" + generator + "] ----- Setting up workspace base for selected generator");
-				WorkspaceGeneratorSetup.setupWorkspaceBase(workspace);
+						WorkspaceGeneratorSetup.setupWorkspaceBase(workspace.get());
 
-				if (workspace.getGeneratorConfiguration().getGradleTaskFor("setup_task") != null) {
-					CountDownLatch latch = new CountDownLatch(1);
+						CountDownLatch latch = new CountDownLatch(1);
+						MCreator.create(null, workspace.get()).getGradleConsole()
+								.exec(GradleConsole.GRADLE_SYNC_TASK, taskResult -> {
+									if (taskResult == GradleResultCode.STATUS_OK) {
+										workspace.get().getGenerator().reloadGradleCaches();
+									} else {
+										fail("Gradle MDK setup failed!");
+									}
+									latch.countDown();
+								});
+						latch.await();
 
-					GradleDaemonUtils.stopAllDaemons(workspace);
+						// Attach a blank file watcher to also test its operation
+						workspace.get().getGenerator().getFileWatcher()
+								.watchFolder(GeneratorUtils.getResourceRoot(workspace.get(), generatorConfiguration));
+						workspace.get().getGenerator().getFileWatcher().addListener(changedFiles -> {
+						});
+					}));
 
-					new MCreator(null, workspace).getGradleConsole()
-							.exec(workspace.getGeneratorConfiguration().getGradleTaskFor("setup_task"), taskResult -> {
-								if (taskResult.statusByMCreator() == GradleErrorCodes.STATUS_OK) {
-									workspace.getGenerator().reloadGradleCaches();
-								} else {
-									fail("Gradle MDK setup failed!");
-								}
-								latch.countDown();
-							});
-					latch.await();
-				}
+					if (generatorConfiguration.getSpecificRoot("vanilla_block_textures_dir") != null) {
+						tests.add(DynamicTest.dynamicTest(generator + " - Testing texture references system",
+								() -> assertFalse(ExternalTexture.getTexturesOfType(workspace.get(), TextureType.BLOCK)
+										.isEmpty())));
+					}
 
-				LOG.info("[" + generator + "] ----- Testing base generation");
-				assertTrue(workspace.getGenerator().generateBase());
+					tests.add(DynamicTest.dynamicTest(generator + " - Base generation",
+							() -> assertTrue(workspace.get().getGenerator().generateBase())));
+					tests.add(DynamicTest.dynamicTest(generator + " - Resource setup tasks",
+							() -> workspace.get().getGenerator().runResourceSetupTasks()));
 
-				LOG.info("[" + generator + "] ----- Testing resource setup tasks");
-				workspace.getGenerator().runResourceSetupTasks();
+					tests.add(DynamicTest.dynamicTest(generator + " - Preparing and generating sample mod elements",
+							() -> TestWorkspaceDataProvider.provideAndGenerateSampleElements(random, workspace.get())));
+					tests.add(DynamicTest.dynamicTest(generator + " - Testing mod elements generation", () -> {
+						GTModElements.runTest(LOG, generator, random, workspace.get());
+						// Fill workspace with sample tags after the elements the tags reference actually exist
+						TestWorkspaceDataProvider.filleWorkspaceWithSampleTags(workspace.get());
+					}));
 
-				LOG.info("[" + generator + "] ----- Preparing and generating sample mod elements");
-				GTSampleElements.provideAndGenerateSampleElements(random, workspace);
+					if (generatorConfiguration.getGeneratorStats().getModElementTypeCoverageInfo()
+							.get(ModElementType.PROCEDURE) != GeneratorStats.CoverageStatus.NONE) {
+						tests.add(DynamicTest.dynamicTest(generator + " - Testing procedure triggers",
+								() -> GTProcedureTriggers.runTest(LOG, generator, workspace.get())));
+						tests.add(DynamicTest.dynamicTest(generator + " - Testing procedure blocks",
+								() -> GTProcedureBlocks.runTest(LOG, generator, random, workspace.get())));
+					}
 
-				LOG.info("[" + generator + "] ----- Testing mod elements generation");
-				GTModElements.runTest(LOG, generator, random, workspace);
+					if (generatorConfiguration.getGeneratorStats().getModElementTypeCoverageInfo()
+							.get(ModElementType.COMMAND) != GeneratorStats.CoverageStatus.NONE)
+						tests.add(DynamicTest.dynamicTest(generator + " - Testing command argument blocks",
+								() -> GTCommandArgBlocks.runTest(LOG, generator, random, workspace.get())));
 
-				LOG.info("[" + generator + "] ----- Testing procedure triggers");
-				GTProcedureTriggers.runTest(LOG, generator, workspace);
+					if (generatorConfiguration.getGeneratorStats().getModElementTypeCoverageInfo()
+							.get(ModElementType.FEATURE) != GeneratorStats.CoverageStatus.NONE)
+						tests.add(DynamicTest.dynamicTest(generator + " - Testing feature blocks",
+								() -> GTFeatureBlocks.runTest(LOG, generator, random, workspace.get())));
 
-				LOG.info("[" + generator + "] ----- Testing procedure blocks");
-				GTProcedureBlocks.runTest(LOG, generator, random, workspace);
+					if (generatorConfiguration.getGeneratorStats().getModElementTypeCoverageInfo()
+							.get(ModElementType.LIVINGENTITY) != GeneratorStats.CoverageStatus.NONE)
+						tests.add(DynamicTest.dynamicTest(generator + " - Testing AI task blocks",
+								() -> GTAITaskBlocks.runTest(LOG, generator, random, workspace.get())));
 
-				LOG.info("[" + generator + "] ----- Testing command argument blocks");
-				GTCommandArgBlocks.runTest(LOG, generator, random, workspace);
+					tests.add(DynamicTest.dynamicTest(
+							generator + " - Re-generating base to include generated mod elements",
+							() -> assertTrue(workspace.get().getGenerator().generateBase())));
 
-				LOG.info("[" + generator + "] ----- Testing feature blocks");
-				GTFeatureBlocks.runTest(LOG, generator, random, workspace);
+					if (generatorConfiguration.getGeneratorFlavor().getBaseLanguage()
+							== GeneratorFlavor.BaseLanguage.JAVA) {
+						tests.add(DynamicTest.dynamicTest(generator + " - Reformatting the code and organising imports",
+								() -> {
+									try (Stream<Path> entries = Files.walk(
+											workspace.get().getGenerator().getSourceRoot().toPath())) {
+										ClassWriter.formatAndOrganiseImportsForFiles(workspace.get(),
+												entries.filter(Files::isRegularFile).map(Path::toFile)
+														.collect(Collectors.toList()), null);
+									}
+								}));
 
-				LOG.info("[" + generator + "] ----- Testing AI task blocks");
-				GTAITaskBlocks.runTest(LOG, generator, random, workspace);
+						// Verify if MinecraftCodeProvider failed to load any code
+						tests.add(DynamicTest.dynamicTest(generator + " - Making sure code provider works",
+								() -> assertFalse(workspace.get().checkFailingGradleDependenciesAndClear())));
 
-				LOG.info("[" + generator + "] ----- Re-generating base to include generated mod elements");
-				assertTrue(workspace.getGenerator().generateBase());
+						// Verify Java files
+						tests.add(DynamicTest.dynamicTest(generator + " - Testing workspace build with mod elements",
+								() -> GTBuild.runTest(LOG, generator, workspace.get())));
 
-				LOG.info("[" + generator + "] ----- Reformatting the code and organising the imports");
-				try (Stream<Path> entries = Files.walk(workspace.getWorkspaceFolder().toPath())) {
-					ClassWriter.formatAndOrganiseImportsForFiles(workspace,
-							entries.filter(Files::isRegularFile).map(Path::toFile).collect(Collectors.toList()), null);
-				}
+						// We only run server tests if we are not in GitHub Actions (their workers are too slow for this)
+						if (generatorConfiguration.getGradleTaskFor("run_server") != null
+								&& !TestUtil.isRunningInGitHubActions()) {
+							tests.add(DynamicTest.dynamicTest(generator + " - Testing server run",
+									() -> GTServerRun.runTest(LOG, generator, workspace.get())));
+						}
+					}
 
-				LOG.info("[" + generator + "] ----- Testing workspace build with mod elements");
-				GTBuild.runTest(LOG, generator, workspace); // This will verify Java files
+					// Verify JSON files
+					tests.add(DynamicTest.dynamicTest(generator + " - Verifying workspace JSON files",
+							() -> verifyGeneratedJSON(workspace.get())));
 
-				// We also need to verify JSON files
-				LOG.info("[" + generator + "] ----- Verifying workspace JSON files");
-				verifyGeneratedJSON(workspace);
+					tests.add(DynamicTest.dynamicTest(generator + " - Stop Gradle and close workspace", () -> {
+						workspace.get().close();
+						FileIO.deleteDir(workspace.get().getWorkspaceFolder());
+					}));
 
-				LOG.info("[" + generator + "] ----- Attempting to stop all Gradle daemons");
-				GradleDaemonUtils.stopAllDaemons(workspace);
-
-				workspace.close();
-
-				FileIO.deleteDir(workspaceDir);
-			});
-		});
+					return DynamicContainer.dynamicContainer("Test generator: " + generator, tests);
+				});
 	}
 
 	private void verifyGeneratedJSON(Workspace workspace) throws IOException {
 		try (Stream<Path> entries = Files.walk(workspace.getWorkspaceFolder().toPath())) {
 			entries.filter(Files::isRegularFile).map(Path::toFile)
 					.filter(file -> FilenameUtils.isExtension(file.getName(), "json")).forEach(file -> {
+						String contents = FileIO.readFileToString(file);
+
+						// If png extension is present twice, something is wrong with resource path handling somewhere
+						assertFalse(contents.contains(".png.png"));
+
+						// If there is any resource path containing more than one colon, it is invalid
+						assertFalse(contents.contains("\"([^\":]*:){2,}[^\":]*\""));
+
+						// If there is any resource path that is tag and contains invalid characters, it is invalid
+						assertFalse(contents.contains("\"#([a-z0-9/._\\-:]*[^a-z0-9/._\\-:\"]+[a-z0-9/._\\-:]*)*\""));
+
 						try {
-							new Gson().fromJson(FileIO.readFileToString(file), Object.class); // try to parse JSON
+							new GsonBuilder().setStrictness(Strictness.STRICT).create()
+									.fromJson(contents, Object.class); // try to parse JSON
 						} catch (Exception e) {
 							fail("Invalid JSON in file: " + file);
 						}

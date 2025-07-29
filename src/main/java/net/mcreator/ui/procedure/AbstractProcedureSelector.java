@@ -20,6 +20,7 @@ package net.mcreator.ui.procedure;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.Strictness;
 import net.mcreator.blockly.data.Dependency;
 import net.mcreator.element.ModElementType;
 import net.mcreator.element.parts.procedure.Procedure;
@@ -37,12 +38,13 @@ import net.mcreator.workspace.elements.VariableTypeLoader;
 import javax.annotation.Nullable;
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class AbstractProcedureSelector extends JPanel implements IValidable {
 
-	private static final Gson gson = new GsonBuilder().setLenient().create();
+	private static final Gson gson = new GsonBuilder().setStrictness(Strictness.LENIENT).create();
 
 	final SearchableComboBox<ProcedureEntry> procedures = new SearchableComboBox<>();
 
@@ -87,12 +89,13 @@ public abstract class AbstractProcedureSelector extends JPanel implements IValid
 
 		procedures.addItem(new ProcedureEntry(defaultName, null));
 
-		for (ModElement mod : mcreator.getWorkspace().getModElements()) {
-			if (mod.getType() == ModElementType.PROCEDURE) {
-				List<?> dependenciesList = (List<?>) mod.getMetadata("dependencies");
-				if (dependenciesList == null)
-					continue;
-
+		//noinspection FuseStreamOperations
+		List<ModElement> procedureElements = mcreator.getWorkspace().getModElements().stream()
+				.filter(mod -> mod.getType() == ModElementType.PROCEDURE).collect(Collectors.toList());
+		procedureElements.sort(ModElement.getComparator(mcreator.getWorkspace(), procedureElements));
+		procedureElements.forEach(mod -> {
+			List<?> dependenciesList = (List<?>) mod.getMetadata("dependencies");
+			if (dependenciesList != null) {
 				List<Dependency> realdepsList = new ArrayList<>();
 
 				boolean missing = false;
@@ -119,7 +122,7 @@ public abstract class AbstractProcedureSelector extends JPanel implements IValid
 				if (correctReturnType || (returnTypeCurrent == null && returnTypeOptional))
 					procedures.addItem(new ProcedureEntry(mod.getName(), returnTypeCurrent, !missing));
 			}
-		}
+		});
 	}
 
 	public void refreshListKeepSelected() {
@@ -205,12 +208,12 @@ public abstract class AbstractProcedureSelector extends JPanel implements IValid
 
 		if (validator != null && currentValidationResult != null) {
 			if (currentValidationResult.getValidationResultType() == Validator.ValidationResultType.WARNING) {
-				g.setColor(new Color(238, 229, 113));
+				g.setColor(currentValidationResult.getValidationResultType().getColor());
 				g.drawRect(0, 0, getWidth(), getHeight());
 
 				g.drawImage(UIRES.get("18px.warning").getImage(), getWidth() - 11, getHeight() - 11, 11, 11, null);
 			} else if (currentValidationResult.getValidationResultType() == Validator.ValidationResultType.ERROR) {
-				g.setColor(new Color(204, 108, 108));
+				g.setColor(currentValidationResult.getValidationResultType().getColor());
 				g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
 
 				g.drawImage(UIRES.get("18px.remove").getImage(), 0, 0, 11, 11, null);

@@ -26,8 +26,6 @@ import net.mcreator.ui.component.zoompane.JZoomPane;
 import net.mcreator.ui.component.zoompane.JZoomport;
 import net.mcreator.ui.init.UIRES;
 import net.mcreator.ui.laf.themes.Theme;
-import net.mcreator.ui.workspace.resources.TextureType;
-import net.mcreator.util.FilenameUtilsPatched;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
@@ -112,6 +110,9 @@ public class WYSIWYG extends JComponent implements MouseMotionListener, MouseLis
 	}
 
 	public void moveMode() {
+		if (selected != null && selected.locked)
+			return;
+
 		owner.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
 		componentMoveMode = true;
 
@@ -200,7 +201,7 @@ public class WYSIWYG extends JComponent implements MouseMotionListener, MouseLis
 						ox * 2 + selected.getWidth(wysiwygEditor.mcreator.getWorkspace()) * 2, getHeight());
 			}
 
-			if (!isNotOverlayType) {
+			if (!isNotOverlayType && selected != null) {
 				GUIComponent.AnchorPoint anchorPoint = selected.getAnchorPoint();
 				if (anchorPoint != null) {
 					Point anchor = anchorPoint.getAnchorPoint(W, H);
@@ -249,11 +250,9 @@ public class WYSIWYG extends JComponent implements MouseMotionListener, MouseLis
 				g.drawRect((int) Math.ceil(W / 2.0 - gw / 2.0), (int) Math.ceil(H / 2.0 - gh / 2.0), gw, gh);
 			}
 		} else {
-			if (wysiwygEditor.overlayBaseTexture.getSelectedItem() != null
-					&& !wysiwygEditor.overlayBaseTexture.getSelectedItem().isEmpty()) {
-				g.drawImage(new ImageIcon(wysiwygEditor.mcreator.getFolderManager().getTextureFile(
-						FilenameUtilsPatched.removeExtension(wysiwygEditor.overlayBaseTexture.getSelectedItem()),
-						TextureType.SCREEN).getAbsolutePath()).getImage(), 0, 0, W, H, this);
+			if (wysiwygEditor.overlayBaseTexture.hasTexture()) {
+				g.drawImage(wysiwygEditor.overlayBaseTexture.getTexture()
+						.getTextureIcon(wysiwygEditor.mcreator.getWorkspace()).getImage(), 0, 0, W, H, this);
 			}
 		}
 
@@ -355,6 +354,7 @@ public class WYSIWYG extends JComponent implements MouseMotionListener, MouseLis
 					wysiwygEditor.editCurrentlySelectedComponent();
 				} else {
 					wysiwygEditor.list.setSelectedValue(component, true);
+					wysiwygEditor.list.requestFocus();
 				}
 			} else {
 				wysiwygEditor.list.clearSelection();
@@ -452,11 +452,14 @@ public class WYSIWYG extends JComponent implements MouseMotionListener, MouseLis
 		for (int i = 0; i < wysiwygEditor.components.size(); i++) {
 			GUIComponent component = wysiwygEditor.components.get(i);
 			if (component.equals(selected)) {
-				component.x = ox;
-				component.y = oy;
-				if (positioningModeSettingWidth && component instanceof net.mcreator.element.parts.gui.SizedComponent) {
-					((SizedComponent) component).width = ow;
-					((SizedComponent) component).height = oh;
+				if (!selected.locked) {
+					component.x = ox;
+					component.y = oy;
+					if (positioningModeSettingWidth
+							&& component instanceof net.mcreator.element.parts.gui.SizedComponent) {
+						((SizedComponent) component).width = ow;
+						((SizedComponent) component).height = oh;
+					}
 				}
 				break;
 			}

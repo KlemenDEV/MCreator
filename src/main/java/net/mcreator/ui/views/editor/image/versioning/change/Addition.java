@@ -24,8 +24,8 @@ import net.mcreator.ui.views.editor.image.layer.Layer;
 import java.awt.image.BufferedImage;
 
 public class Addition extends Change implements IVisualChange {
-	protected int index;
-	protected BufferedImage image;
+	protected final int index;
+	protected final BufferedImage image;
 
 	public Addition(Canvas canvas, Layer layer) {
 		super(canvas, layer);
@@ -35,12 +35,12 @@ public class Addition extends Change implements IVisualChange {
 
 	@Override public void apply() {
 		canvas.add(index, layer);
-		canvas.getCanvasRenderer().repaint();
+		canvas.getImageMakerView().getCanvasRenderer().repaint();
 	}
 
 	@Override public void revert() {
 		canvas.removeNR(index);
-		canvas.getCanvasRenderer().repaint();
+		canvas.getImageMakerView().getCanvasRenderer().repaint();
 	}
 
 	@Override public int sizeOf() {

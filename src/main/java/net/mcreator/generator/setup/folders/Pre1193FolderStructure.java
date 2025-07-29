@@ -19,6 +19,7 @@
 
 package net.mcreator.generator.setup.folders;
 
+import net.mcreator.generator.GeneratorFlavor;
 import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.workspace.Workspace;
 
@@ -27,8 +28,8 @@ import java.io.File;
 
 class Pre1193FolderStructure extends AbstractFolderStructure {
 
-	protected Pre1193FolderStructure(Workspace workspace) {
-		super(workspace);
+	protected Pre1193FolderStructure(GeneratorFlavor flavor, Workspace workspace) {
+		super(flavor, workspace);
 	}
 
 	@Nullable @Override public File getStructuresDir() {
@@ -40,34 +41,36 @@ class Pre1193FolderStructure extends AbstractFolderStructure {
 	}
 
 	@Nullable @Override public File getTexturesFolder(TextureType section) {
-		return switch (section) {
-			case BLOCK -> new File(getResourceRoot(),
-					"assets/" + workspace.getWorkspaceSettings().getModID() + "/textures/blocks");
-			case ITEM -> new File(getResourceRoot(),
-					"assets/" + workspace.getWorkspaceSettings().getModID() + "/textures/items");
-			case ARMOR -> new File(getResourceRoot(),
-					"assets/" + workspace.getWorkspaceSettings().getModID() + "/textures/models/armor");
-			case OTHER ->
-					new File(getResourceRoot(), "assets/" + workspace.getWorkspaceSettings().getModID() + "/textures");
+		return new File(getResourceRoot(), "assets/" + workspace.getWorkspaceSettings().getModID() + switch (section) {
+			case BLOCK -> "/textures/blocks";
+			case ITEM -> "/textures/items";
+			case ARMOR -> "/textures/models/armor";
+			case OTHER -> "/textures";
 			// The types below may not exist on older generators with shared folder for all but block, item and armor,
 			// but this will be taken care of by converters from other texture type section
-			case ENTITY -> new File(getResourceRoot(),
-					"assets/" + workspace.getWorkspaceSettings().getModID() + "/textures/entities");
-			case EFFECT -> new File(getResourceRoot(),
-					"assets/" + workspace.getWorkspaceSettings().getModID() + "/textures/mob_effect");
-			case PARTICLE -> new File(getResourceRoot(),
-					"assets/" + workspace.getWorkspaceSettings().getModID() + "/textures/particle");
-			case SCREEN -> new File(getResourceRoot(),
-					"assets/" + workspace.getWorkspaceSettings().getModID() + "/textures/screens");
-		};
+			case ENTITY -> "/textures/entities";
+			case EFFECT -> "/textures/mob_effect";
+			case PARTICLE -> "/textures/particle";
+			case SCREEN -> "/textures/screens";
+		});
 	}
 
 	@Nullable @Override public File getSourceRoot() {
-		return new File(workspace.getWorkspaceFolder(), "src/main/java");
+		// For datapack and resourcepack, the source root has no java subfolder
+		if (flavor == GeneratorFlavor.DATAPACK || flavor == GeneratorFlavor.RESOURCEPACK) {
+			return new File(workspace.getWorkspaceFolder(), "src/main");
+		} else {
+			return new File(workspace.getWorkspaceFolder(), "src/main/java");
+		}
 	}
 
 	@Nullable @Override public File getResourceRoot() {
-		return new File(workspace.getWorkspaceFolder(), "src/main/resources");
+		// For datapack and resourcepack, source and resource roots are shared
+		if (flavor == GeneratorFlavor.DATAPACK || flavor == GeneratorFlavor.RESOURCEPACK) {
+			return new File(workspace.getWorkspaceFolder(), "src/main");
+		} else {
+			return new File(workspace.getWorkspaceFolder(), "src/main/resources");
+		}
 	}
 
 }

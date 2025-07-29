@@ -42,7 +42,7 @@ public class GeneratorVariableTypes {
 
 	GeneratorVariableTypes(GeneratorConfiguration generatorConfiguration) {
 		Set<String> fileNames = PluginLoader.INSTANCE.getResources(
-				generatorConfiguration.getGeneratorName() + ".variables", Pattern.compile(".*\\.yaml"));
+				generatorConfiguration.getGeneratorName() + ".variables", Pattern.compile(".*\\.yaml$"));
 
 		Load yamlLoad = new Load(YamlUtil.getSimpleLoadSettings());
 
@@ -58,11 +58,11 @@ public class GeneratorVariableTypes {
 							variableTypesData); // make this map concurrent, cache can be reused by multiple instances
 					variableTypesCache.put(VariableTypeLoader.INSTANCE.fromName(variableTypeName), variableTypesData);
 				} catch (YamlEngineException e) {
-					LOG.fatal("[" + generatorConfiguration.getGeneratorName()
-							+ "] Failed to load variable type definition: " + e.getMessage());
+					LOG.fatal("[{}] Failed to load variable type definition: {}",
+							generatorConfiguration.getGeneratorName(), e.getMessage());
 				}
 			} else {
-				LOG.warn("Generator defines variable definition for unknown type: " + variableTypeName);
+				LOG.warn("Generator defines variable definition for unknown type: {}", variableTypeName);
 			}
 		}
 	}

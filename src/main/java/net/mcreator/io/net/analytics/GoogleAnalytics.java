@@ -27,7 +27,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
@@ -60,7 +61,12 @@ public class GoogleAnalytics {
 	private String currentPage = "";
 	private String previousPage = "";
 
-	private final ExecutorService requestExecutor = Executors.newSingleThreadExecutor();
+	private final ExecutorService requestExecutor = Executors.newSingleThreadExecutor(runnable -> {
+		Thread thread = new Thread(runnable);
+		thread.setName("GA4-Requests");
+		thread.setUncaughtExceptionHandler((t, e) -> LOG.error(e));
+		return thread;
+	});
 
 	public GoogleAnalytics(DeviceInfo deviceInfo) {
 		this.deviceInfo = deviceInfo;
@@ -118,9 +124,9 @@ public class GoogleAnalytics {
 
 			processRequestURL(getGATrackURL(payload));
 
-			LOG.info("Tracked page: " + page);
+			LOG.info("Tracked page: {}", page);
 		} catch (Exception e) {
-			LOG.warn("Failed to track page: " + page, e);
+			LOG.warn("Failed to track page: {}", page, e);
 		}
 	}
 
@@ -132,9 +138,9 @@ public class GoogleAnalytics {
 			payload.put("ep.ctx", context);
 			processRequestURL(getGATrackURL(payload));
 
-			LOG.info("Tracked event: " + name + ", context: " + context);
+			LOG.info("Tracked event: {}, context: {}", name, context);
 		} catch (Exception e) {
-			LOG.warn("Failed to track event: " + name + ", context: " + context, e);
+			LOG.warn("Failed to track event: {}, context: {}, error: {}", name, context, e.getMessage());
 		}
 	}
 
@@ -146,9 +152,9 @@ public class GoogleAnalytics {
 		requestExecutor.submit(() -> trackEventSync(name, context));
 	}
 
-	private void processRequestURL(String requesturl) throws IOException {
+	private void processRequestURL(String requesturl) throws IOException, URISyntaxException {
 		if (MCreatorApplication.isInternet && ANALYTICS_ENABLED && !Launcher.version.isDevelopment()) {
-			HttpURLConnection conn = (HttpURLConnection) new URL(requesturl).openConnection();
+			HttpURLConnection conn = (HttpURLConnection) new URI(requesturl).toURL().openConnection();
 			conn.setInstanceFollowRedirects(true);
 			conn.setUseCaches(false);
 			conn.setDefaultUseCaches(false);

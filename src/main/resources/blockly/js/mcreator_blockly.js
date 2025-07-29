@@ -24,12 +24,16 @@ const workspace = Blockly.inject(blockly, {
     toolbox: '<xml id="toolbox"><category name="" colour=""></category></xml>'
 });
 
-function blocklyEventFunction() {
+workspace.addChangeListener(function (event) {
+    if (workspace.isDragging())
+        return; // Don't update while changes are happening.
+
+    if (event.isUiEvent)
+        return; // Don't update on UI-only events.
+
     if (typeof javabridge !== "undefined")
         javabridge.triggerEvent();
-}
-
-workspace.addChangeListener(blocklyEventFunction);
+});
 
 window.addEventListener('resize', function () {
     Blockly.svgResize(workspace);
@@ -45,6 +49,29 @@ Blockly.Block.prototype.setHelpUrl = function () {
 Blockly.Variables.allUsedVarModels = function () {
     return workspace.getVariableMap().getAllVariables();
 };
+
+Blockly.ContextMenuRegistry.registry.register({
+    displayText: function () {
+        return javabridge.t("blockly.context_menu.cleanup_unused_blocks");
+    },
+    preconditionFn: function (scope) {
+        if (scope.workspace.getTopBlocks().length > 1) {
+            return 'enabled';
+        }
+        return 'hidden';
+    },
+    callback: function (scope) {
+        const group = Blockly.Events.getGroup();
+        Blockly.Events.setGroup(true);
+        for (const block of scope.workspace.getTopBlocks()) {
+            if (block.type !== javabridge.startBlockForEditor(editorType))
+                block.dispose();
+        }
+        Blockly.Events.setGroup(group);
+    },
+    scopeType: Blockly.ContextMenuRegistry.ScopeType.WORKSPACE,
+    id: 'cleanupUnusedBlocks'
+});
 
 function getVariablesOfType(type) {
     let retval = [];
@@ -77,15 +104,6 @@ function arrayToBlocklyDropDownArray(arrorig) {
     let retval = [];
     arrorig.forEach(function (element) {
         retval.push(["" + element, "" + element]);
-    });
-    return retval;
-}
-
-function jsonToBlocklyDropDownArray(json) {
-    let map = JSON.parse(json);
-    let retval = [];
-    Object.keys(map).forEach(function (key) {
-        retval.push(["" + map[key], "" + key]);
     });
     return retval;
 }

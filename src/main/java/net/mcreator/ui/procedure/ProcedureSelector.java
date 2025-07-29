@@ -24,6 +24,7 @@ import net.mcreator.blockly.data.Dependency;
 import net.mcreator.element.ModElementType;
 import net.mcreator.java.JavaConventions;
 import net.mcreator.ui.MCreator;
+import net.mcreator.ui.component.JEmptyBox;
 import net.mcreator.ui.component.util.ComboBoxFullWidthPopup;
 import net.mcreator.ui.component.util.ComponentUtils;
 import net.mcreator.ui.component.util.PanelUtils;
@@ -33,7 +34,7 @@ import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.init.UIRES;
 import net.mcreator.ui.modgui.ModElementGUI;
 import net.mcreator.ui.validation.component.VTextField;
-import net.mcreator.ui.validation.optionpane.OptionPaneValidatior;
+import net.mcreator.ui.validation.optionpane.OptionPaneValidator;
 import net.mcreator.ui.validation.optionpane.VOptionPane;
 import net.mcreator.ui.validation.validators.ModElementNameValidator;
 import net.mcreator.ui.workspace.breadcrumb.WorkspaceFolderBreadcrumb;
@@ -208,16 +209,16 @@ public class ProcedureSelector extends AbstractProcedureSelector {
 			actionLabel.setText(L10N.t("procedure.common.do"));
 			procwrap = PanelUtils.westAndCenterElement(actionLabel, procedures);
 		} else {
-			procwrap = procedures;
+			procwrap = PanelUtils.westAndCenterElement(new JEmptyBox(3, 3), procedures);
 		}
 
 		if (allowInlineEditor) {
 			add.putClientProperty(FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_BORDERLESS);
 			add.addActionListener(e -> {
 				String procedureNameString = "";
-				if (mcreator.mcreatorTabs.getCurrentTab().getContent() instanceof ModElementGUI) {
+				if (mcreator.getTabs().getCurrentTab().getContent() instanceof ModElementGUI) {
 					StringBuilder procedureNameBuilder = new StringBuilder(
-							((ModElementGUI<?>) mcreator.mcreatorTabs.getCurrentTab().getContent()).getModElement()
+							((ModElementGUI<?>) mcreator.getTabs().getCurrentTab().getContent()).getModElement()
 									.getName());
 					String[] parts = procedureName.replaceAll("\\(.*\\)", "").split(" ");
 					for (String part : parts) {
@@ -231,7 +232,7 @@ public class ProcedureSelector extends AbstractProcedureSelector {
 
 				procedureNameString = VOptionPane.showInputDialog(mcreator,
 						L10N.t("action.procedure.enter_procedure_name"),
-						L10N.t("action.procedure.new_procedure_dialog_title"), null, new OptionPaneValidatior() {
+						L10N.t("action.procedure.new_procedure_dialog_title"), null, new OptionPaneValidator() {
 							@Override public ValidationResult validate(JComponent component) {
 								return new ModElementNameValidator(mcreator.getWorkspace(), (VTextField) component,
 										L10N.t("common.mod_element_name")).validate();
@@ -288,6 +289,7 @@ public class ProcedureSelector extends AbstractProcedureSelector {
 
 	public ProcedureSelector setDefaultName(String defaultName) {
 		this.defaultName = defaultName;
+		procedures.setPrototypeDisplayValue(new ProcedureEntry(defaultName, null));
 		return this;
 	}
 

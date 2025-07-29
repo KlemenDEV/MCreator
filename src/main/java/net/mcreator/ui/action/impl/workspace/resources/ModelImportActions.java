@@ -32,8 +32,8 @@ import de.javagl.obj.MtlReader;
 import de.javagl.obj.MtlWriter;
 import net.mcreator.generator.GeneratorStats;
 import net.mcreator.io.FileIO;
-import net.mcreator.io.Transliteration;
 import net.mcreator.java.JavaConventions;
+import net.mcreator.minecraft.RegistryNameFixer;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.action.ActionRegistry;
 import net.mcreator.ui.action.BasicAction;
@@ -41,6 +41,7 @@ import net.mcreator.ui.dialogs.JavaModelAnimationEditorDialog;
 import net.mcreator.ui.dialogs.TextureMappingDialog;
 import net.mcreator.ui.dialogs.file.FileDialogs;
 import net.mcreator.ui.init.L10N;
+import net.mcreator.ui.init.UIRES;
 import net.mcreator.ui.modgui.ModElementGUI;
 import net.mcreator.workspace.resources.TexturedModel;
 import org.apache.logging.log4j.LogManager;
@@ -55,7 +56,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -86,6 +86,7 @@ public class ModelImportActions {
 				if (file != null)
 					importJavaModel(actionRegistry.getMCreator(), file);
 			});
+			setIcon(UIRES.get("16px.importjavamodel"));
 		}
 
 		@Override public boolean isEnabled() {
@@ -154,7 +155,7 @@ public class ModelImportActions {
 				return;
 			}
 		} catch (Exception err) {
-			LOG.error("Failed to load Java model: " + file, err);
+			LOG.error("Failed to load Java model: {}", file, err);
 			JOptionPane.showMessageDialog(mcreator,
 					L10N.t("dialog.workspace.resources.import_java_model.invalid_model_format.message"),
 					L10N.t("dialog.workspace.resources.import_java_model.invalid_model_format.title"),
@@ -197,9 +198,9 @@ public class ModelImportActions {
 							+ ".java"));
 		}
 
-		mcreator.mv.resourcesPan.workspacePanelModels.reloadElements();
-		if (mcreator.mcreatorTabs.getCurrentTab().getContent() instanceof ModElementGUI)
-			((ModElementGUI<?>) mcreator.mcreatorTabs.getCurrentTab().getContent()).reloadDataLists();
+		mcreator.reloadWorkspaceTabContents();
+		if (mcreator.getTabs().getCurrentTab().getContent() instanceof ModElementGUI)
+			((ModElementGUI<?>) mcreator.getTabs().getCurrentTab().getContent()).reloadDataLists();
 	}
 
 	public static class JSON extends BasicAction {
@@ -209,6 +210,7 @@ public class ModelImportActions {
 				if (json != null)
 					importJSONModel(actionRegistry.getMCreator(), json);
 			});
+			setIcon(UIRES.get("16px.importjsonmodel"));
 		}
 
 		@Override public boolean isEnabled() {
@@ -226,11 +228,13 @@ public class ModelImportActions {
 		while (matcher.find())
 			txs.add(matcher.group(1));
 
-		newTextureMapDialog(mcreator, txs, file, true);
+		if (!txs.isEmpty()) {
+			newTextureMapDialog(mcreator, txs, file, true);
 
-		mcreator.mv.resourcesPan.workspacePanelModels.reloadElements();
-		if (mcreator.mcreatorTabs.getCurrentTab().getContent() instanceof ModElementGUI)
-			((ModElementGUI<?>) mcreator.mcreatorTabs.getCurrentTab().getContent()).reloadDataLists();
+			mcreator.reloadWorkspaceTabContents();
+			if (mcreator.getTabs().getCurrentTab().getContent() instanceof ModElementGUI)
+				((ModElementGUI<?>) mcreator.getTabs().getCurrentTab().getContent()).reloadDataLists();
+		}
 	}
 
 	public static class OBJ extends BasicAction {
@@ -247,6 +251,7 @@ public class ModelImportActions {
 						importOBJModel(actionRegistry.getMCreator(), obj, mtl);
 				}
 			});
+			setIcon(UIRES.get("16px.importobjmodel"));
 		}
 
 		@Override public boolean isEnabled() {
@@ -271,8 +276,7 @@ public class ModelImportActions {
 				return;
 		}
 
-		String modelName = Transliteration.transliterateString(obj.getName()).toLowerCase(Locale.ENGLISH).trim()
-				.replace(" ", "_").replace(":", "");
+		String modelName = RegistryNameFixer.fix(obj.getName());
 		File objFile = new File(mcreator.getFolderManager().getModelsDir(), modelName);
 		FileIO.copyFile(obj, objFile);
 		File mtlFile = new File(mcreator.getFolderManager().getModelsDir(),
@@ -294,9 +298,9 @@ public class ModelImportActions {
 			}
 		} catch (Exception ignore) {
 		}
-		mcreator.mv.resourcesPan.workspacePanelModels.reloadElements();
-		if (mcreator.mcreatorTabs.getCurrentTab().getContent() instanceof ModElementGUI)
-			((ModElementGUI<?>) mcreator.mcreatorTabs.getCurrentTab().getContent()).reloadDataLists();
+		mcreator.reloadWorkspaceTabContents();
+		if (mcreator.getTabs().getCurrentTab().getContent() instanceof ModElementGUI)
+			((ModElementGUI<?>) mcreator.getTabs().getCurrentTab().getContent()).reloadDataLists();
 	}
 
 	private static void newTextureMapDialog(MCreator mcreator, HashSet<String> txs, File modelFile,
@@ -304,14 +308,12 @@ public class ModelImportActions {
 		Map<String, TexturedModel.TextureMapping> textureMappingMap = new TextureMappingDialog(null).openMappingDialog(
 				mcreator, txs, supportMultiple);
 		if (textureMappingMap != null) {
+			String modelNameBase = RegistryNameFixer.fix(modelFile.getName());
 			String data = TexturedModel.getJSONForTextureMapping(textureMappingMap);
-			FileIO.writeStringToFile(data, new File(mcreator.getFolderManager().getModelsDir(),
-					Transliteration.transliterateString(modelFile.getName()).toLowerCase(Locale.ENGLISH).trim()
-							.replace(":", "").replace(" ", "_") + ".textures"));
+			FileIO.writeStringToFile(data,
+					new File(mcreator.getFolderManager().getModelsDir(), modelNameBase + ".textures"));
 			// copy the actual model
-			FileIO.copyFile(modelFile, new File(mcreator.getFolderManager().getModelsDir(),
-					Transliteration.transliterateString(modelFile.getName()).toLowerCase(Locale.ENGLISH).trim()
-							.replace(":", "").replace(" ", "_")));
+			FileIO.copyFile(modelFile, new File(mcreator.getFolderManager().getModelsDir(), modelNameBase));
 		}
 	}
 

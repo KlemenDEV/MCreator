@@ -43,10 +43,10 @@ public abstract class AbstractResourcePanel<T> extends JPanel implements IReload
 
 	protected final WorkspacePanel workspacePanel;
 
-	private final TransparentToolBar bar = new TransparentToolBar();
+	protected final TransparentToolBar bar = new TransparentToolBar();
 
 	protected final ResourceFilterModel<T> filterModel;
-	protected JSelectableList<T> elementList;
+	protected final JSelectableList<T> elementList;
 
 	public AbstractResourcePanel(WorkspacePanel workspacePanel, ResourceFilterModel<T> filterModel,
 			ListCellRenderer<T> render) {

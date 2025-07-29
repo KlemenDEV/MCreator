@@ -19,7 +19,7 @@
 package net.mcreator.ui.laf.renderer;
 
 import com.google.gson.JsonElement;
-import net.mcreator.ui.component.util.ComponentUtils;
+import net.mcreator.preferences.PreferencesManager;
 import net.mcreator.ui.ide.json.JsonTree;
 import net.mcreator.ui.init.UIRES;
 import net.mcreator.ui.laf.themes.Theme;
@@ -40,7 +40,7 @@ public class AstTreeCellRendererCustom extends DefaultTreeCellRenderer {
 		setBorderSelectionColor(Theme.current().getBackgroundColor());
 		setBackground(Theme.current().getBackgroundColor());
 		setBackgroundSelectionColor(Theme.current().getInterfaceAccentColor());
-		ComponentUtils.deriveFont(this, 11);
+		setFont(Theme.current().getConsoleFont().deriveFont((float) PreferencesManager.PREFERENCES.ide.fontSize.get()));
 	}
 
 	@Override
@@ -57,13 +57,16 @@ public class AstTreeCellRendererCustom extends DefaultTreeCellRenderer {
 			setForeground(Theme.current().getBackgroundColor());
 		}
 
-		if (value instanceof JsonTree.JsonObjectNode) {
+		switch (value) {
+		case JsonTree.JsonObjectNode ignored -> {
 			setIcon(UIRES.get("16px.jsonobj"));
 			setText(value.toString());
-		} else if (value instanceof JsonTree.JsonArrayNode) {
+		}
+		case JsonTree.JsonArrayNode ignored -> {
 			setIcon(UIRES.get("16px.jsonarray"));
 			setText(value.toString());
-		} else if (value instanceof JsonTree.JsonNode node) {
+		}
+		case JsonTree.JsonNode node -> {
 			JsonElement element = node.getElement();
 			String type = null;
 			if (element.isJsonNull())
@@ -78,7 +81,8 @@ public class AstTreeCellRendererCustom extends DefaultTreeCellRenderer {
 			}
 			setText(value + (type == null ? "" : (" [" + type + "]")));
 			setIcon(UIRES.get("16px.jsonel"));
-		} else {
+		}
+		case null, default -> {
 			try {
 				Class<?> treeNodeClass = Class.forName("org.fife.rsta.ac.java.tree.JavaTreeNode");
 				Method text = treeNodeClass.getMethod("getText", boolean.class);
@@ -95,6 +99,7 @@ public class AstTreeCellRendererCustom extends DefaultTreeCellRenderer {
 					LOG.warn(e.getMessage(), e);
 				}
 			}
+		}
 		}
 		return this;
 	}

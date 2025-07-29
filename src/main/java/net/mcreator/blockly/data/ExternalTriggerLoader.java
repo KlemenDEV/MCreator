@@ -20,6 +20,7 @@ package net.mcreator.blockly.data;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.Strictness;
 import net.mcreator.io.FileIO;
 import net.mcreator.plugin.PluginLoader;
 import net.mcreator.util.FilenameUtilsPatched;
@@ -37,9 +38,9 @@ public class ExternalTriggerLoader {
 	ExternalTriggerLoader(String resourceFolder) {
 		this.externalTriggers = new ArrayList<>();
 
-		final Gson gson = new GsonBuilder().setLenient().create();
+		final Gson gson = new GsonBuilder().setStrictness(Strictness.LENIENT).create();
 
-		Set<String> fileNames = PluginLoader.INSTANCE.getResources(resourceFolder, Pattern.compile("^[^$].*\\.json"));
+		Set<String> fileNames = PluginLoader.INSTANCE.getResources(resourceFolder, Pattern.compile("^[^$].*\\.json$"));
 		for (String externalTriggerName : fileNames) {
 			ExternalTrigger externalTrigger = gson.fromJson(
 					FileIO.readResourceToString(PluginLoader.INSTANCE, externalTriggerName), ExternalTrigger.class);
@@ -51,7 +52,7 @@ public class ExternalTriggerLoader {
 				Comparator.comparing(ExternalTrigger::getGroupEstimate).thenComparing(ExternalTrigger::getName));
 	}
 
-	public List<ExternalTrigger> getExternalTrigers() {
+	public List<ExternalTrigger> getExternalTriggers() {
 		return externalTriggers;
 	}
 

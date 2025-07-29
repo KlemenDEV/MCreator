@@ -18,6 +18,7 @@
 
 package net.mcreator.ui.gradle;
 
+import com.sun.management.OperatingSystemMXBean;
 import net.mcreator.Launcher;
 import net.mcreator.gradle.*;
 import net.mcreator.io.OutputStreamEventHandler;
@@ -25,12 +26,16 @@ import net.mcreator.java.ClassFinder;
 import net.mcreator.java.DeclarationFinder;
 import net.mcreator.java.ProjectJarManager;
 import net.mcreator.java.debug.JVMDebugClient;
+import net.mcreator.java.monitoring.JMXMonitorClient;
+import net.mcreator.java.monitoring.JMXMonitorEventListener;
 import net.mcreator.preferences.PreferencesManager;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.action.impl.gradle.ClearAllGradleCachesAction;
 import net.mcreator.ui.component.ConsolePane;
+import net.mcreator.ui.component.SimpleLineChart;
 import net.mcreator.ui.component.util.ComponentUtils;
 import net.mcreator.ui.component.util.KeyStrokes;
+import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.component.util.ThreadUtil;
 import net.mcreator.ui.dialogs.CodeErrorDialog;
 import net.mcreator.ui.ide.CodeEditorView;
@@ -38,6 +43,7 @@ import net.mcreator.ui.ide.ProjectFileOpener;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.init.UIRES;
 import net.mcreator.ui.laf.themes.Theme;
+import net.mcreator.ui.search.ISearchable;
 import net.mcreator.util.HtmlUtils;
 import net.mcreator.util.math.TimeUtils;
 import org.apache.logging.log4j.LogManager;
@@ -46,6 +52,7 @@ import org.gradle.internal.impldep.org.apache.commons.lang.exception.ExceptionUt
 import org.gradle.tooling.*;
 
 import javax.annotation.Nullable;
+import javax.management.remote.JMXConnector;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.SimpleAttributeSet;
@@ -58,19 +65,25 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.lang.management.MemoryMXBean;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class GradleConsole extends JPanel {
+public class GradleConsole extends JPanel implements ISearchable {
 
 	private static final Logger LOG = LogManager.getLogger("Gradle Console");
+
+	public static final String GRADLE_SYNC_TASK = "@sync";
+
+	private static final Pattern ANSI_REMOVER = Pattern.compile("\u001B\\[[;\\d]*m");
 
 	private static final Color COLOR_TASK_START = new Color(0xBBD9D0);
 	private static final Color COLOR_TASK_COMPLETE = new Color(0xbbe86c);
@@ -103,7 +116,12 @@ public class GradleConsole extends JPanel {
 	private int status = READY;
 	private boolean gradleSetupTaskRunning = false;
 
+	private final JScrollPane mainScrollPane;
+
 	private final ConsoleSearchBar searchBar = new ConsoleSearchBar();
+
+	private final SimpleLineChart cpuChart = new SimpleLineChart();
+	private final SimpleLineChart memoryChart = new SimpleLineChart();
 
 	private CancellationTokenSource cancellationSource = GradleConnector.newCancellationTokenSource();
 
@@ -112,6 +130,8 @@ public class GradleConsole extends JPanel {
 
 	// Gradle console may be associated with a debug client
 	@Nullable private JVMDebugClient debugClient = null;
+
+	@Nullable private JMXMonitorClient jmxMonitorClient = null;
 
 	public GradleConsole(MCreator ref) {
 		this.ref = ref;
@@ -146,7 +166,7 @@ public class GradleConsole extends JPanel {
 							}
 						}
 					} catch (SecurityException | IllegalArgumentException ex) {
-						LOG.info("Loading JARs for code editor failed. Error: " + ex.getMessage());
+						LOG.info("Loading JARs for code editor failed. Error: {}", ex.getMessage());
 					}
 				}
 			}
@@ -156,10 +176,11 @@ public class GradleConsole extends JPanel {
 
 		pan.setBorder(BorderFactory.createEmptyBorder(9, 0, 0, 0));
 
-		JScrollPane aae = new JScrollPane(pan, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+		mainScrollPane = new JScrollPane(pan, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		aae.setBorder(BorderFactory.createMatteBorder(0, 10, 0, 0, Theme.current().getSecondAltBackgroundColor()));
-		aae.setBackground(Theme.current().getSecondAltBackgroundColor());
+		mainScrollPane.setBorder(
+				BorderFactory.createMatteBorder(0, 10, 0, 0, Theme.current().getSecondAltBackgroundColor()));
+		mainScrollPane.setBackground(Theme.current().getSecondAltBackgroundColor());
 
 		setLayout(new BorderLayout());
 
@@ -169,10 +190,50 @@ public class GradleConsole extends JPanel {
 
 		JPanel outerholder = new JPanel(new BorderLayout());
 		outerholder.add("North", searchBar);
-		outerholder.add("Center", aae);
+		outerholder.add("Center", mainScrollPane);
 		outerholder.setOpaque(false);
 
 		searchBar.setBorder(BorderFactory.createEmptyBorder(6, 10, 5, 0));
+
+		JLabel cpuLabel = L10N.label("performance_monitor.cpu");
+		cpuLabel.setForeground(Theme.current().getAltForegroundColor());
+		cpuLabel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.current().getAltBackgroundColor()));
+
+		JLabel memoryLabel = L10N.label("performance_monitor.memory");
+		memoryLabel.setForeground(Theme.current().getAltForegroundColor());
+		memoryLabel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Theme.current().getAltBackgroundColor()));
+
+		cpuChart.setChartColor(COLOR_LOGLEVEL_INFO);
+		cpuChart.setMaxPoints(3 * 60);
+		cpuChart.setYLimits(0, 100);
+		cpuChart.addLinkedChart(memoryChart);
+		cpuChart.setLabelFormatter(d -> {
+			String xLabel = Instant.ofEpochMilli((long) d[0]).atZone(ZoneId.systemDefault())
+					.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+			String yLabel = String.format("%d%%", (int) Math.round(d[1]));
+			return new String[] { xLabel, yLabel };
+		});
+
+		memoryChart.setChartColor(COLOR_LOGLEVEL_TRACE);
+		memoryChart.setMaxPoints(3 * 60);
+		memoryChart.addLinkedChart(cpuChart);
+		memoryChart.setLabelFormatter(d -> {
+			String xLabel = Instant.ofEpochMilli((long) d[0]).atZone(ZoneId.systemDefault())
+					.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+			String yLabel = String.format("%d MB", (int) Math.round(d[1]));
+			return new String[] { xLabel, yLabel };
+		});
+
+		JPanel monitorPanel = new JPanel();
+		monitorPanel.setOpaque(false);
+		monitorPanel.setLayout(new GridLayout(1, 2, 15, 15));
+		monitorPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 10));
+		monitorPanel.setPreferredSize(new Dimension(0, 100));
+		monitorPanel.add(PanelUtils.centerAndSouthElement(cpuChart, cpuLabel));
+		monitorPanel.add(PanelUtils.centerAndSouthElement(memoryChart, memoryLabel));
+		mainScrollPane.setColumnHeaderView(monitorPanel);
+		mainScrollPane.getColumnHeader().setOpaque(false);
+		mainScrollPane.getColumnHeader().setVisible(false);
 
 		add("Center", outerholder);
 
@@ -196,14 +257,14 @@ public class GradleConsole extends JPanel {
 		buildbt.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		buildbt.setToolTipText(L10N.t("dialog.gradle_console.start_build"));
 		buildbt.setOpaque(false);
-		buildbt.addActionListener(e -> ref.actionRegistry.buildWorkspace.doAction());
+		buildbt.addActionListener(e -> ref.getActionRegistry().buildWorkspace.doAction());
 		options.add(buildbt);
 
 		JButton rungradletask = new JButton(UIRES.get("16px.runtask"));
 		rungradletask.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		rungradletask.setToolTipText(L10N.t("dialog.gradle_console.run_specific_task"));
 		rungradletask.setOpaque(false);
-		rungradletask.addActionListener(e -> ref.actionRegistry.runGradleTask.doAction());
+		rungradletask.addActionListener(e -> ref.getActionRegistry().runGradleTask.doAction());
 		options.add(rungradletask);
 
 		options.add(ComponentUtils.deriveFont(new JLabel(" "), 2));
@@ -264,30 +325,37 @@ public class GradleConsole extends JPanel {
 	}
 
 	public void exec(String command) {
-		exec(command, null);
+		execImpl(command, null, null, null);
 	}
 
 	public void exec(String command, @Nullable GradleTaskFinishedListener taskSpecificListener) {
-		exec(command, null, taskSpecificListener);
+		execImpl(command, taskSpecificListener, null, null);
 	}
 
 	public void exec(String command, @Nullable ProgressListener progressListener,
 			@Nullable GradleTaskFinishedListener taskSpecificListener) {
-		exec(command, taskSpecificListener, progressListener, null);
+		execImpl(command, taskSpecificListener, progressListener, null);
 	}
 
-	public void exec(String command, @Nullable ProgressListener progressListener,
-			@Nullable JVMDebugClient jvmDebugClient) {
-		exec(command, null, progressListener, jvmDebugClient);
+	public void exec(String command, @Nullable JVMDebugClient jvmDebugClient) {
+		execImpl(command, null, null, jvmDebugClient);
 	}
 
-	public void exec(String command, @Nullable GradleTaskFinishedListener taskSpecificListener,
+	@SuppressWarnings("unchecked")
+	private void execImpl(String command, @Nullable GradleTaskFinishedListener taskSpecificListener,
 			@Nullable ProgressListener progressListener, @Nullable JVMDebugClient optionalDebugClient) {
 		status = RUNNING;
 
+		LOG.info("Executing Gradle task: {}", command);
+
+		final var commandTokens = command.split(" ");
+		final var commands = Arrays.stream(commandTokens).filter(e -> !e.contains("--")).toArray(String[]::new);
+		final var arguments = Arrays.stream(commandTokens).filter(e -> e.contains("--")).collect(Collectors.toList());
+		final boolean isGradleSync = Arrays.asList(commands).contains(GRADLE_SYNC_TASK);
+
 		ref.consoleTab.repaint();
-		ref.statusBar.reloadGradleIndicator();
-		ref.statusBar.setGradleMessage("Gradle: " + command);
+		ref.getStatusBar().reloadGradleIndicator();
+
 		stateListeners.forEach(listener -> listener.taskStarted(command));
 
 		StringBuffer taskOut = new StringBuffer();
@@ -296,7 +364,13 @@ public class GradleConsole extends JPanel {
 		pan.clearConsole();
 		searchBar.reinstall(pan);
 
-		append("Executing Gradle task: " + command, COLOR_TASK_START);
+		if (isGradleSync) {
+			append("Executing Gradle synchronization tasks", COLOR_TASK_START);
+			ref.getStatusBar().setGradleMessage("Gradle sync");
+		} else {
+			append("Executing Gradle task: " + command, COLOR_TASK_START);
+			ref.getStatusBar().setGradleMessage("Gradle: " + command);
+		}
 
 		String java_home = GradleUtils.getJavaHome();
 
@@ -335,17 +409,66 @@ public class GradleConsole extends JPanel {
 			PreferencesManager.PREFERENCES.gradle.offline.set(false);
 		}
 
-		String[] commandTokens = command.split(" ");
-		String[] commands = Arrays.stream(commandTokens).filter(e -> !e.contains("--")).toArray(String[]::new);
-		List<String> arguments = Arrays.stream(commandTokens).filter(e -> e.contains("--"))
-				.collect(Collectors.toList());
+		var projectConnection = GradleUtils.getGradleProjectConnection(ref.getWorkspace());
 
-		BuildLauncher task = GradleUtils.getGradleTaskLauncher(ref.getWorkspace(), commands);
+		ConfigurableLauncher<?> task;
+		if (isGradleSync) {
+			String extraSyncTask = ref.getGeneratorConfiguration().getGradleTaskFor("sync_task");
+			if (extraSyncTask != null) {
+				task = GradleUtils.getGradleSyncLauncher(ref.getGeneratorConfiguration(), projectConnection,
+						extraSyncTask);
+			} else {
+				task = GradleUtils.getGradleSyncLauncher(ref.getGeneratorConfiguration(), projectConnection);
+			}
+		} else {
+			task = GradleUtils.getGradleTaskLauncher(ref.getGeneratorConfiguration(), projectConnection, commands);
 
-		if (optionalDebugClient != null) {
-			this.debugClient = optionalDebugClient;
-			this.debugClient.init(task, cancellationSource.token());
-			ref.getDebugPanel().startDebug(this.debugClient);
+			Map<String, String> environment = GradleUtils.getEnvironment(java_home);
+
+			if (optionalDebugClient != null) {
+				this.debugClient = optionalDebugClient;
+				this.debugClient.init(environment, cancellationSource.token());
+				ref.getDebugPanel().startDebug(this.debugClient);
+			} else {
+				this.debugClient = null;
+			}
+
+			// We make sure only one monitor runs for server run where client is run too
+			if (PreferencesManager.PREFERENCES.gradle.enablePerformanceMonitor.get()) {
+				if (this.jmxMonitorClient == null || !this.jmxMonitorClient.isActive()) {
+					this.jmxMonitorClient = new JMXMonitorClient(environment, new JMXMonitorEventListener() {
+
+						private boolean initial = true;
+
+						@Override public void connected(JMXConnector jmxConnector) {
+							cpuChart.clear();
+							memoryChart.clear();
+							mainScrollPane.getColumnHeader().setVisible(true);
+						}
+
+						@Override public void disconnected() {
+							mainScrollPane.getColumnHeader().setVisible(false);
+						}
+
+						@Override public void dataRefresh(MemoryMXBean memoryMXBean, OperatingSystemMXBean osMXBean) {
+							if (initial) {
+								memoryChart.setYLimits(0,
+										(double) memoryMXBean.getHeapMemoryUsage().getMax() / 1024 / 1024);
+
+								initial = false;
+							}
+
+							long timestamp = System.currentTimeMillis();
+
+							cpuChart.addPoint(timestamp, osMXBean.getProcessCpuLoad() * 100);
+							memoryChart.addPoint(timestamp, (double) (memoryMXBean.getHeapMemoryUsage().getUsed()
+									+ memoryMXBean.getNonHeapMemoryUsage().getUsed()) / 1024 / 1024);
+						}
+					}, 1000);
+				}
+			}
+
+			task.setEnvironmentVariables(environment);
 		}
 
 		if (PreferencesManager.PREFERENCES.gradle.offline.get())
@@ -355,7 +478,9 @@ public class GradleConsole extends JPanel {
 
 		task.withCancellationToken(cancellationSource.token());
 
-		task.setStandardOutput(new OutputStreamEventHandler(line -> SwingUtilities.invokeLater(() -> {
+		task.setStandardOutput(new OutputStreamEventHandler(rawLine -> SwingUtilities.invokeLater(() -> {
+			String line = ANSI_REMOVER.matcher(rawLine).replaceAll("");
+
 			taskOut.append(line).append("\n");
 
 			if (line.startsWith("Note: Some input files use or ov"))
@@ -379,6 +504,10 @@ public class GradleConsole extends JPanel {
 			if (line.contains("to show the individual deprecation warnings and determine"))
 				return;
 			if (line.contains("#sec:command_line_warnings"))
+				return;
+			if (line.startsWith("*** Started working on "))
+				return;
+			if (line.contains("Problems report is available at:"))
 				return;
 
 			if (line.startsWith("WARNING: This project is configured to use the official obfuscation")) {
@@ -411,6 +540,7 @@ public class GradleConsole extends JPanel {
 
 		task.setStandardError(new OutputStreamEventHandler(line -> SwingUtilities.invokeLater(() -> {
 			taskErr.append(line).append("\n");
+
 			if (line.startsWith("[")) {
 				appendAutoColor(line);
 			} else {
@@ -436,24 +566,30 @@ public class GradleConsole extends JPanel {
 					return;
 				if (line.startsWith("SLF4J: "))
 					return;
+				if (line.startsWith("Cannot inject duplicate file mcp/client/Start.class"))
+					return;
 
-				append(line, COLOR_STDERR);
+				if (line.startsWith("Picked up JAVA_TOOL_OPTIONS: "))
+					append(line, COLOR_UNIMPORTANT);
+				else
+					append(line, COLOR_STDERR);
 			}
 		})));
 
-		task.addProgressListener((ProgressListener) event -> ref.statusBar.setGradleMessage(event.getDescription()));
+		task.addProgressListener(
+				(ProgressListener) event -> ref.getStatusBar().setGradleMessage(event.getDescription()));
 
 		if (progressListener != null) {
 			task.addProgressListener(progressListener);
 		}
 
-		task.run(new ResultHandler<>() {
+		ResultHandler<Void> resultHandler = new ResultHandler<>() {
 			@Override public void onComplete(Void result) {
 				SwingUtilities.invokeLater(() -> {
 					ref.getWorkspace().checkFailingGradleDependenciesAndClear(); // clear flag without checking
 
 					succeed();
-					taskComplete(GradleErrorCodes.STATUS_OK);
+					taskComplete(GradleResultCode.STATUS_OK);
 				});
 			}
 
@@ -469,10 +605,25 @@ public class GradleConsole extends JPanel {
 							if (!rerunFlag) {
 								rerunFlag = true;
 
-								LOG.warn("Gradle task suggested re-run. Attempting re-running task: " + command);
+								LOG.warn("Gradle task suggested re-run. Attempting re-running task: {}", command);
 
 								// Re-run the same command with the same listener
-								GradleConsole.this.exec(command, taskSpecificListener, progressListener, debugClient);
+								execImpl(command, taskSpecificListener, progressListener, debugClient);
+
+								return;
+							}
+						} else if (GradleErrorDecoder.isErrorDueToJMXPortIssues(taskErr.toString() + taskOut)) {
+							if (!rerunFlag) {
+								rerunFlag = true;
+
+								LOG.warn(
+										"Gradle task failed due to JMX port issues. Disabling JMX and attempting re-running task: {}",
+										command);
+
+								PreferencesManager.PREFERENCES.gradle.enablePerformanceMonitor.set(false);
+
+								// Re-run the same command with the same listener
+								execImpl(command, taskSpecificListener, progressListener, debugClient);
 
 								return;
 							}
@@ -488,7 +639,7 @@ public class GradleConsole extends JPanel {
 										JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options,
 										options[0]);
 								if (reply == 0 || reply == 1) {
-									taskComplete(GradleErrorCodes.GRADLE_CACHEDATA_ERROR);
+									taskComplete(GradleResultCode.GRADLE_CACHEDATA_ERROR);
 
 									ClearAllGradleCachesAction.clearAllGradleCaches(ref, reply == 1,
 											workspaceReportedFailingGradleDependencies);
@@ -511,7 +662,7 @@ public class GradleConsole extends JPanel {
 						append(" ");
 						append("TASK CANCELED", COLOR_LOGLEVEL_WARN);
 						succeed();
-						taskComplete(GradleErrorCodes.STATUS_OK);
+						taskComplete(GradleResultCode.STATUS_OK);
 						return;
 					} else if (failure.getCause().getClass().getSimpleName().equals("DaemonDisappearedException")
 							// workaround for MDK bug with gradle daemon
@@ -519,7 +670,7 @@ public class GradleConsole extends JPanel {
 						append(" ");
 						append("RUN COMPLETE", COLOR_TASK_COMPLETE);
 						succeed();
-						taskComplete(GradleErrorCodes.STATUS_OK);
+						taskComplete(GradleResultCode.STATUS_OK);
 						return;
 					} else {
 						String exception = ExceptionUtils.getFullStackTrace(failure);
@@ -536,14 +687,14 @@ public class GradleConsole extends JPanel {
 
 					fail();
 
-					int resultcode = 0;
+					GradleResultCode resultcode = GradleResultCode.STATUS_OK;
 
 					if (!errorhandled.get())
 						resultcode = GradleErrorDecoder.processErrorAndShowMessage(taskOut.toString(),
 								taskErr.toString(), ref);
 
-					if (resultcode == GradleErrorCodes.STATUS_OK)
-						resultcode = GradleErrorCodes.GRADLE_BUILD_FAILED;
+					if (resultcode == GradleResultCode.STATUS_OK)
+						resultcode = GradleResultCode.GRADLE_BUILD_FAILED;
 
 					taskComplete(resultcode);
 				});
@@ -552,15 +703,15 @@ public class GradleConsole extends JPanel {
 			private void fail() {
 				status = ERROR;
 				ref.consoleTab.repaint();
-				ref.statusBar.reloadGradleIndicator();
-				ref.statusBar.setGradleMessage(L10N.t("gradle.idle"));
+				ref.getStatusBar().reloadGradleIndicator();
+				ref.getStatusBar().setGradleMessage(L10N.t("gradle.idle"));
 			}
 
 			private void succeed() {
 				status = READY;
 				ref.consoleTab.repaint();
-				ref.statusBar.reloadGradleIndicator();
-				ref.statusBar.setGradleMessage(L10N.t("gradle.idle"));
+				ref.getStatusBar().reloadGradleIndicator();
+				ref.getStatusBar().setGradleMessage(L10N.t("gradle.idle"));
 
 				// on success, we clear the re-run flag
 				if (rerunFlag) {
@@ -569,7 +720,7 @@ public class GradleConsole extends JPanel {
 				}
 			}
 
-			private void taskComplete(int mcreatorGradleStatus) {
+			private void taskComplete(GradleResultCode mcreatorGradleStatus) {
 				appendPlainText("Task completed in " + TimeUtils.millisToLongDHMS(System.currentTimeMillis() - millis),
 						Color.gray);
 				append(" ");
@@ -580,16 +731,28 @@ public class GradleConsole extends JPanel {
 					debugClient = null;
 				}
 
+				if (jmxMonitorClient != null) {
+					jmxMonitorClient.stop();
+					jmxMonitorClient = null;
+				}
+
 				if (taskSpecificListener != null)
-					taskSpecificListener.onTaskFinished(new GradleTaskResult("", mcreatorGradleStatus));
+					taskSpecificListener.onTaskFinished(mcreatorGradleStatus);
 
 				stateListeners.forEach(
-						listener -> listener.taskFinished(new GradleTaskResult("", mcreatorGradleStatus)));
+						listener -> listener.taskFinished(mcreatorGradleStatus));
 
 				// reload mods view to display errors
-				ref.mv.reloadElementsInCurrentTab();
+				ref.reloadWorkspaceTabContents();
 			}
-		});
+		};
+
+		if (task instanceof BuildLauncher buildLauncher) {
+			buildLauncher.run(resultHandler);
+		} else {
+			BuildActionExecuter<?> buildLauncher = (BuildActionExecuter<?>) task;
+			((BuildActionExecuter<Void>) buildLauncher).run(resultHandler);
+		}
 	}
 
 	public int getStatus() {
@@ -762,6 +925,16 @@ public class GradleConsole extends JPanel {
 
 	@Nullable public JVMDebugClient getDebugClient() {
 		return debugClient;
+	}
+
+	@Override public void search(@Nullable String searchTerm) {
+		if (!searchen.isSelected())
+			searchen.doClick();
+
+		searchBar.getSearchField().requestFocusInWindow();
+
+		if (searchTerm != null)
+			searchBar.getSearchField().setText(searchTerm);
 	}
 
 }

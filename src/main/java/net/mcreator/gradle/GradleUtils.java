@@ -18,6 +18,8 @@
 
 package net.mcreator.gradle;
 
+import net.mcreator.generator.GeneratorConfiguration;
+import net.mcreator.generator.GeneratorFlavor;
 import net.mcreator.io.FileIO;
 import net.mcreator.plugin.modapis.ModAPIImplementation;
 import net.mcreator.plugin.modapis.ModAPIManager;
@@ -26,8 +28,7 @@ import net.mcreator.workspace.Workspace;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.gradle.tooling.BuildLauncher;
-import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.*;
 
 import java.io.File;
 import java.util.Arrays;
@@ -38,43 +39,58 @@ public class GradleUtils {
 
 	private static final Logger LOG = LogManager.getLogger(GradleUtils.class);
 
-	private static ProjectConnection getGradleProjectConnection(Workspace workspace) {
-		updateMCreatorBuildFile(workspace);
+	public static ProjectConnection getGradleProjectConnection(Workspace workspace) {
+		updateMCreatorBuildFile(workspace); // update mcreator.gradle file if needed
+		workspace.getGenerator().notifyDaemonsAboutChangedPaths(); // notify gradle daemons about changed paths
 		return workspace.getGenerator().getGradleProjectConnection();
 	}
 
-	public static Map<String, String> getEnvironment(String java_home) {
-		Map<String, String> environment = new HashMap<>(System.getenv());
-
-		// avoid global overrides
-		cleanupEnvironment(environment);
-
-		if (java_home != null)
-			environment.put("JAVA_HOME", java_home);
-
-		return environment;
+	public static BuildActionExecuter<Void> getGradleSyncLauncher(GeneratorConfiguration generatorConfiguration,
+			ProjectConnection projectConnection, String... additionalTasks) {
+		BuildAction<Void> syncBuildAction = GradleSyncBuildAction.loadFromIsolatedClassLoader();
+		BuildActionExecuter<Void> retval = projectConnection.action().projectsLoaded(syncBuildAction, unused -> {})
+				.build().forTasks(additionalTasks);
+		return configureLauncher(generatorConfiguration, retval); // make sure we have proper JVM, environment, ...
 	}
 
-	public static BuildLauncher getGradleTaskLauncher(Workspace workspace, String... tasks) {
-		BuildLauncher retval = getGradleProjectConnection(workspace).newBuild().forTasks(tasks)
-				.setJvmArguments("-Xms" + PreferencesManager.PREFERENCES.gradle.xms.get() + "m",
-						"-Xmx" + PreferencesManager.PREFERENCES.gradle.xmx.get() + "m");
+	public static BuildLauncher getGradleTaskLauncher(GeneratorConfiguration generatorConfiguration,
+			ProjectConnection projectConnection, String... tasks) {
+		BuildLauncher retval = projectConnection.newBuild().forTasks(tasks);
+		return configureLauncher(generatorConfiguration, retval); // make sure we have proper JVM, environment, ...
+	}
+
+	public static <T> ModelBuilder<T> getGradleModelBuilder(GeneratorConfiguration generatorConfiguration,
+			ProjectConnection projectConnection, Class<T> clazz) {
+		return configureLauncher(generatorConfiguration, projectConnection.model(clazz));
+	}
+
+	private static <T extends ConfigurableLauncher<T>> T configureLauncher(
+			GeneratorConfiguration generatorConfiguration, T launcher) {
+		// For some unexplainable reason, ForgeGradle eclipse model import does not generate
+		// all files if Xmx is passed. Likely some bug with Forge Gradle daemons where daemon
+		// fails to operate correctly so new one needs to be created for model building
+		if (!(launcher instanceof ModelBuilder<?>
+				&& generatorConfiguration.getGeneratorFlavor() == GeneratorFlavor.FORGE))
+			launcher.addJvmArguments("-Xmx" + PreferencesManager.PREFERENCES.gradle.xmx.get() + "m");
+
+		// make sure Gradle reports in English so our error decoder works properly
+		launcher.addJvmArguments("-Duser.language=en");
 
 		String java_home = getJavaHome();
 		if (java_home != null) // make sure detected JAVA_HOME is not null
-			retval = retval.setJavaHome(new File(java_home));
+			launcher = launcher.setJavaHome(new File(java_home));
 
 		// use custom set of environment variables to prevent system overrides
-		retval.setEnvironmentVariables(getEnvironment(java_home));
+		launcher.setEnvironmentVariables(getEnvironment(java_home));
 
 		if (java_home != null)
-			retval.withArguments(Arrays.asList("-Porg.gradle.java.installations.auto-detect=false",
+			launcher.withArguments(Arrays.asList("-Porg.gradle.java.installations.auto-detect=false",
 					"-Porg.gradle.java.installations.paths=" + java_home.replace('\\', '/')));
 
-		// some mod API toolchains need to think they are running in IDE, so we make them think we are Eclipse
-		retval.addJvmArguments("-Declipse.application=net.mcreator");
+		// some mod API toolchains (NeoGradle, Mod Dev Gradle) need to think they are running in IDE, so we make them think we are Eclipse
+		launcher.addJvmArguments("-Declipse.application=net.mcreator");
 
-		return retval;
+		return launcher;
 	}
 
 	public static String getJavaHome() {
@@ -125,15 +141,41 @@ public class GradleUtils {
 		}
 	}
 
+	public static Map<String, String> getEnvironment(String java_home) {
+		Map<String, String> environment = new HashMap<>(System.getenv());
+
+		// avoid global overrides
+		cleanupEnvironment(environment);
+
+		if (java_home != null)
+			environment.put("JAVA_HOME", java_home);
+
+		return environment;
+	}
+
 	public static void cleanupEnvironment(Map<String, String> environment) {
-		environment.remove("_JAVA_OPTIONS");
-		environment.remove("GRADLE_USER_HOME");
-		environment.remove("GRADLE_OPTS");
+		// General Java environment variables
 		environment.remove("JAVA_HOME");
-		environment.remove("JDK_HOME");
 		environment.remove("JRE_HOME");
+		environment.remove("JDK_HOME");
 		environment.remove("CLASSPATH");
+		environment.remove("_JAVA_OPTIONS");
+		environment.remove("JAVA_OPTS");
 		environment.remove("JAVA_TOOL_OPTIONS");
+		environment.remove("JAVACMD");
+		environment.remove("JDK_JAVA_OPTIONS");
+
+		// Gradle-specific environment variables
+		environment.remove("GRADLE_HOME");
+		environment.remove("GRADLE_OPTS");
+		environment.remove("GRADLE_USER_HOME");
+	}
+
+	public static void clearGradleConfigurationCache(Workspace workspace) {
+		File gradleCache = new File(workspace.getWorkspaceFolder(), ".gradle/configuration-cache");
+		if (gradleCache.isDirectory()) {
+			FileIO.deleteDir(gradleCache);
+		}
 	}
 
 }

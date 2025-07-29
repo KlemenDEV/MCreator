@@ -28,14 +28,14 @@ import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.dialogs.TypedTextureSelectorDialog;
 import net.mcreator.ui.help.HelpUtils;
 import net.mcreator.ui.init.L10N;
-import net.mcreator.ui.minecraft.TextureHolder;
+import net.mcreator.ui.minecraft.TextureSelectionButton;
+import net.mcreator.ui.procedure.AbstractProcedureSelector;
+import net.mcreator.ui.procedure.NumberProcedureSelector;
 import net.mcreator.ui.procedure.ProcedureSelector;
-import net.mcreator.ui.validation.AggregatedValidationResult;
-import net.mcreator.ui.validation.validators.TileHolderValidator;
+import net.mcreator.ui.validation.validators.TextureSelectionButtonValidator;
 import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.workspace.elements.ModElement;
 import net.mcreator.workspace.elements.VariableTypeLoader;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
@@ -45,24 +45,25 @@ import java.net.URISyntaxException;
 
 public class ParticleGUI extends ModElementGUI<Particle> {
 
-	private TextureHolder texture;
+	private TextureSelectionButton texture;
 
 	private final JSpinner width = new JSpinner(new SpinnerNumberModel(0.2, 0, 4096, 0.1));
 	private final JSpinner height = new JSpinner(new SpinnerNumberModel(0.2, 0, 4096, 0.1));
-	private final JSpinner scale = new JSpinner(new SpinnerNumberModel(1, 0.1, 4096, 0.1));
+	private NumberProcedureSelector scale;
 	private final JSpinner gravity = new JSpinner(new SpinnerNumberModel(0, -100, 100, 0.1));
 	private final JSpinner speedFactor = new JSpinner(new SpinnerNumberModel(1, -100, 100, 0.1));
 	private final JSpinner maxAge = new JSpinner(new SpinnerNumberModel(7, 0, 100000, 1));
 	private final JSpinner maxAgeDiff = new JSpinner(new SpinnerNumberModel(0, 0, 100000, 1));
 	private final JSpinner frameDuration = new JSpinner(new SpinnerNumberModel(1, 1, 100000, 1));
-	private final JSpinner angularVelocity = new JSpinner(new SpinnerNumberModel(0, -100, 100, 0.1));
+	private final JSpinner angularVelocity = new JSpinner(new SpinnerNumberModel(0, -100, 100, 0.01));
 	private final JSpinner angularAcceleration = new JSpinner(new SpinnerNumberModel(0, -100, 100, 0.01));
 
+	private final JCheckBox emissiveRendering = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox canCollide = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox alwaysShow = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox animate = L10N.checkbox("elementgui.common.enable");
 
-	private final JComboBox<String> renderType = new JComboBox<>(new String[] { "OPAQUE", "TRANSLUCENT", "LIT" });
+	private final JComboBox<String> renderType = new JComboBox<>(new String[] { "OPAQUE", "TRANSLUCENT" });
 
 	private ProcedureSelector additionalExpiryCondition;
 
@@ -73,6 +74,10 @@ public class ParticleGUI extends ModElementGUI<Particle> {
 	}
 
 	@Override protected void initGUI() {
+		scale = new NumberProcedureSelector(this.withEntry("particle/scale"), mcreator,
+				L10N.t("elementgui.particle.visual_scale"), AbstractProcedureSelector.Side.CLIENT,
+				new JSpinner(new SpinnerNumberModel(1, 0.1, 4096, 0.1)), 0,
+				Dependency.fromString("x:number/y:number/z:number/world:world/age:number/scale:number"));
 		additionalExpiryCondition = new ProcedureSelector(this.withEntry("particle/additional_expiry_condition"),
 				mcreator, L10N.t("elementgui.particle.expiry_condition"), ProcedureSelector.Side.CLIENT, true,
 				VariableTypeLoader.BuiltInTypes.LOGIC, Dependency.fromString(
@@ -88,14 +93,14 @@ public class ParticleGUI extends ModElementGUI<Particle> {
 		alwaysShow.setOpaque(false);
 		animate.setOpaque(false);
 
-		texture = new TextureHolder(new TypedTextureSelectorDialog(mcreator, TextureType.PARTICLE));
+		texture = new TextureSelectionButton(new TypedTextureSelectorDialog(mcreator, TextureType.PARTICLE));
 		texture.setOpaque(false);
 
 		JComponent textureComponent = PanelUtils.totalCenterInPanel(ComponentUtils.squareAndBorder(
 				HelpUtils.wrapWithHelpButton(this.withEntry("particle/texture"), texture),
 				L10N.t("elementgui.common.texture")));
 
-		JPanel spo2 = new JPanel(new GridLayout(12, 2, 2, 2));
+		JPanel spo2 = new JPanel(new GridLayout(13, 2, 2, 2));
 		spo2.setOpaque(false);
 
 		spo2.add(HelpUtils.wrapWithHelpButton(this.withEntry("particle/animated_texture"),
@@ -109,6 +114,10 @@ public class ParticleGUI extends ModElementGUI<Particle> {
 		spo2.add(HelpUtils.wrapWithHelpButton(this.withEntry("particle/render_type"),
 				L10N.label("elementgui.particle.render_type")));
 		spo2.add(renderType);
+
+		spo2.add(HelpUtils.wrapWithHelpButton(this.withEntry("particle/emissive_rendering"),
+				L10N.label("elementgui.common.emissive_rendering")));
+		spo2.add(emissiveRendering);
 
 		spo2.add(HelpUtils.wrapWithHelpButton(this.withEntry("particle/scale"),
 				L10N.label("elementgui.particle.visual_scale")));
@@ -148,35 +157,30 @@ public class ParticleGUI extends ModElementGUI<Particle> {
 
 		pane3.add("Center", PanelUtils.totalCenterInPanel(PanelUtils.northAndCenterElement(textureComponent,
 				PanelUtils.centerAndSouthElement(spo2,
-						PanelUtils.westAndCenterElement(new JEmptyBox(3, 3), additionalExpiryCondition), 5, 10), 15,
-				15)));
+						PanelUtils.westAndCenterElement(new JEmptyBox(3, 3), additionalExpiryCondition), 5, 2), 15,
+				5)));
 
-		texture.setValidator(new TileHolderValidator(texture));
+		texture.setValidator(new TextureSelectionButtonValidator(texture));
 
-		addPage(L10N.t("elementgui.common.page_properties"), pane3);
+		addPage(L10N.t("elementgui.common.page_properties"), pane3).validate(texture);
 	}
 
 	@Override public void reloadDataLists() {
 		super.reloadDataLists();
 
 		additionalExpiryCondition.refreshListKeepSelected();
-	}
-
-	@Override protected AggregatedValidationResult validatePage(int page) {
-		if (page == 0)
-			return new AggregatedValidationResult(texture);
-		return new AggregatedValidationResult.PASS();
+		scale.refreshListKeepSelected();
 	}
 
 	@Override public void openInEditingMode(Particle particle) {
-		texture.setTextureFromTextureName(
-				StringUtils.removeEnd(particle.texture, ".png")); // legacy, old workspaces stored name with extension
+		texture.setTexture(particle.texture);
 		width.setValue(particle.width);
 		height.setValue(particle.height);
-		scale.setValue(particle.scale);
+		scale.setSelectedProcedure(particle.scale);
 		gravity.setValue(particle.gravity);
 		speedFactor.setValue(particle.speedFactor);
 		frameDuration.setValue(particle.frameDuration);
+		emissiveRendering.setSelected(particle.emissiveRendering);
 		maxAge.setValue(particle.maxAge);
 		maxAgeDiff.setValue(particle.maxAgeDiff);
 		angularVelocity.setValue(particle.angularVelocity);
@@ -190,14 +194,15 @@ public class ParticleGUI extends ModElementGUI<Particle> {
 
 	@Override public Particle getElementFromGUI() {
 		Particle particle = new Particle(modElement);
-		particle.texture = texture.getID() + ".png"; // legacy, old workspaces stored name with extension
+		particle.texture = texture.getTextureHolder();
 		particle.width = (double) width.getValue();
 		particle.height = (double) height.getValue();
-		particle.scale = (double) scale.getValue();
+		particle.scale = scale.getSelectedProcedure();
 		particle.gravity = (double) gravity.getValue();
 		particle.speedFactor = (double) speedFactor.getValue();
 		particle.maxAge = (int) maxAge.getValue();
 		particle.frameDuration = (int) frameDuration.getValue();
+		particle.emissiveRendering = emissiveRendering.isSelected();
 		particle.maxAgeDiff = (int) maxAgeDiff.getValue();
 		particle.angularVelocity = (double) angularVelocity.getValue();
 		particle.angularAcceleration = (double) angularAcceleration.getValue();

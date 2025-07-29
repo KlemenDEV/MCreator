@@ -19,17 +19,12 @@
 package net.mcreator.element.types;
 
 import net.mcreator.element.GeneratableElement;
-import net.mcreator.element.parts.IWorkspaceDependent;
-import net.mcreator.element.parts.MItemBlock;
-import net.mcreator.element.parts.ProjectileEntry;
-import net.mcreator.element.parts.TabEntry;
+import net.mcreator.element.parts.*;
 import net.mcreator.element.parts.procedure.LogicProcedure;
 import net.mcreator.element.parts.procedure.Procedure;
 import net.mcreator.element.parts.procedure.StringListProcedure;
-import net.mcreator.element.types.interfaces.IItem;
-import net.mcreator.element.types.interfaces.IItemWithModel;
-import net.mcreator.element.types.interfaces.IItemWithTexture;
-import net.mcreator.element.types.interfaces.ITabContainedElement;
+import net.mcreator.element.types.interfaces.*;
+import net.mcreator.generator.mapping.NameMapper;
 import net.mcreator.minecraft.DataListEntry;
 import net.mcreator.minecraft.DataListLoader;
 import net.mcreator.minecraft.MCItem;
@@ -50,18 +45,19 @@ import java.awt.image.BufferedImage;
 import java.util.*;
 
 @SuppressWarnings({ "unused", "NotNullFieldNotInitialized" }) public class Item extends GeneratableElement
-		implements IItem, IItemWithModel, ITabContainedElement, IItemWithTexture {
+		implements IItem, IItemWithModel, ITabContainedElement, ISpecialInfoHolder, IItemWithTexture {
 
 	public int renderType;
-	@TextureReference(TextureType.ITEM) public String texture;
+	@TextureReference(TextureType.ITEM) public TextureHolder texture;
 	@Nonnull public String customModelName;
+	@TextureReference(TextureType.ITEM) public TextureHolder guiTexture;
 
 	@ModElementReference public Map<String, Procedure> customProperties;
 	@TextureReference(TextureType.ITEM) @ResourceReference("model") public List<StateEntry> states;
 
 	public String name;
 	public String rarity;
-	public TabEntry creativeTab;
+	@ModElementReference public List<TabEntry> creativeTabs;
 	public int stackSize;
 	public int enchantability;
 	public int useDuration;
@@ -80,7 +76,7 @@ import java.util.*;
 	public StringListProcedure specialInformation;
 	public LogicProcedure glowCondition;
 
-	@Nullable @ModElementReference(defaultValues = "<NONE>") public String guiBoundTo;
+	@Nullable @ModElementReference public String guiBoundTo;
 	public int inventorySize;
 	public int inventoryStackSize;
 
@@ -98,7 +94,9 @@ import java.util.*;
 	// Ranged properties
 	public boolean enableRanged;
 	public boolean shootConstantly;
+	public boolean rangedItemChargesPower;
 	public ProjectileEntry projectile;
+	public boolean projectileDisableAmmoCheck;
 	public Procedure onRangedItemUsed;
 	public Procedure rangedUseCondition;
 
@@ -111,6 +109,15 @@ import java.util.*;
 	public boolean isAlwaysEdible;
 	public String animation;
 
+	// Music disc
+	public boolean isMusicDisc;
+	public Sound musicDiscMusic;
+	public String musicDiscDescription;
+	public int musicDiscLengthInTicks;
+	public int musicDiscAnalogOutput;
+
+	@ModElementReference public List<String> providedBannerPatterns;
+
 	private Item() {
 		this(null);
 	}
@@ -118,36 +125,43 @@ import java.util.*;
 	public Item(ModElement element) {
 		super(element);
 
+		this.creativeTabs = new ArrayList<>();
+
 		this.customProperties = new LinkedHashMap<>();
 		this.states = new ArrayList<>();
 
 		this.rarity = "COMMON";
 		this.inventorySize = 9;
-		this.inventoryStackSize = 64;
+		this.inventoryStackSize = 99;
 		this.saturation = 0.3f;
 		this.animation = "eat";
+
+		this.providedBannerPatterns = new ArrayList<>();
 	}
 
 	@Override public BufferedImage generateModElementPicture() {
-		return ImageUtils.resizeAndCrop(
-				getModElement().getFolderManager().getTextureImageIcon(texture, TextureType.ITEM).getImage(), 32);
+		if (hasGUITexture()) {
+			return ImageUtils.resizeAndCrop(guiTexture.getImage(TextureType.ITEM), 32);
+		} else {
+			return ImageUtils.resizeAndCrop(texture.getImage(TextureType.ITEM), 32);
+		}
 	}
 
 	@Override public Model getItemModel() {
 		return Model.getModelByParams(getModElement().getWorkspace(), customModelName, decodeModelType(renderType));
 	}
 
-	@Override public Map<String, String> getTextureMap() {
+	@Override public Map<String, TextureHolder> getTextureMap() {
 		if (getItemModel() instanceof TexturedModel textured && textured.getTextureMapping() != null)
 			return textured.getTextureMapping().getTextureMap();
 		return new HashMap<>();
 	}
 
-	@Override public TabEntry getCreativeTab() {
-		return creativeTab;
+	@Override public List<TabEntry> getCreativeTabs() {
+		return creativeTabs;
 	}
 
-	@Override public String getTexture() {
+	@Override public TextureHolder getTexture() {
 		return texture;
 	}
 
@@ -157,6 +171,14 @@ import java.util.*;
 
 	@Override public List<MCItem> getCreativeTabItems() {
 		return providedMCItems();
+	}
+
+	@Override public StringListProcedure getSpecialInfoProcedure() {
+		return specialInformation;
+	}
+
+	public boolean hasGUITexture() {
+		return guiTexture != null && !guiTexture.isEmpty();
 	}
 
 	public boolean hasNormalModel() {
@@ -171,16 +193,52 @@ import java.util.*;
 		return decodeModelType(renderType) == Model.Type.BUILTIN && customModelName.equals("Ranged item");
 	}
 
+	public boolean hasCustomJSONModel() {
+		return decodeModelType(renderType) == Model.Type.JSON;
+	}
+
+	public boolean hasCustomOBJModel() {
+		return decodeModelType(renderType) == Model.Type.OBJ;
+	}
+
+	public boolean hasCustomJAVAModel() {
+		return decodeModelType(renderType) == Model.Type.JAVA;
+	}
+
 	public boolean hasInventory() {
-		return guiBoundTo != null && !guiBoundTo.isEmpty() && !guiBoundTo.equals("<NONE>");
+		return guiBoundTo != null && !guiBoundTo.isEmpty();
 	}
 
 	public boolean hasNonDefaultAnimation() {
 		return isFood ? !animation.equals("eat") : !animation.equals("none");
 	}
 
+	public boolean hasCustomFoodConsumable() {
+		return isFood && !(useDuration == 32 && (animation.equals("eat") || animation.equals("drink")));
+	}
+
 	public boolean hasEatResultItem() {
 		return isFood && eatResultItem != null && !eatResultItem.isEmpty();
+	}
+
+	public boolean hasCustomEatResultItem() {
+		return isFood && eatResultItem != null && !eatResultItem.isEmpty() && eatResultItem.getUnmappedValue()
+				.startsWith("CUSTOM:");
+	}
+
+	public boolean hasBannerPatterns() {
+		return !providedBannerPatterns.isEmpty();
+	}
+
+	public String getPatternDescription() {
+		if (!providedBannerPatterns.isEmpty()) {
+			List<String> names = providedBannerPatterns.stream()
+					.map(e -> getModElement().getWorkspace().getModElementByName(e))
+					.map(me -> me != null && me.getGeneratableElement() instanceof BannerPattern bp ? bp.name : "")
+					.toList();
+			return String.join(", ", names);
+		}
+		return "";
 	}
 
 	/**
@@ -206,8 +264,8 @@ import java.util.*;
 
 			model.stateMap = new StateMap();
 			state.stateMap.forEach((prop, value) -> {
-				if (customProperties.containsKey(prop.getName().replace("CUSTOM:", "")) || builtinProperties.contains(
-						prop.getName()))
+				if (customProperties.containsKey(prop.getName().replace(NameMapper.MCREATOR_PREFIX, ""))
+						|| builtinProperties.contains(prop.getName()))
 					model.stateMap.put(prop, value);
 			});
 
@@ -221,7 +279,7 @@ import java.util.*;
 	public static class StateEntry implements IWorkspaceDependent {
 
 		public int renderType;
-		@TextureReference(TextureType.ITEM) public String texture;
+		@TextureReference(TextureType.ITEM) public TextureHolder texture;
 		public String customModelName;
 
 		public StateMap stateMap;
@@ -240,7 +298,7 @@ import java.util.*;
 			return Model.getModelByParams(workspace, customModelName, decodeModelType(renderType));
 		}
 
-		public Map<String, String> getTextureMap() {
+		public Map<String, TextureHolder> getTextureMap() {
 			if (getItemModel() instanceof TexturedModel textured && textured.getTextureMapping() != null)
 				return textured.getTextureMapping().getTextureMap();
 			return null;
@@ -257,21 +315,37 @@ import java.util.*;
 		public boolean hasRangedItemModel() {
 			return decodeModelType(renderType) == Model.Type.BUILTIN && customModelName.equals("Ranged item");
 		}
+
+		public boolean hasCustomJSONModel() {
+			return decodeModelType(renderType) == Model.Type.JSON;
+		}
+
+		public boolean hasCustomOBJModel() {
+			return decodeModelType(renderType) == Model.Type.OBJ;
+		}
+
+		public boolean hasCustomJAVAModel() {
+			return decodeModelType(renderType) == Model.Type.JAVA;
+		}
 	}
 
 	public static int encodeModelType(Model.Type modelType) {
 		return switch (modelType) {
+			case BUILTIN -> 0;
 			case JSON -> 1;
 			case OBJ -> 2;
-			default -> 0;
+			case JAVA -> 3;
+			default -> throw new IllegalStateException("Unexpected value: " + modelType);
 		};
 	}
 
 	public static Model.Type decodeModelType(int modelType) {
 		return switch (modelType) {
+			case 0 -> Model.Type.BUILTIN;
 			case 1 -> Model.Type.JSON;
 			case 2 -> Model.Type.OBJ;
-			default -> Model.Type.BUILTIN;
+			case 3 -> Model.Type.JAVA;
+			default -> throw new IllegalStateException("Unexpected value: " + modelType);
 		};
 	}
 

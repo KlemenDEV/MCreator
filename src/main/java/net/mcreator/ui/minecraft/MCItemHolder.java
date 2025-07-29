@@ -45,6 +45,7 @@ public class MCItemHolder extends JButton implements IValidable {
 
 	private boolean showValidation = true;
 	private boolean removeButtonHover;
+	private boolean openOnRightClick = true;
 
 	private final List<ActionListener> listeners = new ArrayList<>();
 
@@ -71,12 +72,17 @@ public class MCItemHolder extends JButton implements IValidable {
 		initGUI();
 	}
 
+	public MCItemHolder disableRightClick() {
+		this.openOnRightClick = false;
+		return this;
+	}
+
 	public void addBlockSelectedListener(ActionListener al) {
 		listeners.add(al);
 	}
 
 	public void setBlock(MItemBlock mItemBlock) {
-		if (mItemBlock != null) {
+		if (mItemBlock != null && mItemBlock.isValidReference()) {
 			setIcon(new ImageIcon(ImageUtils.resizeAA(
 					MCItem.getBlockIconBasedOnName(mcreator.getWorkspace(), mItemBlock.getUnmappedValue()).getImage(),
 					25)));
@@ -120,7 +126,7 @@ public class MCItemHolder extends JButton implements IValidable {
 		setBorder(BorderFactory.createEmptyBorder());
 		addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
-				if (isEnabled()) {
+				if (isEnabled() && (e.getButton() != MouseEvent.BUTTON3 || openOnRightClick)) {
 					if ((e.getButton() == MouseEvent.BUTTON2
 							|| e.getX() > 1 && e.getX() < 11 && e.getY() < getHeight() - 1
 							&& e.getY() > getHeight() - 11) && !block.isEmpty()) {

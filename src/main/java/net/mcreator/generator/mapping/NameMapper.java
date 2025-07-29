@@ -19,8 +19,10 @@
 package net.mcreator.generator.mapping;
 
 import net.mcreator.generator.GeneratorTokens;
+import net.mcreator.util.TraceUtil;
 import net.mcreator.workspace.Workspace;
 import net.mcreator.workspace.elements.ModElement;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -34,6 +36,10 @@ public class NameMapper {
 	private static final Logger LOG = LogManager.getLogger("Name Mapper");
 
 	public static final String UNKNOWN_ELEMENT = "deleted_mod_element";
+
+	public static final String MCREATOR_PREFIX = "CUSTOM:";
+
+	public static final String EXTERNAL_PREFIX = "EXTERNAL:";
 
 	private final String mappingSource;
 	private Workspace workspace;
@@ -68,28 +74,53 @@ public class NameMapper {
 		if (mapping == null)
 			return origName;
 
+		if (origName.startsWith(EXTERNAL_PREFIX)) {
+			return origName.replace(EXTERNAL_PREFIX, "");
+		}
+
 		Object skip_prefixes = mapping.get("_bypass_prefix");
-		if (skip_prefixes instanceof String && origName.startsWith((String) skip_prefixes)) {
-			return origName;
-		} else if (skip_prefixes instanceof List) {
-			for (Object skip_prefix : (List<?>) skip_prefixes) {
-				if (skip_prefix instanceof String && origName.startsWith((String) skip_prefix))
-					return origName;
+		if (skip_prefixes instanceof String skipPrefix && origName.startsWith(skipPrefix)) {
+			return origName.replace(skipPrefix + "mod:",
+					skipPrefix + workspace.getWorkspaceSettings().getModID() + ":");
+		} else if (skip_prefixes instanceof List<?> skipPrefixesList) {
+			for (Object skip_prefix : skipPrefixesList) {
+				if (skip_prefix instanceof String skipPrefix && origName.startsWith(skipPrefix))
+					return origName.replace(skipPrefix + "mod:",
+							skipPrefix + workspace.getWorkspaceSettings().getModID() + ":");
 			}
 		}
 
-		String mcreator_prefix = (String) mapping.get("_mcreator_prefix");
-		if (mcreator_prefix != null && origName.startsWith(mcreator_prefix)) {
+		if (origName.startsWith(MCREATOR_PREFIX)) {
 			Object mcreator_map_template = mapping.get("_mcreator_map_template");
 			String toMapTemplate = null;
-			if (mcreator_map_template instanceof String)
+			String suffix = null;
+			if (mcreator_map_template instanceof String) {
 				toMapTemplate = (String) mcreator_map_template;
-			else if (mcreator_map_template instanceof List<?> mappingValuesList
-					&& mappingTable < mappingValuesList.size())
+			} else if (mcreator_map_template instanceof List<?> mappingValuesList
+					&& mappingTable < mappingValuesList.size()) {
 				toMapTemplate = (String) mappingValuesList.get(mappingTable);
+			} else if (mcreator_map_template instanceof Map<?, ?> mappingValuesMap) {
+				String suffixSeparator = ".";
+				if (mapping.get("_suffix_separator") != null) {
+					suffixSeparator = (String) mapping.get("_suffix_separator");
+				}
+				String suffixLookup = StringUtils.substringAfterLast(origName.replace(MCREATOR_PREFIX, ""),
+						suffixSeparator);
+				if (suffixLookup.isEmpty()) { // If the entry has no suffix, use the "_default" mapping entry
+					suffixLookup = "_default";
+				} else {
+					suffix = suffixSeparator + suffixLookup;
+				}
+				toMapTemplate = switch (mappingValuesMap.get(suffixLookup)) {
+					case String stringEntry -> stringEntry;
+					case List<?> listEntry when mappingTable < listEntry.size() -> (String) listEntry.get(mappingTable);
+					default -> null;
+				};
+			}
 
 			if (toMapTemplate != null) {
-				origName = origName.replace(mcreator_prefix, "");
+				// Remove prefix and possibly the suffix
+				origName = StringUtils.removeEnd(origName.replace(MCREATOR_PREFIX, ""), suffix);
 				String retval = GeneratorTokens.replaceTokens(workspace, toMapTemplate.replace("@NAME", origName)
 						.replace("@UPPERNAME", origName.toUpperCase(Locale.ENGLISH))
 						.replace("@name", origName.toLowerCase(Locale.ENGLISH)));
@@ -99,7 +130,8 @@ public class NameMapper {
 						retval = retval.replace("@registryname", element.getRegistryName())
 								.replace("@REGISTRYNAME", element.getRegistryNameUpper());
 					} else {
-						LOG.warn("Failed to determine registry name for: " + origName);
+						LOG.warn("({}) Failed to determine registry name for: {}", TraceUtil.tryToFindMCreatorInvoker(),
+								origName);
 						retval = retval.replace("@registryname", UNKNOWN_ELEMENT)
 								.replace("@REGISTRYNAME", UNKNOWN_ELEMENT.toUpperCase(Locale.ENGLISH));
 					}
@@ -124,19 +156,12 @@ public class NameMapper {
 	}
 
 	@Nullable private String processMapping(Map<?, ?> mapping, String origName, int mappingTable) {
-		String mappedName = null;
-
-		Object mappedObject = mapping.get(origName);
-
-		if (mappedObject instanceof String) {
-			if (mappingTable == 0)
-				mappedName = (String) mappedObject;
-		} else if (mappedObject instanceof List<?> mappingValuesList) {
-			if (mappingTable < mappingValuesList.size())
-				mappedName = (String) mappingValuesList.get(mappingTable);
-		}
-
-		return mappedName;
+		return switch (mapping.get(origName)) {
+			case String mappingString when mappingTable == 0 -> mappingString;
+			case List<?> mappingValuesList when mappingTable < mappingValuesList.size() ->
+					(String) mappingValuesList.get(mappingTable);
+			case null, default -> null;
+		};
 	}
 
 }

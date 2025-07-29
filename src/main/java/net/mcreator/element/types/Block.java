@@ -20,43 +20,43 @@ package net.mcreator.element.types;
 
 import net.mcreator.element.BaseType;
 import net.mcreator.element.GeneratableElement;
-import net.mcreator.element.parts.Fluid;
 import net.mcreator.element.parts.*;
+import net.mcreator.element.parts.Fluid;
 import net.mcreator.element.parts.procedure.NumberProcedure;
 import net.mcreator.element.parts.procedure.Procedure;
 import net.mcreator.element.parts.procedure.StringListProcedure;
-import net.mcreator.element.types.interfaces.IBlock;
-import net.mcreator.element.types.interfaces.IBlockWithBoundingBox;
-import net.mcreator.element.types.interfaces.IItemWithModel;
-import net.mcreator.element.types.interfaces.ITabContainedElement;
+import net.mcreator.element.types.interfaces.*;
 import net.mcreator.generator.GeneratorFlavor;
 import net.mcreator.minecraft.MCItem;
 import net.mcreator.minecraft.MinecraftImageGenerator;
+import net.mcreator.ui.minecraft.states.PropertyDataWithValue;
 import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.util.image.ImageUtils;
 import net.mcreator.workspace.elements.ModElement;
 import net.mcreator.workspace.references.ModElementReference;
+import net.mcreator.workspace.references.ResourceReference;
 import net.mcreator.workspace.references.TextureReference;
 import net.mcreator.workspace.resources.Model;
 import net.mcreator.workspace.resources.TexturedModel;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @SuppressWarnings({ "unused", "NotNullFieldNotInitialized" }) public class Block extends GeneratableElement
-		implements IBlock, IItemWithModel, ITabContainedElement, IBlockWithBoundingBox {
+		implements IBlock, IItemWithModel, ITabContainedElement, ISpecialInfoHolder, IBlockWithBoundingBox {
 
-	@TextureReference(TextureType.BLOCK) public String texture;
-	@TextureReference(TextureType.BLOCK) public String textureTop;
-	@TextureReference(TextureType.BLOCK) public String textureLeft;
-	@TextureReference(TextureType.BLOCK) public String textureFront;
-	@TextureReference(TextureType.BLOCK) public String textureRight;
-	@TextureReference(TextureType.BLOCK) public String textureBack;
+	@TextureReference(TextureType.BLOCK) public TextureHolder texture;
+	@TextureReference(TextureType.BLOCK) public TextureHolder textureTop;
+	@TextureReference(TextureType.BLOCK) public TextureHolder textureLeft;
+	@TextureReference(TextureType.BLOCK) public TextureHolder textureFront;
+	@TextureReference(TextureType.BLOCK) public TextureHolder textureRight;
+	@TextureReference(TextureType.BLOCK) public TextureHolder textureBack;
 	public int renderType;
 	@Nonnull public String customModelName;
 	public int rotationMode;
@@ -64,10 +64,13 @@ import java.util.stream.Collectors;
 	public boolean emissiveRendering;
 	public boolean displayFluidOverlay;
 
-	@TextureReference(TextureType.ITEM) public String itemTexture;
-	@TextureReference(TextureType.BLOCK) public String particleTexture;
+	@ModElementReference @ResourceReference("animation") public List<AnimationEntry> animations;
+
+	@TextureReference(TextureType.ITEM) public TextureHolder itemTexture;
+	@TextureReference(TextureType.BLOCK) public TextureHolder particleTexture;
 
 	public String blockBase;
+	public String blockSetType;
 
 	public String tintType;
 	public boolean isItemTinted;
@@ -79,13 +82,20 @@ import java.util.stream.Collectors;
 	public boolean disableOffset;
 	public List<BoxEntry> boundingBoxes;
 
+	public List<PropertyDataWithValue<?>> customProperties;
+
 	public String name;
 	public StringListProcedure specialInformation;
 	public double hardness;
 	public double resistance;
 	public boolean hasGravity;
 	public boolean isWaterloggable;
-	public TabEntry creativeTab;
+
+	public boolean hasBlockItem;
+	public int maxStackSize;
+	public String rarity;
+	public boolean immuneToFire;
+	@ModElementReference public List<TabEntry> creativeTabs;
 
 	@Nonnull public String destroyTool;
 	public MItemBlock customDrop;
@@ -97,7 +107,6 @@ import java.util.stream.Collectors;
 	public boolean plantsGrowOn;
 	public boolean canRedstoneConnect;
 	public int lightOpacity;
-	public Material material;
 
 	public int tickRate;
 	public boolean tickRandomly;
@@ -106,11 +115,13 @@ import java.util.stream.Collectors;
 	public boolean canProvidePower;
 	public NumberProcedure emittedRedstonePower;
 	public String colorOnMap;
+	public String noteBlockInstrument;
 	public MItemBlock creativePickItem;
 	public String offsetType;
 	public String aiPathNodeType;
 	public Color beaconColorModifier;
 
+	public boolean ignitedByLava;
 	public int flammability;
 	public int fireSpreadSpeed;
 
@@ -132,7 +143,8 @@ import java.util.stream.Collectors;
 
 	public int luminance;
 	public boolean unbreakable;
-	public int breakHarvestLevel;
+	public String vanillaToolTier;
+	public Procedure additionalHarvestCondition;
 
 	public Procedure placingCondition;
 
@@ -141,8 +153,14 @@ import java.util.stream.Collectors;
 	public Procedure bonemealSuccessCondition;
 	public Procedure onBonemealSuccess;
 
+	public boolean sensitiveToVibration;
+	public List<GameEventEntry> vibrationalEvents;
+	public NumberProcedure vibrationSensitivityRadius;
+	public Procedure canReceiveVibrationCondition;
+	public Procedure onReceivedVibration;
+
 	public boolean hasInventory;
-	@ModElementReference(defaultValues = "<NONE>") public String guiBoundTo;
+	@ModElementReference @Nullable public String guiBoundTo;
 	public boolean openGUIOnRightClick;
 	public int inventorySize;
 	public int inventoryStackSize;
@@ -150,6 +168,8 @@ import java.util.stream.Collectors;
 	public boolean inventoryComparatorPower;
 	public List<Integer> inventoryOutSlotIDs;
 	public List<Integer> inventoryInSlotIDs;
+	public Procedure inventoryAutomationTakeCondition;
+	public Procedure inventoryAutomationPlaceCondition;
 
 	public boolean hasEnergyStorage;
 	public int energyInitial;
@@ -192,6 +212,14 @@ import java.util.stream.Collectors;
 	public Block(ModElement element) {
 		super(element);
 
+		this.hasBlockItem = true;
+		this.maxStackSize = 64;
+		this.rarity = "COMMON";
+		this.creativeTabs = new ArrayList<>();
+
+		this.customProperties = new ArrayList<>();
+
+		this.blockSetType = "OAK";
 		this.tintType = "No tint";
 		this.boundingBoxes = new ArrayList<>();
 		this.restrictionBiomes = new ArrayList<>();
@@ -200,10 +228,12 @@ import java.util.stream.Collectors;
 		this.speedFactor = 1.0;
 		this.jumpFactor = 1.0;
 		this.colorOnMap = "DEFAULT";
+		this.noteBlockInstrument = "harp";
 		this.aiPathNodeType = "DEFAULT";
 		this.offsetType = "NONE";
 		this.generationShape = "UNIFORM";
 		this.destroyTool = "Not specified";
+		this.vanillaToolTier = "NONE";
 		this.inventoryInSlotIDs = new ArrayList<>();
 		this.inventoryOutSlotIDs = new ArrayList<>();
 
@@ -211,6 +241,10 @@ import java.util.stream.Collectors;
 		this.energyMaxReceive = 200;
 		this.energyMaxExtract = 200;
 		this.fluidCapacity = 8000;
+
+		this.vibrationalEvents = new ArrayList<>();
+
+		this.animations = new ArrayList<>();
 	}
 
 	public int renderType() {
@@ -236,7 +270,7 @@ import java.util.stream.Collectors;
 	}
 
 	public boolean shouldOpenGUIOnRightClick() {
-		return guiBoundTo != null && !guiBoundTo.equals("<NONE>") && openGUIOnRightClick;
+		return guiBoundTo != null && openGUIOnRightClick;
 	}
 
 	public boolean shouldScheduleTick() {
@@ -245,6 +279,10 @@ import java.util.stream.Collectors;
 
 	public boolean shouldDisableOffset() {
 		return disableOffset || offsetType.equals("NONE");
+	}
+
+	public boolean hasDrops() {
+		return dropAmount > 0 && (hasBlockItem || hasCustomDrop());
 	}
 
 	@Override public boolean isFullCube() {
@@ -262,18 +300,20 @@ import java.util.stream.Collectors;
 			modelType = Model.Type.JSON;
 		else if (renderType == 3)
 			modelType = Model.Type.OBJ;
+		else if (renderType == 4)
+			modelType = Model.Type.JAVA;
 		return Model.getModelByParams(getModElement().getWorkspace(), customModelName, modelType);
 	}
 
-	@Override public Map<String, String> getTextureMap() {
+	@Override public Map<String, TextureHolder> getTextureMap() {
 		Model model = getItemModel();
 		if (model instanceof TexturedModel && ((TexturedModel) model).getTextureMapping() != null)
 			return ((TexturedModel) model).getTextureMapping().getTextureMap();
 		return new HashMap<>();
 	}
 
-	@Override public TabEntry getCreativeTab() {
-		return creativeTab;
+	@Override public List<TabEntry> getCreativeTabs() {
+		return creativeTabs;
 	}
 
 	@Override public @Nonnull List<BoxEntry> getValidBoundingBoxes() {
@@ -312,27 +352,33 @@ import java.util.stream.Collectors;
 					new ImageIcon(getTextureWithFallback(textureLeft))).getImage();
 			return (BufferedImage) MinecraftImageGenerator.Preview.generateBlockIcon(getTextureWithFallback(textureTop),
 					side, side);
+		} else if (renderType() == 4) {
+			return ImageUtils.resizeAndCrop(itemTexture.getImage(TextureType.ITEM), 32);
 		} else {
 			return ImageUtils.resizeAndCrop(getMainTexture(), 32);
 		}
 	}
 
 	@Override public List<MCItem> providedMCItems() {
-		return List.of(new MCItem.Custom(this.getModElement(), null, "block"));
+		return List.of(new MCItem.Custom(this.getModElement(), null, hasBlockItem ? "block" : "block_without_item"));
 	}
 
 	@Override public List<MCItem> getCreativeTabItems() {
-		return providedMCItems();
+		return hasBlockItem ? providedMCItems() : Collections.emptyList();
+	}
+
+	@Override public StringListProcedure getSpecialInfoProcedure() {
+		return specialInformation;
 	}
 
 	private Image getMainTexture() {
-		return getModElement().getFolderManager().getTextureImageIcon(texture, TextureType.BLOCK).getImage();
+		return texture.getImage(TextureType.BLOCK);
 	}
 
-	private Image getTextureWithFallback(String textureName) {
-		if (textureName.isEmpty())
+	private Image getTextureWithFallback(TextureHolder texture) {
+		if (texture.isEmpty())
 			return getMainTexture();
-		return getModElement().getFolderManager().getTextureImageIcon(textureName, TextureType.BLOCK).getImage();
+		return texture.getImage(TextureType.BLOCK);
 	}
 
 	@Override public String getRenderType() {
@@ -343,17 +389,65 @@ import java.util.stream.Collectors;
 		return transparencyType.toLowerCase(Locale.ENGLISH);
 	}
 
-	@Override public Collection<BaseType> getBaseTypesProvided() {
-		List<BaseType> baseTypes = new ArrayList<>(List.of(BaseType.BLOCK, BaseType.ITEM));
+	@Override public boolean hasCustomItemProperties() {
+		return maxStackSize != 64 || !rarity.equals("COMMON") || immuneToFire;
+	}
 
-		if (generateFeature && getModElement().getGenerator().getGeneratorConfiguration().getGeneratorFlavor()
-				== GeneratorFlavor.FABRIC) // Fabric needs Java code to register feature generation
-			baseTypes.add(BaseType.FEATURE);
+	@Override public Collection<BaseType> getBaseTypesProvided() {
+		List<BaseType> baseTypes = new ArrayList<>(List.of(BaseType.BLOCK));
+
+		if (hasBlockItem) {
+			baseTypes.add(BaseType.ITEM);
+		}
+
+		if (generateFeature) {
+			baseTypes.add(BaseType.CONFIGUREDFEATURE);
+			if (getModElement().getGenerator().getGeneratorConfiguration().getGeneratorFlavor()
+					== GeneratorFlavor.FABRIC) // Fabric needs Java code to register feature generation
+				baseTypes.add(BaseType.FEATURE);
+		}
 
 		if (hasInventory)
 			baseTypes.add(BaseType.BLOCKENTITY);
 
 		return baseTypes;
+	}
+
+	public Set<String> getVibrationalEvents() {
+		return vibrationalEvents.stream().map(e -> e.getMappedValue(1)).collect(Collectors.toSet());
+	}
+
+	public TextureHolder textureTop() {
+		return textureTop == null || textureTop.isEmpty() ? texture : textureTop;
+	}
+
+	public TextureHolder textureLeft() {
+		return textureLeft == null || textureLeft.isEmpty() ? texture : textureLeft;
+	}
+
+	public TextureHolder textureFront() {
+		return textureFront == null || textureFront.isEmpty() ? texture : textureFront;
+	}
+
+	public TextureHolder textureRight() {
+		return textureRight == null || textureRight.isEmpty() ? texture : textureRight;
+	}
+
+	public TextureHolder textureBack() {
+		return textureBack == null || textureBack.isEmpty() ? texture : textureBack;
+	}
+
+	public TextureHolder getParticleTexture() {
+		return particleTexture == null || particleTexture.isEmpty() ? texture : particleTexture;
+	}
+
+	public static class AnimationEntry {
+
+		public Animation animation;
+		public double speed;
+
+		public Procedure condition;
+
 	}
 
 }

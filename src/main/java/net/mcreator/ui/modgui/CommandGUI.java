@@ -35,7 +35,6 @@ import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.help.HelpUtils;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.laf.themes.Theme;
-import net.mcreator.ui.validation.AggregatedValidationResult;
 import net.mcreator.ui.validation.ValidationGroup;
 import net.mcreator.ui.validation.component.VTextField;
 import net.mcreator.ui.validation.validators.TextFieldValidator;
@@ -47,8 +46,8 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class CommandGUI extends ModElementGUI<Command> implements IBlocklyPanelHolder {
 
@@ -99,8 +98,8 @@ public class CommandGUI extends ModElementGUI<Command> implements IBlocklyPanelH
 		blocklyPanel.addTaskToRunAfterLoaded(() -> {
 			BlocklyLoader.INSTANCE.getBlockLoader(BlocklyEditorType.COMMAND_ARG)
 					.loadBlocksAndCategoriesInPanel(blocklyPanel, ToolboxType.COMMAND);
-			blocklyPanel.getJSBridge().setJavaScriptEventListener(
-					() -> new Thread(CommandGUI.this::regenerateArgs, "CommandRegenerate").start());
+			blocklyPanel.addChangeListener(
+					changeEvent -> new Thread(CommandGUI.this::regenerateArgs, "CommandRegenerate").start());
 			if (!isEditingMode()) {
 				blocklyPanel.setXML(Command.XML_BASE);
 			}
@@ -124,7 +123,9 @@ public class CommandGUI extends ModElementGUI<Command> implements IBlocklyPanelH
 		page1group.addValidationElement(commandName);
 
 		addPage(PanelUtils.northAndCenterElement(PanelUtils.join(FlowLayout.LEFT, enderpanel),
-				ComponentUtils.applyPadding(args, 10, true, true, true, true)));
+				ComponentUtils.applyPadding(args, 10, true, true, true, true))).validate(page1group).lazyValidate(
+				() -> new BlocklyAggregatedValidationResult(compileNotesPanel.getCompileNotes(),
+						message -> message.replace("Command", "Command arguments")));
 
 		if (!isEditingMode()) {
 			commandName.setText(modElement.getName().toLowerCase(Locale.ENGLISH));
@@ -150,23 +151,12 @@ public class CommandGUI extends ModElementGUI<Command> implements IBlocklyPanelH
 		});
 	}
 
-	@Override protected AggregatedValidationResult validatePage(int page) {
-		return new AggregatedValidationResult(page1group,
-				new BlocklyAggregatedValidationResult(compileNotesPanel.getCompileNotes(),
-						message -> message.replace("Command", "Command arguments")));
-	}
-
 	@Override public void openInEditingMode(Command command) {
 		commandName.setText(command.commandName);
 		type.setSelectedItem(command.type);
 		permissionLevel.setSelectedItem(command.permissionLevel);
 
-		blocklyPanel.setXMLDataOnly(command.argsxml);
-		blocklyPanel.addTaskToRunAfterLoaded(() -> {
-			blocklyPanel.clearWorkspace();
-			blocklyPanel.setXML(command.argsxml);
-			blocklyPanel.triggerEventFunction();
-		});
+		blocklyPanel.addTaskToRunAfterLoaded(() -> blocklyPanel.setXML(command.argsxml));
 	}
 
 	@Override public Command getElementFromGUI() {

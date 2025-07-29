@@ -22,11 +22,13 @@ import net.mcreator.element.GeneratableElement;
 import net.mcreator.element.parts.MItemBlock;
 import net.mcreator.element.parts.Sound;
 import net.mcreator.element.parts.TabEntry;
+import net.mcreator.element.parts.TextureHolder;
 import net.mcreator.element.parts.procedure.LogicProcedure;
 import net.mcreator.element.parts.procedure.Procedure;
 import net.mcreator.element.parts.procedure.StringListProcedure;
 import net.mcreator.element.types.interfaces.IItem;
 import net.mcreator.element.types.interfaces.ITabContainedElement;
+import net.mcreator.generator.mapping.MappableElement;
 import net.mcreator.io.FileIO;
 import net.mcreator.minecraft.MCItem;
 import net.mcreator.minecraft.MinecraftImageGenerator;
@@ -38,28 +40,31 @@ import net.mcreator.workspace.references.TextureReference;
 import net.mcreator.workspace.resources.Model;
 import net.mcreator.workspace.resources.TexturedModel;
 
+import javax.annotation.Nullable;
 import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unused") public class Armor extends GeneratableElement implements IItem, ITabContainedElement {
 
 	public boolean enableHelmet;
-	@TextureReference(TextureType.ITEM) public String textureHelmet;
+	@TextureReference(TextureType.ITEM) public TextureHolder textureHelmet;
 	public boolean enableBody;
-	@TextureReference(TextureType.ITEM) public String textureBody;
+	@TextureReference(TextureType.ITEM) public TextureHolder textureBody;
 	public boolean enableLeggings;
-	@TextureReference(TextureType.ITEM) public String textureLeggings;
+	@TextureReference(TextureType.ITEM) public TextureHolder textureLeggings;
 	public boolean enableBoots;
-	@TextureReference(TextureType.ITEM) public String textureBoots;
+	@TextureReference(TextureType.ITEM) public TextureHolder textureBoots;
 
 	public Procedure onHelmetTick;
 	public Procedure onBodyTick;
 	public Procedure onLeggingsTick;
 	public Procedure onBootsTick;
 
-	public TabEntry creativeTab;
+	@ModElementReference public List<TabEntry> creativeTabs;
 	@TextureReference(value = TextureType.ARMOR, files = { "%s_layer_1", "%s_layer_2" }) public String armorTextureFile;
 
 	public String helmetName;
@@ -106,6 +111,11 @@ import java.util.*;
 	public boolean leggingsImmuneToFire;
 	public boolean bootsImmuneToFire;
 
+	public LogicProcedure helmetGlowCondition;
+	public LogicProcedure bodyGlowCondition;
+	public LogicProcedure leggingsGlowCondition;
+	public LogicProcedure bootsGlowCondition;
+
 	public LogicProcedure helmetPiglinNeutral;
 	public LogicProcedure bodyPiglinNeutral;
 	public LogicProcedure leggingsPiglinNeutral;
@@ -129,6 +139,9 @@ import java.util.*;
 	public Armor(ModElement element) {
 		super(element);
 
+		this.creativeTabs = new ArrayList<>();
+		this.repairItems = new ArrayList<>();
+
 		this.helmetModelName = "Default";
 		this.bodyModelName = "Default";
 		this.leggingsModelName = "Default";
@@ -145,48 +158,48 @@ import java.util.*;
 	}
 
 	@Override public BufferedImage generateModElementPicture() {
-		ArrayList<File> armorPieces = new ArrayList<>();
+		List<Image> armorPieces = new ArrayList<>();
 		if (enableHelmet)
-			armorPieces.add(getModElement().getFolderManager().getTextureFile(textureHelmet, TextureType.ITEM));
+			armorPieces.add(textureHelmet.getImage(TextureType.ITEM));
 		if (enableBody)
-			armorPieces.add(getModElement().getFolderManager().getTextureFile(textureBody, TextureType.ITEM));
+			armorPieces.add(textureBody.getImage(TextureType.ITEM));
 		if (enableLeggings)
-			armorPieces.add(getModElement().getFolderManager().getTextureFile(textureLeggings, TextureType.ITEM));
+			armorPieces.add(textureLeggings.getImage(TextureType.ITEM));
 		if (enableBoots)
-			armorPieces.add(getModElement().getFolderManager().getTextureFile(textureBoots, TextureType.ITEM));
+			armorPieces.add(textureBoots.getImage(TextureType.ITEM));
 
 		return MinecraftImageGenerator.Preview.generateArmorPreviewPicture(armorPieces);
 	}
 
-	public Model getHelmetModel() {
+	@Nullable public Model getHelmetModel() {
 		Model.Type modelType = Model.Type.BUILTIN;
 		if (!helmetModelName.equals("Default"))
 			modelType = Model.Type.JAVA;
 		return Model.getModelByParams(getModElement().getWorkspace(), helmetModelName, modelType);
 	}
 
-	public Model getBodyModel() {
+	@Nullable public Model getBodyModel() {
 		Model.Type modelType = Model.Type.BUILTIN;
 		if (!bodyModelName.equals("Default"))
 			modelType = Model.Type.JAVA;
 		return Model.getModelByParams(getModElement().getWorkspace(), bodyModelName, modelType);
 	}
 
-	public Model getLeggingsModel() {
+	@Nullable public Model getLeggingsModel() {
 		Model.Type modelType = Model.Type.BUILTIN;
 		if (!leggingsModelName.equals("Default"))
 			modelType = Model.Type.JAVA;
 		return Model.getModelByParams(getModElement().getWorkspace(), leggingsModelName, modelType);
 	}
 
-	public Model getBootsModel() {
+	@Nullable public Model getBootsModel() {
 		Model.Type modelType = Model.Type.BUILTIN;
 		if (!bootsModelName.equals("Default"))
 			modelType = Model.Type.JAVA;
 		return Model.getModelByParams(getModElement().getWorkspace(), bootsModelName, modelType);
 	}
 
-	public Model getHelmetItemModel() {
+	@Nullable public Model getHelmetItemModel() {
 		Model.Type modelType = Model.Type.BUILTIN;
 		if (helmetItemRenderType == 1)
 			modelType = Model.Type.JSON;
@@ -195,7 +208,7 @@ import java.util.*;
 		return Model.getModelByParams(getModElement().getWorkspace(), helmetItemCustomModelName, modelType);
 	}
 
-	public Model getBodyItemModel() {
+	@Nullable public Model getBodyItemModel() {
 		Model.Type modelType = Model.Type.BUILTIN;
 		if (bodyItemRenderType == 1)
 			modelType = Model.Type.JSON;
@@ -204,7 +217,7 @@ import java.util.*;
 		return Model.getModelByParams(getModElement().getWorkspace(), bodyItemCustomModelName, modelType);
 	}
 
-	public Model getLeggingsItemModel() {
+	@Nullable public Model getLeggingsItemModel() {
 		Model.Type modelType = Model.Type.BUILTIN;
 		if (leggingsItemRenderType == 1)
 			modelType = Model.Type.JSON;
@@ -213,7 +226,7 @@ import java.util.*;
 		return Model.getModelByParams(getModElement().getWorkspace(), leggingsItemCustomModelName, modelType);
 	}
 
-	public Model getBootsItemModel() {
+	@Nullable public Model getBootsItemModel() {
 		Model.Type modelType = Model.Type.BUILTIN;
 		if (bootsItemRenderType == 1)
 			modelType = Model.Type.JSON;
@@ -232,7 +245,7 @@ import java.util.*;
 		};
 	}
 
-	public Map<String, String> getItemModelTextureMap(String part) {
+	public Map<String, TextureHolder> getItemModelTextureMap(String part) {
 		Model model = switch (part) {
 			case "helmet" -> getHelmetItemModel();
 			case "body" -> getBodyItemModel();
@@ -245,7 +258,7 @@ import java.util.*;
 		return new HashMap<>();
 	}
 
-	public String getItemTextureFor(String part) {
+	public TextureHolder getItemTextureFor(String part) {
 		return switch (part) {
 			case "helmet" -> textureHelmet;
 			case "body" -> textureBody;
@@ -256,43 +269,57 @@ import java.util.*;
 	}
 
 	public boolean hasHelmetNormalModel() {
-		return getHelmetItemModel().getType() == Model.Type.BUILTIN && getHelmetItemModel().getReadableName()
+		Model helmetItemModel = getHelmetItemModel();
+		return helmetItemModel == null
+				|| helmetItemModel.getType() == Model.Type.BUILTIN && helmetItemModel.getReadableName()
 				.equals("Normal");
 	}
 
 	public boolean hasHelmetToolModel() {
-		return getHelmetItemModel().getType() == Model.Type.BUILTIN && getHelmetItemModel().getReadableName()
-				.equals("Tool");
+		Model helmetItemModel = getHelmetItemModel();
+		if (helmetItemModel == null)
+			return false;
+		return helmetItemModel.getType() == Model.Type.BUILTIN && helmetItemModel.getReadableName().equals("Tool");
 	}
 
 	public boolean hasBodyNormalModel() {
-		return getBodyItemModel().getType() == Model.Type.BUILTIN && getBodyItemModel().getReadableName()
+		Model bodyItemModel = getBodyItemModel();
+		return bodyItemModel == null || bodyItemModel.getType() == Model.Type.BUILTIN && bodyItemModel.getReadableName()
 				.equals("Normal");
 	}
 
 	public boolean hasBodyToolModel() {
-		return getBodyItemModel().getType() == Model.Type.BUILTIN && getBodyItemModel().getReadableName()
-				.equals("Tool");
+		Model bodyItemModel = getBodyItemModel();
+		if (bodyItemModel == null)
+			return false;
+		return bodyItemModel.getType() == Model.Type.BUILTIN && bodyItemModel.getReadableName().equals("Tool");
 	}
 
 	public boolean hasLeggingsNormalModel() {
-		return getLeggingsItemModel().getType() == Model.Type.BUILTIN && getLeggingsItemModel().getReadableName()
+		Model leggingsItemModel = getLeggingsItemModel();
+		return leggingsItemModel == null
+				|| leggingsItemModel.getType() == Model.Type.BUILTIN && leggingsItemModel.getReadableName()
 				.equals("Normal");
 	}
 
 	public boolean hasLeggingsToolModel() {
-		return getLeggingsItemModel().getType() == Model.Type.BUILTIN && getLeggingsItemModel().getReadableName()
-				.equals("Tool");
+		Model leggingsItemModel = getLeggingsItemModel();
+		if (leggingsItemModel == null)
+			return false;
+		return leggingsItemModel.getType() == Model.Type.BUILTIN && leggingsItemModel.getReadableName().equals("Tool");
 	}
 
 	public boolean hasBootsNormalModel() {
-		return getBootsItemModel().getType() == Model.Type.BUILTIN && getBootsItemModel().getReadableName()
-				.equals("Normal");
+		Model bootsItemModel = getBootsItemModel();
+		return bootsItemModel == null
+				|| bootsItemModel.getType() == Model.Type.BUILTIN && bootsItemModel.getReadableName().equals("Normal");
 	}
 
 	public boolean hasBootsToolModel() {
-		return getBootsItemModel().getType() == Model.Type.BUILTIN && getBootsItemModel().getReadableName()
-				.equals("Tool");
+		Model bootsItemModel = getBootsItemModel();
+		if (bootsItemModel == null)
+			return false;
+		return bootsItemModel.getType() == Model.Type.BUILTIN && bootsItemModel.getReadableName().equals("Tool");
 	}
 
 	public String getArmorModelsCode() {
@@ -301,12 +328,15 @@ import java.util.*;
 		Model model1 = getHelmetModel();
 		if (model1 != null && model1.getType() == Model.Type.JAVA)
 			models.add(model1);
+
 		Model model2 = getBodyModel();
 		if (model2 != null && model2.getType() == Model.Type.JAVA)
 			models.add(model2);
+
 		Model model3 = getLeggingsModel();
 		if (model3 != null && model3.getType() == Model.Type.JAVA)
 			models.add(model3);
+
 		Model model4 = getBootsModel();
 		if (model4 != null && model4.getType() == Model.Type.JAVA)
 			models.add(model4);
@@ -336,18 +366,46 @@ import java.util.*;
 		return providedMCItems();
 	}
 
+	public List<String> getHelmetFixedSpecialInformation() {
+		if (helmetSpecialInformation != null && helmetSpecialInformation.getName() == null)
+			return List.copyOf(helmetSpecialInformation.getFixedValue());
+		return List.of();
+	}
+
+	public List<String> getBodyFixedSpecialInformation() {
+		if (bodySpecialInformation != null && bodySpecialInformation.getName() == null)
+			return List.copyOf(bodySpecialInformation.getFixedValue());
+		return List.of();
+	}
+
+	public List<String> getLeggingsFixedSpecialInformation() {
+		if (leggingsSpecialInformation != null && leggingsSpecialInformation.getName() == null)
+			return List.copyOf(leggingsSpecialInformation.getFixedValue());
+		return List.of();
+	}
+
+	public List<String> getBootsFixedSpecialInformation() {
+		if (bootsSpecialInformation != null && bootsSpecialInformation.getName() == null)
+			return List.copyOf(bootsSpecialInformation.getFixedValue());
+		return List.of();
+	}
+
 	@Override public ImageIcon getIconForMCItem(Workspace workspace, String suffix) {
 		return switch (suffix) {
-			case "helmet" -> workspace.getFolderManager().getTextureImageIcon(textureHelmet, TextureType.ITEM);
-			case "body" -> workspace.getFolderManager().getTextureImageIcon(textureBody, TextureType.ITEM);
-			case "legs" -> workspace.getFolderManager().getTextureImageIcon(textureLeggings, TextureType.ITEM);
-			case "boots" -> workspace.getFolderManager().getTextureImageIcon(textureBoots, TextureType.ITEM);
+			case "helmet" -> textureHelmet.getImageIcon(TextureType.ITEM);
+			case "body" -> textureBody.getImageIcon(TextureType.ITEM);
+			case "legs" -> textureLeggings.getImageIcon(TextureType.ITEM);
+			case "boots" -> textureBoots.getImageIcon(TextureType.ITEM);
 			default -> null;
 		};
 	}
 
-	@Override public TabEntry getCreativeTab() {
-		return creativeTab;
+	@Override public List<TabEntry> getCreativeTabs() {
+		return creativeTabs;
+	}
+
+	public List<String> getRepairItemsAsStringList() {
+		return this.repairItems.stream().map(MappableElement::getUnmappedValue).collect(Collectors.toList());
 	}
 
 }

@@ -20,6 +20,7 @@
 package net.mcreator.generator;
 
 import net.mcreator.element.GeneratableElement;
+import net.mcreator.generator.mapping.NameMapper;
 import net.mcreator.generator.template.TemplateExpressionParser;
 import net.mcreator.generator.template.TemplateGeneratorException;
 import net.mcreator.io.writer.JSONWriter;
@@ -29,6 +30,7 @@ import net.mcreator.workspace.elements.TagElement;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TagsUtils {
 
@@ -37,17 +39,20 @@ public class TagsUtils {
 			File tagFile = getTagFileFor(workspace, tag.getKey());
 			if (tagFile != null) {
 				try {
+					// In case duplicates somehow exist, here is the last chance to remove them
+					Set<String> uniqueEntries = tag.getValue().stream().map(TagElement::getEntryName)
+							.collect(Collectors.toSet()); // use toSet, we loose order, but should not matter
+
 					Map<String, Object> datamodel = new HashMap<>();
 					datamodel.put("tag", tag.getKey());
 					datamodel.put("type", tag.getKey().type().name().toLowerCase(Locale.ENGLISH));
-					datamodel.put("elements", tag.getValue().stream()
-							.map(e -> tag.getKey().type().getMappableElementProvider()
-									.apply(workspace, TagElement.getEntryName(e))).toList());
+					datamodel.put("elements", uniqueEntries.stream()
+							.map(e -> tag.getKey().type().getMappableElementProvider().apply(workspace, e)).toList());
 					String json = generator.getTemplateGeneratorFromName("templates")
 							.generateFromTemplate(tagsSpecification.get("template").toString(), datamodel);
-					JSONWriter.writeJSONToFile(json, tagFile);
+					JSONWriter.writeJSONToFile(workspace, json, tagFile);
 				} catch (TemplateGeneratorException e) {
-					generator.getLogger().error("Failed to generate code for tag: " + tag.getKey(), e);
+					generator.getLogger().error("Failed to generate code for tag: {}", tag.getKey(), e);
 				}
 			}
 		});
@@ -58,7 +63,9 @@ public class TagsUtils {
 
 		String name = GeneratorTokens.replaceTokens(workspace,
 				rawName.replace("@namespace", tagElement.getMinecraftNamespace(workspace))
-						.replace("@name", tagElement.getName()).replace("@folder", tagElement.type().getFolder()));
+						.replace("@name", tagElement.getName())
+						.replace("@folder_pre21", tagElement.type().getPre21Folder())
+						.replace("@folder", tagElement.type().getFolder()));
 
 		File tagFile = new File(name);
 		if (workspace.getFolderManager().isFileInWorkspace(tagFile)) {
@@ -73,12 +80,28 @@ public class TagsUtils {
 		if (tags != null) {
 			for (Object template : tags) {
 				Map<?, ?> map = (Map<?, ?>) template;
-				TagElement tag = TagElement.fromString((String) map.get("tag"));
+				String tagRawName = (String) map.get("tag");
+				TagElement tag = TagElement.fromString(tagRawName
+								//@formatter:off
+								.replace("@NAME", element.getModElement().getName())
+								.replace("@modid", generator.getWorkspace().getWorkspaceSettings().getModID())
+								.replace("@registryname", element.getModElement().getRegistryName())
+						//@formatter:on
+				);
 
 				boolean shouldSkip = TemplateExpressionParser.shouldSkipTemplateBasedOnCondition(generator, map,
 						element);
 
 				if (map.containsKey("entryprovider")) {
+					// If this tag name contains @registryname, we can "safely" assume it is only used by one
+					// (the one calling this method) mod element. In this case, we can first delete all
+					// managed entries to make sure we remove any stale entries before re-adding them
+					// in this method, as we can assume no other mod element will add entries to this tag.
+					// We only need to do this in case of entryprovider, as it can dynamically change entries
+					// based on the mod element definition that can change with user edits.
+					if (tagRawName.contains("@registryname"))
+						removeAllManagedTagEntries(generator, tag);
+
 					@SuppressWarnings("unchecked") Collection<String> entryprovider = (Collection<String>) TemplateExpressionParser.processFTLExpression(
 							generator, (String) map.get("entryprovider"), element);
 					if (entryprovider != null) {
@@ -89,6 +112,7 @@ public class TagsUtils {
 				} else if (map.containsKey("entry")) {
 					String entry = GeneratorTokens.replaceTokens(generator.getWorkspace(), ((String) map.get("entry"))
 									//@formatter:off
+									.replace("@NAME", element.getModElement().getName())
 									.replace("@modid", generator.getWorkspace().getWorkspaceSettings().getModID())
 									.replace("@registryname", element.getModElement().getRegistryName())
 							//@formatter:on
@@ -96,8 +120,20 @@ public class TagsUtils {
 
 					handleTagEntryEntry(generator, tag, entry, deleteMode || shouldSkip);
 				} else {
-					handleTagEntryEntry(generator, tag, "CUSTOM:" + element.getModElement().getName(),
+					handleTagEntryEntry(generator, tag, NameMapper.MCREATOR_PREFIX + element.getModElement().getName(),
 							deleteMode || shouldSkip);
+				}
+			}
+		}
+	}
+
+	private static void removeAllManagedTagEntries(Generator generator, TagElement tag) {
+		List<String> entries = generator.getWorkspace().getTagElements().get(tag);
+		if (entries != null) {
+			// make a copy of the list to avoid concurrent modification
+			for (String entry : new ArrayList<>(entries)) {
+				if (TagElement.isEntryManaged(entry)) {
+					generator.getWorkspace().getTagElements().get(tag).remove(entry);
 				}
 			}
 		}
@@ -125,7 +161,7 @@ public class TagsUtils {
 			// only add this entry if it does not already exist in managed or unmanaged form
 			else if (!entries.contains(entryManaged) && !entries.contains(entry)) {
 				// We add managed entries to the beginning of the list
-				generator.getWorkspace().getTagElements().get(tag).add(0, entryManaged);
+				generator.getWorkspace().getTagElements().get(tag).addFirst(entryManaged);
 			}
 		}
 	}

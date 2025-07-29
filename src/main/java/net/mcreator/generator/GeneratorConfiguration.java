@@ -85,7 +85,7 @@ public class GeneratorConfiguration implements Comparable<GeneratorConfiguration
 			generatorConfig = new ConcurrentHashMap<>(
 					generatorConfig); // make this map concurrent, cache can be reused by multiple instances
 		} catch (YamlEngineException e) {
-			LOG.fatal("[" + generatorName + "] Error: " + e.getMessage());
+			LOG.fatal("[{}] Error: {}", generatorName, e.getMessage());
 		}
 
 		this.generatorFlavor = GeneratorFlavor.valueOf(this.generatorName.split("-")[0].toUpperCase(Locale.ENGLISH));
@@ -98,7 +98,7 @@ public class GeneratorConfiguration implements Comparable<GeneratorConfiguration
 
 		// load mappings
 		this.mappingLoader = new MappingLoader(this);
-		this.definitionsProvider = new DefinitionsProvider(generatorName);
+		this.definitionsProvider = new DefinitionsProvider(this);
 
 		// load global variable definitions
 		this.generatorVariableTypes = new GeneratorVariableTypes(this);
@@ -293,7 +293,7 @@ public class GeneratorConfiguration implements Comparable<GeneratorConfiguration
 		Map<?, ?> map = definitionsProvider.getModElementDefinition(type);
 
 		if (map == null) {
-			LOG.info("Failed to load element definition for mod element type " + type.getRegistryName());
+			LOG.info("Failed to load element definition for mod element type {}", type.getRegistryName());
 			return null;
 		}
 
@@ -311,7 +311,7 @@ public class GeneratorConfiguration implements Comparable<GeneratorConfiguration
 		Map<?, ?> map = definitionsProvider.getModElementDefinition(type);
 
 		if (map == null) {
-			LOG.info("Failed to load element definition for mod element type " + type.getRegistryName());
+			LOG.info("Failed to load element definition for mod element type {}", type.getRegistryName());
 			return null;
 		}
 

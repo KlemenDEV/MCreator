@@ -56,7 +56,7 @@ public class LabelDialog extends AbstractWYSIWYGDialog<Label> {
 
 		StringProcedureSelector labelText = new StringProcedureSelector(IHelpContext.NONE.withEntry("gui/label_text"),
 				editor.mcreator, L10N.t("elementgui.common.value"), ProcedureSelector.Side.BOTH, false, textField, 200,
-				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity/guistate:map"));
+				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity"));
 		labelText.refreshList();
 
 		ProcedureSelector displayCondition = new ProcedureSelector(
@@ -106,9 +106,9 @@ public class LabelDialog extends AbstractWYSIWYGDialog<Label> {
 			anchor.setSelectedItem(label.anchorPoint);
 		}
 
-		cancel.addActionListener(arg01 -> setVisible(false));
+		cancel.addActionListener(arg01 -> dispose());
 		ok.addActionListener(arg01 -> {
-			setVisible(false);
+			dispose();
 			StringProcedure textProcedure = labelText.getSelectedProcedure();
 
 			if (label == null) {

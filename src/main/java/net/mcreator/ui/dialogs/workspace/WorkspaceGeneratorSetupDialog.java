@@ -20,11 +20,12 @@ package net.mcreator.ui.dialogs.workspace;
 
 import net.mcreator.generator.setup.WorkspaceGeneratorSetup;
 import net.mcreator.gradle.GradleDaemonUtils;
-import net.mcreator.gradle.GradleErrorCodes;
+import net.mcreator.gradle.GradleResultCode;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.MCreatorApplication;
 import net.mcreator.ui.dialogs.ProgressDialog;
 import net.mcreator.ui.dialogs.preferences.PreferencesDialog;
+import net.mcreator.ui.gradle.GradleConsole;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.util.DesktopUtils;
 import org.apache.logging.log4j.LogManager;
@@ -52,42 +53,38 @@ public class WorkspaceGeneratorSetupDialog {
 
 			p1.markStateOk();
 
-			if (m.getGeneratorConfiguration().getGradleTaskFor("setup_task") != null) {
-				m.getGradleConsole().setGradleSetupTaskRunningFlag(true);
+			m.getGradleConsole().setGradleSetupTaskRunningFlag(true);
 
-				ProgressDialog.ProgressUnit p20 = new ProgressDialog.ProgressUnit(
-						L10N.t("dialog.setup_workspace.step.gradle_daemons"));
-				dial.addProgressUnit(p20);
+			ProgressDialog.ProgressUnit p20 = new ProgressDialog.ProgressUnit(
+					L10N.t("dialog.setup_workspace.step.gradle_daemons"));
+			dial.addProgressUnit(p20);
 
-				try {
-					GradleDaemonUtils.stopAllDaemons(m.getWorkspace());
-					p20.markStateOk();
-				} catch (IOException | InterruptedException e) {
-					LOG.warn("Failed to stop Gradle daemons", e);
-					p20.markStateWarning();
+			try {
+				GradleDaemonUtils.stopAllDaemons(m.getWorkspace());
+				p20.markStateOk();
+			} catch (IOException | InterruptedException e) {
+				LOG.warn("Failed to stop Gradle daemons", e);
+				p20.markStateWarning();
+			}
+
+			ProgressDialog.ProgressUnit p2 = new ProgressDialog.ProgressUnit(
+					L10N.t("dialog.setup_workspace.step.gradle_project"));
+			dial.addProgressUnit(p2);
+
+			m.getTabs().showTab(m.consoleTab);
+
+			m.getGradleConsole().exec(GradleConsole.GRADLE_SYNC_TASK, taskResult -> {
+				m.getGradleConsole().setGradleSetupTaskRunningFlag(false);
+				if (taskResult == GradleResultCode.STATUS_OK) {
+					p2.markStateOk();
+
+					finalizeTheSetup(m, dial);
+				} else {
+					p2.markStateError();
+					showSetupFailedMessage(dial, m, null);
 				}
 
-				ProgressDialog.ProgressUnit p2 = new ProgressDialog.ProgressUnit(
-						L10N.t("dialog.setup_workspace.step.gradle_project"));
-				dial.addProgressUnit(p2);
-
-				m.mcreatorTabs.showTab(m.consoleTab);
-
-				m.getGradleConsole().exec(m.getGeneratorConfiguration().getGradleTaskFor("setup_task"), taskResult -> {
-					m.getGradleConsole().setGradleSetupTaskRunningFlag(false);
-					if (taskResult.statusByMCreator() == GradleErrorCodes.STATUS_OK) {
-						p2.markStateOk();
-
-						finalizeTheSetup(m, dial);
-					} else {
-						p2.markStateError();
-						showSetupFailedMessage(dial, m, null);
-					}
-
-				});
-			} else {
-				finalizeTheSetup(m, dial);
-			}
+			});
 		}, "GeneratorSetup");
 		t.start();
 
@@ -121,7 +118,11 @@ public class WorkspaceGeneratorSetupDialog {
 
 				dial.hideDialog();
 
-				m.mcreatorTabs.showTab(m.workspaceTab);
+				SwingUtilities.invokeLater(() -> {
+					m.getTabs().showTab(m.workspaceTab);
+					if (m.hasProjectBrowser())
+						m.getProjectBrowser().reloadTree();
+				});
 			} catch (Exception e) {
 				LOG.error(L10N.t("dialog.setup_workspace.step.failed_gradle_caches"), e);
 				p3.markStateError();

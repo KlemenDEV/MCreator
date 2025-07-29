@@ -30,7 +30,6 @@ package net.mcreator.ui.modgui;
 import net.mcreator.blockly.data.Dependency;
 import net.mcreator.element.parts.TabEntry;
 import net.mcreator.element.types.Armor;
-import net.mcreator.minecraft.DataListEntry;
 import net.mcreator.minecraft.ElementUtil;
 import net.mcreator.minecraft.JavaModels;
 import net.mcreator.minecraft.MinecraftImageGenerator;
@@ -47,17 +46,12 @@ import net.mcreator.ui.dialogs.TypedTextureSelectorDialog;
 import net.mcreator.ui.help.HelpUtils;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.laf.renderer.ModelComboBoxRenderer;
-import net.mcreator.ui.laf.renderer.WTextureComboBoxRenderer;
 import net.mcreator.ui.laf.themes.Theme;
-import net.mcreator.ui.minecraft.DataListComboBox;
-import net.mcreator.ui.minecraft.MCItemListField;
-import net.mcreator.ui.minecraft.SoundSelector;
-import net.mcreator.ui.minecraft.TextureHolder;
+import net.mcreator.ui.minecraft.*;
 import net.mcreator.ui.procedure.AbstractProcedureSelector;
 import net.mcreator.ui.procedure.LogicProcedureSelector;
 import net.mcreator.ui.procedure.ProcedureSelector;
 import net.mcreator.ui.procedure.StringListProcedureSelector;
-import net.mcreator.ui.validation.AggregatedValidationResult;
 import net.mcreator.ui.validation.ValidationGroup;
 import net.mcreator.ui.validation.Validator;
 import net.mcreator.ui.validation.component.VComboBox;
@@ -82,8 +76,10 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ArmorGUI extends ModElementGUI<Armor> {
@@ -92,10 +88,10 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 
 	private static final int ARMOR_TEXTURE_SIZE_FACTOR = 5;
 
-	private TextureHolder textureHelmet;
-	private TextureHolder textureBody;
-	private TextureHolder textureLeggings;
-	private TextureHolder textureBoots;
+	private TextureSelectionButton textureHelmet;
+	private TextureSelectionButton textureBody;
+	private TextureSelectionButton textureLeggings;
+	private TextureSelectionButton textureBoots;
 
 	private final VTextField helmetName = new VTextField();
 	private final VTextField bodyName = new VTextField();
@@ -130,17 +126,17 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 	private final VComboBox<String> bootsModelPartL = new SearchableComboBox<>();
 	private final VComboBox<String> bootsModelPartR = new SearchableComboBox<>();
 
-	private final VComboBox<String> armorTextureFile = new SearchableComboBox<>();
+	private TextureComboBox armorTextureFile;
 
 	private final JCheckBox enableHelmet = L10N.checkbox("elementgui.armor.armor_helmet");
 	private final JCheckBox enableBody = L10N.checkbox("elementgui.armor.armor_chestplate");
 	private final JCheckBox enableLeggings = L10N.checkbox("elementgui.armor.armor_leggings");
 	private final JCheckBox enableBoots = L10N.checkbox("elementgui.armor.armor_boots");
 
-	private final VComboBox<String> helmetModelTexture = new SearchableComboBox<>();
-	private final VComboBox<String> bodyModelTexture = new SearchableComboBox<>();
-	private final VComboBox<String> leggingsModelTexture = new SearchableComboBox<>();
-	private final VComboBox<String> bootsModelTexture = new SearchableComboBox<>();
+	private TextureComboBox helmetModelTexture;
+	private TextureComboBox bodyModelTexture;
+	private TextureComboBox leggingsModelTexture;
+	private TextureComboBox bootsModelTexture;
 
 	private final Model normal = new Model.BuiltInModel("Normal");
 	private final Model tool = new Model.BuiltInModel("Tool");
@@ -157,6 +153,11 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 	private final JCheckBox leggingsImmuneToFire = L10N.checkbox("elementgui.common.enable");
 	private final JCheckBox bootsImmuneToFire = L10N.checkbox("elementgui.common.enable");
 
+	private LogicProcedureSelector helmetGlowCondition;
+	private LogicProcedureSelector bodyGlowCondition;
+	private LogicProcedureSelector leggingsGlowCondition;
+	private LogicProcedureSelector bootsGlowCondition;
+
 	private LogicProcedureSelector helmetPiglinNeutral;
 	private LogicProcedureSelector bodyPiglinNeutral;
 	private LogicProcedureSelector leggingsPiglinNeutral;
@@ -172,8 +173,8 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 	private final JSpinner damageValueLeggings = new JSpinner(new SpinnerNumberModel(5, 0, 1024, 1));
 	private final JSpinner damageValueBody = new JSpinner(new SpinnerNumberModel(6, 0, 1024, 1));
 	private final JSpinner damageValueHelmet = new JSpinner(new SpinnerNumberModel(2, 0, 1024, 1));
-	private final JSpinner enchantability = new JSpinner(new SpinnerNumberModel(9, 0, 100, 1));
-	private final JSpinner toughness = new JSpinner(new SpinnerNumberModel(0.0, 0, 10, 0.1));
+	private final JSpinner enchantability = new JSpinner(new SpinnerNumberModel(9, 1, 128000, 1));
+	private final JSpinner toughness = new JSpinner(new SpinnerNumberModel(0.0, 0, 1024, 0.1));
 	private final JSpinner knockbackResistance = new JSpinner(new SpinnerNumberModel(0.0, 0, 5.0, 0.1));
 
 	private ProcedureSelector onHelmetTick;
@@ -181,7 +182,7 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 	private ProcedureSelector onLeggingsTick;
 	private ProcedureSelector onBootsTick;
 
-	private final DataListComboBox creativeTab = new DataListComboBox(mcreator);
+	private final TabListField creativeTabs = new TabListField(mcreator);
 
 	private final ValidationGroup group1page = new ValidationGroup();
 	private final ValidationGroup group2page = new ValidationGroup();
@@ -200,6 +201,22 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 	}
 
 	@Override protected void initGUI() {
+		helmetGlowCondition = new LogicProcedureSelector(this.withEntry("item/glowing_effect"), mcreator,
+				L10N.t("elementgui.armor.glowing_effect"), AbstractProcedureSelector.Side.CLIENT,
+				L10N.checkbox("elementgui.common.enable"), 0,
+				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity/itemstack:itemstack"));
+		bodyGlowCondition = new LogicProcedureSelector(this.withEntry("item/glowing_effect"), mcreator,
+				L10N.t("elementgui.armor.glowing_effect"), AbstractProcedureSelector.Side.CLIENT,
+				L10N.checkbox("elementgui.common.enable"), 0,
+				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity/itemstack:itemstack"));
+		leggingsGlowCondition = new LogicProcedureSelector(this.withEntry("item/glowing_effect"), mcreator,
+				L10N.t("elementgui.armor.glowing_effect"), AbstractProcedureSelector.Side.CLIENT,
+				L10N.checkbox("elementgui.common.enable"), 0,
+				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity/itemstack:itemstack"));
+		bootsGlowCondition = new LogicProcedureSelector(this.withEntry("item/glowing_effect"), mcreator,
+				L10N.t("elementgui.armor.glowing_effect"), AbstractProcedureSelector.Side.CLIENT,
+				L10N.checkbox("elementgui.common.enable"), 0,
+				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity/itemstack:itemstack"));
 		helmetPiglinNeutral = new LogicProcedureSelector(this.withEntry("armor/piglin_neutral"), mcreator,
 				L10N.t("elementgui.armor.piglin_neutral"), AbstractProcedureSelector.Side.BOTH,
 				L10N.checkbox("elementgui.common.enable"), 0,
@@ -248,22 +265,14 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 
 		repairItems = new MCItemListField(mcreator, ElementUtil::loadBlocksAndItemsAndTags, false, true);
 
-		armorTextureFile.setRenderer(new WTextureComboBoxRenderer(element -> {
-			File[] armorTextures = mcreator.getFolderManager().getArmorTextureFilesForName(element);
-			if (armorTextures[0].isFile() && armorTextures[1].isFile()) {
-				return new ImageIcon(armorTextures[0].getAbsolutePath());
-			}
-			return null;
-		}));
+		armorTextureFile = new TextureComboBox(mcreator, TextureType.ARMOR, true).requireValue(
+				"elementgui.armor.armor_needs_texture");
+		armorTextureFile.setAddPNGExtension(false);
 
-		helmetModelTexture.setRenderer(
-				new WTextureComboBoxRenderer.TypeTextures(mcreator.getWorkspace(), TextureType.ENTITY));
-		bodyModelTexture.setRenderer(
-				new WTextureComboBoxRenderer.TypeTextures(mcreator.getWorkspace(), TextureType.ENTITY));
-		leggingsModelTexture.setRenderer(
-				new WTextureComboBoxRenderer.TypeTextures(mcreator.getWorkspace(), TextureType.ENTITY));
-		bootsModelTexture.setRenderer(
-				new WTextureComboBoxRenderer.TypeTextures(mcreator.getWorkspace(), TextureType.ENTITY));
+		helmetModelTexture = new TextureComboBox(mcreator, TextureType.ENTITY, true, "From armor");
+		bodyModelTexture = new TextureComboBox(mcreator, TextureType.ENTITY, true, "From armor");
+		leggingsModelTexture = new TextureComboBox(mcreator, TextureType.ENTITY, true, "From armor");
+		bootsModelTexture = new TextureComboBox(mcreator, TextureType.ENTITY, true, "From armor");
 
 		JPanel pane2 = new JPanel(new BorderLayout(10, 10));
 		JPanel pane5 = new JPanel(new BorderLayout(10, 10));
@@ -323,10 +332,10 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 		destal.setLayout(new BoxLayout(destal, BoxLayout.Y_AXIS));
 		destal.setOpaque(false);
 
-		textureHelmet = new TextureHolder(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM));
-		textureBody = new TextureHolder(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM));
-		textureLeggings = new TextureHolder(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM));
-		textureBoots = new TextureHolder(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM));
+		textureHelmet = new TextureSelectionButton(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM));
+		textureBody = new TextureSelectionButton(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM));
+		textureLeggings = new TextureSelectionButton(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM));
+		textureBoots = new TextureSelectionButton(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM));
 
 		textureHelmet.setOpaque(false);
 		textureBody.setOpaque(false);
@@ -365,9 +374,14 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 				L10N.label("elementgui.item.is_immune_to_fire")));
 		helmetSubPanel.add(helmetImmuneToFire);
 
+		JPanel helmetConditionsPanel = new JPanel(new GridLayout(3, 1, 2, 2));
+		helmetConditionsPanel.setOpaque(false);
+		helmetConditionsPanel.add(helmetGlowCondition);
+		helmetConditionsPanel.add(helmetSpecialInformation);
+		helmetConditionsPanel.add(helmetPiglinNeutral);
+
 		helmetCollapsiblePanel = new CollapsiblePanel(L10N.t("elementgui.armor.advanced_helmet"),
-				PanelUtils.northAndCenterElement(helmetSubPanel,
-						PanelUtils.centerAndSouthElement(helmetPiglinNeutral, helmetSpecialInformation, 2, 2)));
+				PanelUtils.northAndCenterElement(helmetSubPanel, helmetConditionsPanel));
 
 		JComponent helText = PanelUtils.centerAndSouthElement(PanelUtils.centerInPanelPadding(textureHelmet, 0, 0),
 				enableHelmet);
@@ -411,9 +425,14 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 				L10N.label("elementgui.item.is_immune_to_fire")));
 		bodySubPanel.add(bodyImmuneToFire);
 
+		JPanel bodyConditionsPanel = new JPanel(new GridLayout(3, 1, 2, 2));
+		bodyConditionsPanel.setOpaque(false);
+		bodyConditionsPanel.add(bodyGlowCondition);
+		bodyConditionsPanel.add(bodySpecialInformation);
+		bodyConditionsPanel.add(bodyPiglinNeutral);
+
 		bodyCollapsiblePanel = new CollapsiblePanel(L10N.t("elementgui.armor.advanced_chestplate"),
-				PanelUtils.centerAndSouthElement(bodySubPanel,
-						PanelUtils.centerAndSouthElement(bodyPiglinNeutral, bodySpecialInformation, 2, 2)));
+				PanelUtils.centerAndSouthElement(bodySubPanel, bodyConditionsPanel));
 
 		destal.add(PanelUtils.westAndCenterElement(PanelUtils.pullElementUp(bodText), PanelUtils.centerAndSouthElement(
 				PanelUtils.join(FlowLayout.LEFT, L10N.label("elementgui.armor.chestplate_name"), bodyName),
@@ -451,9 +470,14 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 				L10N.label("elementgui.item.is_immune_to_fire")));
 		leggingsSubPanel.add(leggingsImmuneToFire);
 
+		JPanel leggingsConditionsPanel = new JPanel(new GridLayout(3, 1, 2, 2));
+		leggingsConditionsPanel.setOpaque(false);
+		leggingsConditionsPanel.add(leggingsGlowCondition);
+		leggingsConditionsPanel.add(leggingsSpecialInformation);
+		leggingsConditionsPanel.add(leggingsPiglinNeutral);
+
 		leggingsCollapsiblePanel = new CollapsiblePanel(L10N.t("elementgui.armor.advanced_leggings"),
-				PanelUtils.centerAndSouthElement(leggingsSubPanel,
-						PanelUtils.centerAndSouthElement(leggingsPiglinNeutral, leggingsSpecialInformation, 2, 2)));
+				PanelUtils.centerAndSouthElement(leggingsSubPanel, leggingsConditionsPanel));
 
 		destal.add(PanelUtils.westAndCenterElement(PanelUtils.pullElementUp(legText), PanelUtils.centerAndSouthElement(
 				PanelUtils.join(FlowLayout.LEFT, L10N.label("elementgui.armor.leggings_name"), leggingsName),
@@ -491,9 +515,14 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 				L10N.label("elementgui.item.is_immune_to_fire")));
 		bootsSubPanel.add(bootsImmuneToFire);
 
+		JPanel bootsConditionsPanel = new JPanel(new GridLayout(3, 1, 2, 2));
+		bootsConditionsPanel.setOpaque(false);
+		bootsConditionsPanel.add(bootsGlowCondition);
+		bootsConditionsPanel.add(bootsSpecialInformation);
+		bootsConditionsPanel.add(bootsPiglinNeutral);
+
 		bootsCollapsiblePanel = new CollapsiblePanel(L10N.t("elementgui.armor.advanced_boots"),
-				PanelUtils.centerAndSouthElement(bootsSubPanel,
-						PanelUtils.centerAndSouthElement(bootsPiglinNeutral, bootsSpecialInformation, 2, 2)));
+				PanelUtils.centerAndSouthElement(bootsSubPanel, bootsConditionsPanel));
 
 		destal.add(PanelUtils.westAndCenterElement(PanelUtils.pullElementUp(bootText), PanelUtils.centerAndSouthElement(
 				PanelUtils.join(FlowLayout.LEFT, L10N.label("elementgui.armor.boots_name"), bootsName),
@@ -519,7 +548,7 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 			bootsName.setEnabled(enableBoots.isSelected());
 		});
 
-		armorTextureFile.addActionListener(e -> updateArmorTexturePreview());
+		armorTextureFile.getComboBox().addActionListener(e -> updateArmorTexturePreview());
 
 		JPanel sbbp22 = new JPanel();
 		sbbp22.setOpaque(false);
@@ -542,9 +571,9 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 				L10N.label("elementgui.armor.layer_texture")));
 		enderpanel.add(armorTextureFile);
 
-		enderpanel.add(HelpUtils.wrapWithHelpButton(this.withEntry("common/creative_tab"),
-				L10N.label("elementgui.common.creative_tab")));
-		enderpanel.add(creativeTab);
+		enderpanel.add(HelpUtils.wrapWithHelpButton(this.withEntry("common/creative_tabs"),
+				L10N.label("elementgui.common.creative_tabs")));
+		enderpanel.add(creativeTabs);
 
 		enderpanel.add(HelpUtils.wrapWithHelpButton(this.withEntry("armor/equip_sound"),
 				L10N.label("elementgui.armor.equip_sound")));
@@ -746,20 +775,15 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 		group1page.addValidationElement(leggingsName);
 		group1page.addValidationElement(helmetName);
 
-		armorTextureFile.setValidator(() -> {
-			if (armorTextureFile.getSelectedItem() == null || armorTextureFile.getSelectedItem().isEmpty())
-				return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
-						L10N.t("elementgui.armor.armor_needs_texture"));
-			return Validator.ValidationResult.PASSED;
-		});
-
 		group2page.addValidationElement(armorTextureFile);
 
-		addPage(L10N.t("elementgui.common.page_visual"), pane2);
-		addPage(L10N.t("elementgui.common.page_properties"), pane5);
+		addPage(L10N.t("elementgui.common.page_visual"), pane2).validate(group1page);
+		addPage(L10N.t("elementgui.common.page_properties"), pane5).validate(group2page);
 		addPage(L10N.t("elementgui.common.page_triggers"), pane6);
 
 		if (!isEditingMode()) {
+			creativeTabs.setListElements(List.of(new TabEntry(mcreator.getWorkspace(), "COMBAT")));
+
 			String readableNameFromModElement = StringUtils.machineToReadableName(modElement.getName());
 			helmetName.setText(L10N.t("elementgui.armor.helmet", readableNameFromModElement));
 			bodyName.setText(L10N.t("elementgui.armor.chestplate", readableNameFromModElement));
@@ -776,6 +800,11 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 		leggingsModel.removeActionListener(leggingsModelListener);
 		bootsModel.removeActionListener(bootsModelListener);
 
+		helmetGlowCondition.refreshListKeepSelected();
+		bodyGlowCondition.refreshListKeepSelected();
+		leggingsGlowCondition.refreshListKeepSelected();
+		bootsGlowCondition.refreshListKeepSelected();
+
 		helmetPiglinNeutral.refreshListKeepSelected();
 		bodyPiglinNeutral.refreshListKeepSelected();
 		leggingsPiglinNeutral.refreshListKeepSelected();
@@ -789,8 +818,6 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 		bodySpecialInformation.refreshListKeepSelected();
 		leggingsSpecialInformation.refreshListKeepSelected();
 		bootsSpecialInformation.refreshListKeepSelected();
-		ComboBoxUtil.updateComboBoxContents(creativeTab, ElementUtil.loadAllTabs(mcreator.getWorkspace()),
-				new DataListEntry.Dummy("COMBAT"));
 
 		ComboBoxUtil.updateComboBoxContents(helmetModel, ListUtils.merge(Collections.singleton(defaultModel),
 				Model.getModels(mcreator.getWorkspace()).stream()
@@ -812,21 +839,10 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 						.filter(el -> el.getType() == Model.Type.JAVA || el.getType() == Model.Type.MCREATOR)
 						.collect(Collectors.toList())));
 
-		ComboBoxUtil.updateComboBoxContents(helmetModelTexture, ListUtils.merge(Collections.singleton("From armor"),
-				mcreator.getFolderManager().getTexturesList(TextureType.ENTITY).stream().map(File::getName)
-						.filter(s -> s.endsWith(".png")).collect(Collectors.toList())), "");
-
-		ComboBoxUtil.updateComboBoxContents(bodyModelTexture, ListUtils.merge(Collections.singleton("From armor"),
-				mcreator.getFolderManager().getTexturesList(TextureType.ENTITY).stream().map(File::getName)
-						.filter(s -> s.endsWith(".png")).collect(Collectors.toList())), "");
-
-		ComboBoxUtil.updateComboBoxContents(leggingsModelTexture, ListUtils.merge(Collections.singleton("From armor"),
-				mcreator.getFolderManager().getTexturesList(TextureType.ENTITY).stream().map(File::getName)
-						.filter(s -> s.endsWith(".png")).collect(Collectors.toList())), "");
-
-		ComboBoxUtil.updateComboBoxContents(bootsModelTexture, ListUtils.merge(Collections.singleton("From armor"),
-				mcreator.getFolderManager().getTexturesList(TextureType.ENTITY).stream().map(File::getName)
-						.filter(s -> s.endsWith(".png")).collect(Collectors.toList())), "");
+		helmetModelTexture.reload();
+		bodyModelTexture.reload();
+		leggingsModelTexture.reload();
+		bootsModelTexture.reload();
 
 		ComboBoxUtil.updateComboBoxContents(helmetItemRenderType, ListUtils.merge(Arrays.asList(normal, tool),
 				Model.getModelsWithTextureMaps(mcreator.getWorkspace()).stream()
@@ -848,12 +864,7 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 						.filter(el -> el.getType() == Model.Type.JSON || el.getType() == Model.Type.OBJ)
 						.collect(Collectors.toList())));
 
-		List<File> armors = mcreator.getFolderManager().getTexturesList(TextureType.ARMOR);
-		List<String> armorPart1s = new ArrayList<>();
-		for (File texture : armors)
-			if (texture.getName().endsWith("_layer_1.png"))
-				armorPart1s.add(texture.getName().replace("_layer_1.png", ""));
-		ComboBoxUtil.updateComboBoxContents(armorTextureFile, ListUtils.merge(Collections.singleton(""), armorPart1s));
+		armorTextureFile.reload();
 
 		helmetModel.addActionListener(helmetModelListener);
 		bodyModel.addActionListener(bodyModelListener);
@@ -861,18 +872,10 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 		bootsModel.addActionListener(bootsModelListener);
 	}
 
-	@Override protected AggregatedValidationResult validatePage(int page) {
-		if (page == 1)
-			return new AggregatedValidationResult(group2page);
-		else if (page == 0)
-			return new AggregatedValidationResult(group1page);
-		return new AggregatedValidationResult.PASS();
-	}
-
 	private void updateArmorTexturePreview() {
-		File[] armorTextures = mcreator.getFolderManager()
-				.getArmorTextureFilesForName(armorTextureFile.getSelectedItem());
-		if (armorTextures[0].isFile() && armorTextures[1].isFile()) {
+		String textureName = armorTextureFile.getTextureName();
+		File[] armorTextures = mcreator.getFolderManager().getArmorTextureFilesForName(textureName);
+		if (!textureName.isBlank() && armorTextures[0].isFile() && armorTextures[1].isFile()) {
 			ImageIcon bg1 = new ImageIcon(
 					ImageUtils.resize(new ImageIcon(armorTextures[0].getAbsolutePath()).getImage(),
 							64 * ARMOR_TEXTURE_SIZE_FACTOR, 32 * ARMOR_TEXTURE_SIZE_FACTOR));
@@ -890,11 +893,11 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 	}
 
 	@Override public void openInEditingMode(Armor armor) {
-		textureHelmet.setTextureFromTextureName(armor.textureHelmet);
-		textureBody.setTextureFromTextureName(armor.textureBody);
-		textureLeggings.setTextureFromTextureName(armor.textureLeggings);
-		textureBoots.setTextureFromTextureName(armor.textureBoots);
-		armorTextureFile.setSelectedItem(armor.armorTextureFile);
+		textureHelmet.setTexture(armor.textureHelmet);
+		textureBody.setTexture(armor.textureBody);
+		textureLeggings.setTexture(armor.textureLeggings);
+		textureBoots.setTexture(armor.textureBoots);
+		armorTextureFile.setTextureFromTextureName(armor.armorTextureFile);
 		maxDamage.setValue(armor.maxDamage);
 		damageValueBoots.setValue(armor.damageValueBoots);
 		damageValueLeggings.setValue(armor.damageValueLeggings);
@@ -915,7 +918,7 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 		enableBody.setSelected(armor.enableBody);
 		enableLeggings.setSelected(armor.enableLeggings);
 		enableBoots.setSelected(armor.enableBoots);
-		creativeTab.setSelectedItem(armor.creativeTab);
+		creativeTabs.setListElements(armor.creativeTabs);
 		textureHelmet.setEnabled(enableHelmet.isSelected());
 		textureBody.setEnabled(enableBody.isSelected());
 		textureLeggings.setEnabled(enableLeggings.isSelected());
@@ -928,25 +931,25 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 		equipSound.setSound(armor.equipSound);
 
 		Model _helmetModel = armor.getHelmetModel();
-		if (_helmetModel != null && _helmetModel.getType() != null && _helmetModel.getReadableName() != null)
+		if (_helmetModel != null)
 			helmetModel.setSelectedItem(_helmetModel);
 
 		Model _bodyModel = armor.getBodyModel();
-		if (_bodyModel != null && _bodyModel.getType() != null && _bodyModel.getReadableName() != null)
+		if (_bodyModel != null)
 			bodyModel.setSelectedItem(_bodyModel);
 
 		Model _leggingsModel = armor.getLeggingsModel();
-		if (_leggingsModel != null && _leggingsModel.getType() != null && _leggingsModel.getReadableName() != null)
+		if (_leggingsModel != null)
 			leggingsModel.setSelectedItem(_leggingsModel);
 
 		Model _bootsModel = armor.getBootsModel();
-		if (_bootsModel != null && _bootsModel.getType() != null && _bootsModel.getReadableName() != null)
+		if (_bootsModel != null)
 			bootsModel.setSelectedItem(_bootsModel);
 
-		helmetModelTexture.setSelectedItem(armor.helmetModelTexture);
-		bodyModelTexture.setSelectedItem(armor.bodyModelTexture);
-		leggingsModelTexture.setSelectedItem(armor.leggingsModelTexture);
-		bootsModelTexture.setSelectedItem(armor.bootsModelTexture);
+		helmetModelTexture.setTextureFromTextureName(armor.helmetModelTexture);
+		bodyModelTexture.setTextureFromTextureName(armor.bodyModelTexture);
+		leggingsModelTexture.setTextureFromTextureName(armor.leggingsModelTexture);
+		bootsModelTexture.setTextureFromTextureName(armor.bootsModelTexture);
 
 		helmetModelPart.setSelectedItem(armor.helmetModelPart);
 		bodyModelPart.setSelectedItem(armor.bodyModelPart);
@@ -975,6 +978,11 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 		leggingsImmuneToFire.setSelected(armor.leggingsImmuneToFire);
 		bootsImmuneToFire.setSelected(armor.bootsImmuneToFire);
 
+		helmetGlowCondition.setSelectedProcedure(armor.helmetGlowCondition);
+		bodyGlowCondition.setSelectedProcedure(armor.bodyGlowCondition);
+		leggingsGlowCondition.setSelectedProcedure(armor.leggingsGlowCondition);
+		bootsGlowCondition.setSelectedProcedure(armor.bootsGlowCondition);
+
 		helmetPiglinNeutral.setSelectedProcedure(armor.helmetPiglinNeutral);
 		bodyPiglinNeutral.setSelectedProcedure(armor.bodyPiglinNeutral);
 		leggingsPiglinNeutral.setSelectedProcedure(armor.leggingsPiglinNeutral);
@@ -983,12 +991,15 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 		Model helmetItemModel = armor.getHelmetItemModel();
 		if (helmetItemModel != null)
 			helmetItemRenderType.setSelectedItem(helmetItemModel);
+
 		Model bodyItemModel = armor.getBodyItemModel();
 		if (bodyItemModel != null)
 			bodyItemRenderType.setSelectedItem(bodyItemModel);
+
 		Model leggingsItemModel = armor.getLeggingsItemModel();
 		if (leggingsItemModel != null)
 			leggingsItemRenderType.setSelectedItem(leggingsItemModel);
+
 		Model bootsItemModel = armor.getBootsItemModel();
 		if (bootsItemModel != null)
 			bootsItemRenderType.setSelectedItem(bootsItemModel);
@@ -999,13 +1010,13 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 	@Override public Armor getElementFromGUI() {
 		Armor armor = new Armor(modElement);
 		armor.enableHelmet = enableHelmet.isSelected();
-		armor.textureHelmet = textureHelmet.getID();
+		armor.textureHelmet = textureHelmet.getTextureHolder();
 		armor.enableBody = enableBody.isSelected();
-		armor.textureBody = textureBody.getID();
+		armor.textureBody = textureBody.getTextureHolder();
 		armor.enableLeggings = enableLeggings.isSelected();
-		armor.textureLeggings = textureLeggings.getID();
+		armor.textureLeggings = textureLeggings.getTextureHolder();
 		armor.enableBoots = enableBoots.isSelected();
-		armor.textureBoots = textureBoots.getID();
+		armor.textureBoots = textureBoots.getTextureHolder();
 		armor.onHelmetTick = onHelmetTick.getSelectedProcedure();
 		armor.onBodyTick = onBodyTick.getSelectedProcedure();
 		armor.onLeggingsTick = onLeggingsTick.getSelectedProcedure();
@@ -1014,8 +1025,8 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 		armor.bodySpecialInformation = bodySpecialInformation.getSelectedProcedure();
 		armor.leggingsSpecialInformation = leggingsSpecialInformation.getSelectedProcedure();
 		armor.bootsSpecialInformation = bootsSpecialInformation.getSelectedProcedure();
-		armor.creativeTab = new TabEntry(mcreator.getWorkspace(), creativeTab.getSelectedItem());
-		armor.armorTextureFile = armorTextureFile.getSelectedItem();
+		armor.creativeTabs = creativeTabs.getListElements();
+		armor.armorTextureFile = armorTextureFile.getTextureName();
 		armor.maxDamage = (int) maxDamage.getValue();
 		armor.damageValueHelmet = (int) damageValueHelmet.getValue();
 		armor.damageValueBody = (int) damageValueBody.getValue();
@@ -1040,16 +1051,20 @@ public class ArmorGUI extends ModElementGUI<Armor> {
 		armor.leggingsModelPartR = leggingsModelPartR.getSelectedItem();
 		armor.bootsModelPartL = bootsModelPartL.getSelectedItem();
 		armor.bootsModelPartR = bootsModelPartR.getSelectedItem();
-		armor.helmetModelTexture = helmetModelTexture.getSelectedItem();
-		armor.bodyModelTexture = bodyModelTexture.getSelectedItem();
-		armor.leggingsModelTexture = leggingsModelTexture.getSelectedItem();
-		armor.bootsModelTexture = bootsModelTexture.getSelectedItem();
+		armor.helmetModelTexture = helmetModelTexture.getTextureName();
+		armor.bodyModelTexture = bodyModelTexture.getTextureName();
+		armor.leggingsModelTexture = leggingsModelTexture.getTextureName();
+		armor.bootsModelTexture = bootsModelTexture.getTextureName();
 		armor.equipSound = equipSound.getSound();
 		armor.repairItems = repairItems.getListElements();
 		armor.helmetImmuneToFire = helmetImmuneToFire.isSelected();
 		armor.bodyImmuneToFire = bodyImmuneToFire.isSelected();
 		armor.leggingsImmuneToFire = leggingsImmuneToFire.isSelected();
 		armor.bootsImmuneToFire = bootsImmuneToFire.isSelected();
+		armor.helmetGlowCondition = helmetGlowCondition.getSelectedProcedure();
+		armor.bodyGlowCondition = bodyGlowCondition.getSelectedProcedure();
+		armor.leggingsGlowCondition = leggingsGlowCondition.getSelectedProcedure();
+		armor.bootsGlowCondition = bootsGlowCondition.getSelectedProcedure();
 		armor.helmetPiglinNeutral = helmetPiglinNeutral.getSelectedProcedure();
 		armor.bodyPiglinNeutral = bodyPiglinNeutral.getSelectedProcedure();
 		armor.leggingsPiglinNeutral = leggingsPiglinNeutral.getSelectedProcedure();

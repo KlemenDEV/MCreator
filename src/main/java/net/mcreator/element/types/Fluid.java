@@ -23,9 +23,12 @@ import net.mcreator.element.GeneratableElement;
 import net.mcreator.element.parts.Particle;
 import net.mcreator.element.parts.Sound;
 import net.mcreator.element.parts.TabEntry;
+import net.mcreator.element.parts.TextureHolder;
+import net.mcreator.element.parts.procedure.NumberProcedure;
 import net.mcreator.element.parts.procedure.Procedure;
 import net.mcreator.element.parts.procedure.StringListProcedure;
 import net.mcreator.element.types.interfaces.IBlock;
+import net.mcreator.element.types.interfaces.ISpecialInfoHolder;
 import net.mcreator.element.types.interfaces.ITabContainedElement;
 import net.mcreator.minecraft.MCItem;
 import net.mcreator.minecraft.MinecraftImageGenerator;
@@ -33,23 +36,31 @@ import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.util.image.ImageUtils;
 import net.mcreator.workspace.Workspace;
 import net.mcreator.workspace.elements.ModElement;
+import net.mcreator.workspace.references.ModElementReference;
 import net.mcreator.workspace.references.TextureReference;
 
 import javax.annotation.Nonnull;
 import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 @SuppressWarnings({ "unused", "NotNullFieldNotInitialized" }) public class Fluid extends GeneratableElement
-		implements IBlock, ITabContainedElement {
+		implements IBlock, ITabContainedElement, ISpecialInfoHolder {
 
 	public String name;
 	public String bucketName;
 
-	@TextureReference(TextureType.BLOCK) public String textureStill;
-	@TextureReference(TextureType.BLOCK) public String textureFlowing;
+	@TextureReference(TextureType.BLOCK) public TextureHolder textureStill;
+	@TextureReference(TextureType.BLOCK) public TextureHolder textureFlowing;
+
+	@TextureReference(TextureType.OTHER) public TextureHolder textureRenderOverlay;
+	public boolean hasFog;
+	public Color fogColor;
+	public NumberProcedure fogStartDistance;
+	public NumberProcedure fogEndDistance;
 
 	public String tintType;
 
@@ -68,8 +79,8 @@ import java.util.List;
 	@Nonnull public String type;
 
 	public boolean generateBucket;
-	@TextureReference(TextureType.ITEM) public String textureBucket;
-	public TabEntry creativeTab;
+	@TextureReference(TextureType.ITEM) public TextureHolder textureBucket;
+	@ModElementReference public List<TabEntry> creativeTabs;
 	public Sound emptySound;
 	public String rarity;
 	public StringListProcedure specialInformation;
@@ -79,6 +90,7 @@ import java.util.List;
 	public int lightOpacity;
 	public boolean emissiveRendering;
 	public int tickRate;
+	public boolean ignitedByLava;
 	public int flammability;
 	public int fireSpreadSpeed;
 	public String colorOnMap;
@@ -99,6 +111,8 @@ import java.util.List;
 	public Fluid(ModElement element) {
 		super(element);
 
+		this.creativeTabs = new ArrayList<>();
+
 		this.tintType = "No tint";
 
 		this.rarity = "COMMON";
@@ -118,12 +132,11 @@ import java.util.List;
 	}
 
 	@Override public BufferedImage generateModElementPicture() {
-		return ImageUtils.resizeAndCrop(
-				getModElement().getFolderManager().getTextureImageIcon(textureStill, TextureType.BLOCK).getImage(), 32);
+		return ImageUtils.resizeAndCrop(textureStill.getImage(TextureType.BLOCK), 32);
 	}
 
-	@Override public TabEntry getCreativeTab() {
-		return creativeTab;
+	@Override public List<TabEntry> getCreativeTabs() {
+		return creativeTabs;
 	}
 
 	public boolean isFluidTinted() {
@@ -149,7 +162,7 @@ import java.util.List;
 
 	@Override public List<MCItem> providedMCItems() {
 		ArrayList<MCItem> retval = new ArrayList<>();
-		retval.add(new MCItem.Custom(this.getModElement(), null, "block", "Block"));
+		retval.add(new MCItem.Custom(this.getModElement(), null, "block_without_item", "Block"));
 		if (this.generateBucket)
 			retval.add(new MCItem.Custom(this.getModElement(), "bucket", "item", "Bucket"));
 		return retval;
@@ -162,16 +175,24 @@ import java.util.List;
 		return retval;
 	}
 
+	@Override public StringListProcedure getSpecialInfoProcedure() {
+		return specialInformation;
+	}
+
 	@Override public ImageIcon getIconForMCItem(Workspace workspace, String suffix) {
 		if ("bucket".equals(suffix)) {
 			// Use the custom bucket texture if present
 			if (textureBucket != null && !textureBucket.isEmpty()) {
-				return workspace.getFolderManager().getTextureImageIcon(textureBucket, TextureType.ITEM);
+				return textureBucket.getImageIcon(TextureType.ITEM);
 			}
 			// Otherwise, fallback to the generated fluid bucket icon
-			return MinecraftImageGenerator.generateFluidBucketIcon(
-					workspace.getFolderManager().getTextureImageIcon(textureStill, TextureType.BLOCK));
+			return MinecraftImageGenerator.generateFluidBucketIcon(textureStill.getImageIcon(TextureType.BLOCK));
 		}
 		return null;
 	}
+
+	public boolean hasCustomBucketTexture() {
+		return generateBucket && textureBucket != null && !textureBucket.isEmpty();
+	}
+
 }

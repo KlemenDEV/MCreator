@@ -24,10 +24,7 @@ import net.mcreator.element.GeneratableElement;
 import net.mcreator.element.parts.*;
 import net.mcreator.element.parts.procedure.Procedure;
 import net.mcreator.element.parts.procedure.StringListProcedure;
-import net.mcreator.element.types.interfaces.IBlock;
-import net.mcreator.element.types.interfaces.IBlockWithBoundingBox;
-import net.mcreator.element.types.interfaces.IItemWithModel;
-import net.mcreator.element.types.interfaces.ITabContainedElement;
+import net.mcreator.element.types.interfaces.*;
 import net.mcreator.generator.GeneratorFlavor;
 import net.mcreator.minecraft.MCItem;
 import net.mcreator.ui.workspace.resources.TextureType;
@@ -44,15 +41,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused") public class Plant extends GeneratableElement
-		implements IBlock, IItemWithModel, ITabContainedElement, IBlockWithBoundingBox {
+		implements IBlock, IItemWithModel, ITabContainedElement, ISpecialInfoHolder, IBlockWithBoundingBox {
 
 	public int renderType;
-	@TextureReference(TextureType.BLOCK) public String texture;
-	@TextureReference(TextureType.BLOCK) public String textureBottom;
+	@TextureReference(TextureType.BLOCK) public TextureHolder texture;
+	@TextureReference(TextureType.BLOCK) public TextureHolder textureBottom;
 	@Nonnull public String customModelName;
 
-	@TextureReference(TextureType.ITEM) public String itemTexture;
-	@TextureReference(TextureType.BLOCK) public String particleTexture;
+	@TextureReference(TextureType.ITEM) public TextureHolder itemTexture;
+	@TextureReference(TextureType.BLOCK) public TextureHolder particleTexture;
 
 	public String tintType;
 	public boolean isItemTinted;
@@ -61,6 +58,11 @@ import java.util.stream.Collectors;
 
 	@ModElementReference public String suspiciousStewEffect;
 	public int suspiciousStewDuration;
+
+	public double secondaryTreeChance;
+	@ModElementReference public ConfiguredFeatureEntry[] trees;
+	@ModElementReference public ConfiguredFeatureEntry[] flowerTrees;
+	@ModElementReference public ConfiguredFeatureEntry[] megaTrees;
 
 	public String growapableSpawnType;
 	public int growapableMaxHeight;
@@ -71,12 +73,18 @@ import java.util.stream.Collectors;
 
 	public String name;
 	public StringListProcedure specialInformation;
-	public TabEntry creativeTab;
+	@ModElementReference public List<TabEntry> creativeTabs;
 	public double hardness;
 	public double resistance;
 	public int luminance;
 	public boolean unbreakable;
 	public boolean isSolid;
+	public boolean isWaterloggable;
+
+	public boolean hasBlockItem;
+	public int maxStackSize;
+	public String rarity;
+	public boolean immuneToFire;
 
 	public boolean isCustomSoundType;
 	public StepSound soundOnStep;
@@ -100,6 +108,7 @@ import java.util.stream.Collectors;
 	public String offsetType;
 	public String aiPathNodeType;
 
+	public boolean ignitedByLava;
 	public int flammability;
 	public int fireSpreadSpeed;
 	public double jumpFactor;
@@ -140,6 +149,11 @@ import java.util.stream.Collectors;
 	public Plant(ModElement element) {
 		super(element);
 
+		this.hasBlockItem = true;
+		this.maxStackSize = 64;
+		this.rarity = "COMMON";
+		this.creativeTabs = new ArrayList<>();
+
 		this.canBePlacedOn = new ArrayList<>();
 		this.restrictionBiomes = new ArrayList<>();
 		this.growapableSpawnType = "Plains";
@@ -160,10 +174,27 @@ import java.util.stream.Collectors;
 		this.patchSize = 64;
 
 		this.boundingBoxes = new ArrayList<>();
+
+		this.secondaryTreeChance = 0.1;
+		this.trees = new ConfiguredFeatureEntry[2];
+		this.flowerTrees = new ConfiguredFeatureEntry[2];
+		this.megaTrees = new ConfiguredFeatureEntry[2];
 	}
 
 	public boolean generateLootTable() {
 		return !useLootTableForDrops;
+	}
+
+	public boolean hasDrops() {
+		return dropAmount > 0 && (hasBlockItem || !customDrop.isEmpty());
+	}
+
+	public boolean isWaterloggable() {
+		// Disable waterlogging for sapling with mega trees due to ghost water blocks when the tree fails to grow
+		if ("sapling".equals(plantType) && (megaTrees[0] != null || megaTrees[1] != null)) {
+			return false;
+		}
+		return isWaterloggable;
 	}
 
 	@Override public Model getItemModel() {
@@ -175,7 +206,7 @@ import java.util.stream.Collectors;
 		return Model.getModelByParams(getModElement().getWorkspace(), customModelName, modelType);
 	}
 
-	@Override public Map<String, String> getTextureMap() {
+	@Override public Map<String, TextureHolder> getTextureMap() {
 		Model model = getItemModel();
 		if (model instanceof TexturedModel && ((TexturedModel) model).getTextureMapping() != null)
 			return ((TexturedModel) model).getTextureMapping().getTextureMap();
@@ -183,12 +214,11 @@ import java.util.stream.Collectors;
 	}
 
 	@Override public BufferedImage generateModElementPicture() {
-		return ImageUtils.resizeAndCrop(
-				getModElement().getFolderManager().getTextureImageIcon(texture, TextureType.BLOCK).getImage(), 32);
+		return ImageUtils.resizeAndCrop(texture.getImage(TextureType.BLOCK), 32);
 	}
 
-	@Override public TabEntry getCreativeTab() {
-		return creativeTab;
+	@Override public List<TabEntry> getCreativeTabs() {
+		return creativeTabs;
 	}
 
 	public boolean isBlockTinted() {
@@ -207,12 +237,23 @@ import java.util.stream.Collectors;
 		return "cutout";
 	}
 
-	@Override public Collection<BaseType> getBaseTypesProvided() {
-		List<BaseType> baseTypes = new ArrayList<>(List.of(BaseType.BLOCK, BaseType.ITEM));
+	@Override public boolean hasCustomItemProperties() {
+		return maxStackSize != 64 || !rarity.equals("COMMON") || immuneToFire;
+	}
 
-		if (generateFeature && getModElement().getGenerator().getGeneratorConfiguration().getGeneratorFlavor()
-				== GeneratorFlavor.FABRIC) // Fabric needs Java code to register feature generation
-			baseTypes.add(BaseType.FEATURE);
+	@Override public Collection<BaseType> getBaseTypesProvided() {
+		List<BaseType> baseTypes = new ArrayList<>(List.of(BaseType.BLOCK));
+
+		if (hasBlockItem) {
+			baseTypes.add(BaseType.ITEM);
+		}
+
+		if (generateFeature) {
+			baseTypes.add(BaseType.CONFIGUREDFEATURE);
+			if (getModElement().getGenerator().getGeneratorConfiguration().getGeneratorFlavor()
+					== GeneratorFlavor.FABRIC) // Fabric needs Java code to register feature generation
+				baseTypes.add(BaseType.FEATURE);
+		}
 
 		if (hasTileEntity)
 			baseTypes.add(BaseType.BLOCKENTITY);
@@ -221,11 +262,23 @@ import java.util.stream.Collectors;
 	}
 
 	@Override public List<MCItem> providedMCItems() {
-		return List.of(new MCItem.Custom(this.getModElement(), null, "block"));
+		return List.of(new MCItem.Custom(this.getModElement(), null, hasBlockItem ? "block" : "block_without_item"));
 	}
 
 	@Override public List<MCItem> getCreativeTabItems() {
-		return providedMCItems();
+		return hasBlockItem ? providedMCItems() : Collections.emptyList();
+	}
+
+	@Override public StringListProcedure getSpecialInfoProcedure() {
+		return specialInformation;
+	}
+
+	public TextureHolder textureBottom() {
+		return textureBottom == null || textureBottom.isEmpty() ? texture : textureBottom;
+	}
+
+	public TextureHolder getParticleTexture() {
+		return particleTexture == null || particleTexture.isEmpty() ? texture : particleTexture;
 	}
 
 }

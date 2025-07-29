@@ -32,7 +32,6 @@ import net.mcreator.ui.laf.themes.Theme;
 import net.mcreator.ui.minecraft.MCItemHolder;
 import net.mcreator.ui.procedure.NumberProcedureSelector;
 import net.mcreator.ui.procedure.ProcedureSelector;
-import net.mcreator.ui.validation.AggregatedValidationResult;
 import net.mcreator.ui.validation.ValidationGroup;
 import net.mcreator.ui.validation.validators.MCItemHolderValidator;
 import net.mcreator.workspace.elements.ModElement;
@@ -41,6 +40,7 @@ import net.mcreator.workspace.elements.VariableTypeLoader;
 import javax.annotation.Nullable;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import java.awt.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -120,6 +120,8 @@ public class ItemExtensionGUI extends ModElementGUI<ItemExtension> {
 		hasDispenseBehavior.setSelected(false);
 		hasDispenseBehavior.addActionListener(e -> updateDispenseElements());
 
+		dispenseResultItemstack.setPreferredSize(new Dimension(300, 0));
+
 		JComponent dispenserBehaviourPanel = PanelUtils.gridElements(3, 1, 0, 2, canDispense, dispenseSuccessCondition,
 				dispenseResultItemstack);
 		dispenserBehaviourPanel.setBorder(BorderFactory.createTitledBorder(
@@ -144,11 +146,7 @@ public class ItemExtensionGUI extends ModElementGUI<ItemExtension> {
 		parameters.add(new JEmptyBox(10, 10));
 		parameters.add(dispenserBehaviourPanel);
 
-		addPage(PanelUtils.totalCenterInPanel(parameters));
-	}
-
-	@Override protected AggregatedValidationResult validatePage(int page) {
-		return new AggregatedValidationResult(pageGroup);
+		addPage(PanelUtils.totalCenterInPanel(parameters)).validate(pageGroup);
 	}
 
 	@Override public void reloadDataLists() {

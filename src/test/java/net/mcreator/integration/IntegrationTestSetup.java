@@ -31,6 +31,7 @@ import net.mcreator.minecraft.DataListLoader;
 import net.mcreator.plugin.PluginLoader;
 import net.mcreator.plugin.modapis.ModAPIManager;
 import net.mcreator.preferences.PreferencesManager;
+import net.mcreator.preferences.data.GradleSection;
 import net.mcreator.ui.MCreatorApplication;
 import net.mcreator.ui.blockly.WebConsoleListener;
 import net.mcreator.ui.component.ConsolePane;
@@ -40,10 +41,12 @@ import net.mcreator.ui.init.*;
 import net.mcreator.ui.laf.themes.ThemeManager;
 import net.mcreator.util.MCreatorVersionNumber;
 import net.mcreator.util.TerribleModuleHacks;
+import net.mcreator.util.TestUtil;
 import net.mcreator.util.UTF8Forcer;
 import net.mcreator.workspace.elements.VariableTypeLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -71,6 +74,8 @@ public class IntegrationTestSetup implements BeforeAllCallback {
 		 * ******************************/
 		LoggingSystem.init();
 
+		TestUtil.enterTestingMode(Assertions::fail);
+
 		TerribleModuleHacks.openAllFor(ClassLoader.getSystemClassLoader().getUnnamedModule());
 		TerribleModuleHacks.openMCreatorRequirements();
 
@@ -83,9 +88,9 @@ public class IntegrationTestSetup implements BeforeAllCallback {
 		Launcher.version = new MCreatorVersionNumber(conf);
 
 		// print version of Java
-		LOG.info("Java version: " + System.getProperty("java.version") + ", VM: " + System.getProperty("java.vm.name")
-				+ ", vendor: " + System.getProperty("java.vendor"));
-		LOG.info("Current JAVA_HOME for running instance: " + System.getProperty("java.home"));
+		LOG.info("Java version: {}, VM: {}, vendor: {}", System.getProperty("java.version"),
+				System.getProperty("java.vm.name"), System.getProperty("java.vendor"));
+		LOG.info("Current JAVA_HOME for running instance: {}", System.getProperty("java.home"));
 
 		// load preferences
 		PreferencesManager.init();
@@ -97,11 +102,11 @@ public class IntegrationTestSetup implements BeforeAllCallback {
 		 * END: Launcher.java emulation
 		 * ****************************/
 
-		// Reduce autosave interval for tests
+		// Increase autosave interval for tests
 		PreferencesManager.PREFERENCES.backups.workspaceAutosaveInterval.set(2000);
 
 		// Gradle's builds are RAM intensive, so we may need more RAM
-		PreferencesManager.PREFERENCES.gradle.xmx.set(3072); // 3G
+		PreferencesManager.PREFERENCES.gradle.xmx.set(GradleSection.MAX_RAM);
 
 		// Disable native file choosers for tests due to threading issues
 		PreferencesManager.PREFERENCES.ui.nativeFileChooser.set(false);
@@ -136,7 +141,6 @@ public class IntegrationTestSetup implements BeforeAllCallback {
 
 		// load translations after plugins are loaded
 		L10N.initTranslations();
-		L10N.enterTestingMode();
 
 		// may be needed to generate icons for MCItems (e.g. generation of potion icons)
 		ImageMakerTexturesCache.init();
@@ -164,7 +168,7 @@ public class IntegrationTestSetup implements BeforeAllCallback {
 		// load generator configurations
 		Set<String> fileNames = PluginLoader.INSTANCE.getResources(Pattern.compile("generator\\.yaml"));
 		for (String generator : fileNames) {
-			LOG.info("Loading generator: " + generator);
+			LOG.info("Loading generator: {}", generator);
 			generator = generator.replace("/generator.yaml", "");
 			Generator.GENERATOR_CACHE.put(generator, new GeneratorConfiguration(generator));
 		}

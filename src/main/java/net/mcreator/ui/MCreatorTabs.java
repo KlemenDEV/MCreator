@@ -47,6 +47,9 @@ import java.util.Locale;
 
 public class MCreatorTabs {
 
+	private static final int TAB_HEIGHT = 39;
+	private static final int TAB_BORDER_HEIGHT = 4;
+
 	private final CardLayout cardLayout;
 	private final JPanel container;
 
@@ -81,22 +84,21 @@ public class MCreatorTabs {
 		});
 
 		moreTabs = new JLabel(UIRES.get("more"));
-		moreTabs.setPreferredSize(new Dimension(40, 39));
+		moreTabs.setPreferredSize(new Dimension(40, TAB_HEIGHT));
 		moreTabs.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createMatteBorder(0, 0, 0, 1, Theme.current().getSecondAltBackgroundColor()),
-				BorderFactory.createCompoundBorder(
-						BorderFactory.createMatteBorder(0, 0, 5, 0, Theme.current().getAltBackgroundColor()),
-						BorderFactory.createEmptyBorder(0, 10, 0, 10))));
+				BorderFactory.createMatteBorder(0, 0, TAB_BORDER_HEIGHT, 0, Theme.current().getAltBackgroundColor()),
+				BorderFactory.createEmptyBorder(0, 10, 0, 10)));
 		moreTabs.setCursor(new Cursor(Cursor.HAND_CURSOR));
 		moreTabs.addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) {
-				moreTabsMenu.show(e.getComponent(), 0, 39);
+				moreTabsMenu.show(e.getComponent(), 0, TAB_HEIGHT);
 			}
 		});
 
 		filler = new JPanel();
 		filler.setOpaque(false);
-		filler.setBorder(BorderFactory.createMatteBorder(0, 0, 5, 0, Theme.current().getAltBackgroundColor()));
+		filler.setBorder(
+				BorderFactory.createMatteBorder(0, 0, TAB_BORDER_HEIGHT, 0, Theme.current().getAltBackgroundColor()));
 	}
 
 	void reloadTabStrip() {
@@ -150,7 +152,7 @@ public class MCreatorTabs {
 			tabsStripWidth += moreTabs.getPreferredSize().width;
 		}
 
-		filler.setPreferredSize(new Dimension(Math.max(0, maxWidth - tabsStripWidth), 39));
+		filler.setPreferredSize(new Dimension(Math.max(0, maxWidth - tabsStripWidth), TAB_HEIGHT));
 		tabsStrip.add(filler);
 
 		tabsStrip.revalidate();
@@ -179,7 +181,7 @@ public class MCreatorTabs {
 		});
 
 		MCREvent.event(new TabEvent.Added(tab));
-		container.add(tab.content, tab.identifier.toString());
+		container.add(tab.content, tab.identifier.toString().toLowerCase(Locale.ROOT));
 		showTab(tab);
 
 		reloadTabStrip();
@@ -207,11 +209,15 @@ public class MCreatorTabs {
 
 	public Tab showTabOrGetExisting(Object identifier, boolean notify) {
 		Tab existing = null;
-		if (this.current != null && !this.current.equals(this.previous))
+		if (this.current != null && !this.current.equals(this.previous)) {
 			this.previous = this.current;
+			if (this.previous.tabHiddenListener != null)
+				this.previous.tabHiddenListener.tabHidden(this.previous);
+		}
 		for (Tab tab : tabs) {
-			if (tab.identifier.equals(identifier)) {
-				cardLayout.show(container, identifier.toString());
+			if (tab.identifier.equals(identifier) || tab.identifier.toString().toLowerCase(Locale.ROOT)
+					.equals(identifier.toString().toLowerCase(Locale.ROOT))) {
+				cardLayout.show(container, identifier.toString().toLowerCase(Locale.ROOT));
 				tab.setBackground(Theme.current().getAltBackgroundColor());
 				tab.selected = true;
 				this.current = tab;
@@ -244,7 +250,7 @@ public class MCreatorTabs {
 
 			if (tab.equals(this.current))
 				if (!showTab(this.previous)) {
-					showTab(tabs.get(0));
+					showTab(tabs.getFirst());
 				}
 
 			if (tab.tabClosedListener != null)
@@ -292,6 +298,7 @@ public class MCreatorTabs {
 		private TabClosedListener tabClosedListener;
 		private TabClosingListener tabClosingListener;
 		private TabShownListener tabShownListener;
+		private TabHiddenListener tabHiddenListener;
 
 		private Color inactiveColor = Theme.current().getAltBackgroundColor();
 		private Color activeColor = Theme.current().getInterfaceAccentColor();
@@ -301,8 +308,6 @@ public class MCreatorTabs {
 		private final JLabel iconLabel = new JLabel();
 		private final JLabel blo = new JLabel();
 		private final FontRenderContext frc;
-
-		private boolean hasRightBorder = true;
 
 		private String text;
 
@@ -379,17 +384,22 @@ public class MCreatorTabs {
 		public void updateSize() {
 			if (closeable && icon == null) {
 				setPreferredSize(
-						new Dimension((int) (blo.getFont().getStringBounds(blo.getText(), frc).getWidth() + 40), 39));
+						new Dimension((int) (blo.getFont().getStringBounds(blo.getText(), frc).getWidth() + 45),
+								TAB_HEIGHT));
 			} else if (closeable) {
 				setPreferredSize(
-						new Dimension((int) (blo.getFont().getStringBounds(blo.getText(), frc).getWidth() + 70), 39));
+						new Dimension((int) (blo.getFont().getStringBounds(blo.getText(), frc).getWidth() + 75),
+								TAB_HEIGHT));
 			} else {
 				setPreferredSize(
-						new Dimension((int) (blo.getFont().getStringBounds(blo.getText(), frc).getWidth() + 30), 39));
+						new Dimension((int) (blo.getFont().getStringBounds(blo.getText(), frc).getWidth() + 32),
+								TAB_HEIGHT));
 			}
 		}
 
 		public void setText(String name) {
+			this.text = name;
+
 			if (uppercase)
 				name = name.toUpperCase(Locale.ENGLISH);
 			blo.setText(name);
@@ -416,20 +426,11 @@ public class MCreatorTabs {
 		}
 
 		void updateBorder() {
-			if (selected)
-				setBorder(BorderFactory.createCompoundBorder(
-						BorderFactory.createMatteBorder(0, 0, 0, hasRightBorder ? 1 : 0,
-								Theme.current().getSecondAltBackgroundColor()),
-						BorderFactory.createMatteBorder(0, 0, 5, 0, activeColor)));
-			else
-				setBorder(BorderFactory.createCompoundBorder(
-						BorderFactory.createMatteBorder(0, 0, 0, hasRightBorder ? 1 : 0,
-								Theme.current().getSecondAltBackgroundColor()),
-						BorderFactory.createMatteBorder(0, 0, 5, 0, inactiveColor)));
-		}
-
-		public void setHasRightBorder(boolean hasRightBorder) {
-			this.hasRightBorder = hasRightBorder;
+			if (selected) {
+				setBorder(BorderFactory.createMatteBorder(0, 0, TAB_BORDER_HEIGHT, 0, activeColor));
+			} else {
+				setBorder(BorderFactory.createMatteBorder(0, 0, TAB_BORDER_HEIGHT, 0, inactiveColor));
+			}
 		}
 
 		public void setInactiveColor(Color inactiveColor) {
@@ -454,6 +455,10 @@ public class MCreatorTabs {
 			this.tabShownListener = tabShownListener;
 		}
 
+		public void setTabHiddenListener(TabHiddenListener tabHiddenListener) {
+			this.tabHiddenListener = tabHiddenListener;
+		}
+
 		public JPanel getContent() {
 			return content;
 		}
@@ -475,6 +480,10 @@ public class MCreatorTabs {
 
 	public interface TabShownListener {
 		void tabShown(Tab tab);
+	}
+
+	public interface TabHiddenListener {
+		void tabHidden(Tab tab);
 	}
 
 	public interface TabClosedListener {

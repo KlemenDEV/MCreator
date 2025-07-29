@@ -26,7 +26,9 @@ import net.mcreator.workspace.Workspace;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nullable;
 import java.awt.*;
+import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused") public class VariableType {
@@ -37,6 +39,8 @@ import java.util.Map;
 	private String blocklyVariableType;
 	private boolean ignoredByCoverage;
 	private boolean nullable;
+
+	@Nullable public List<String> required_apis;
 
 	public void setName(String name) {
 		this.name = name;
@@ -64,9 +68,20 @@ import java.util.Map;
 			else
 				return Color.decode(color);
 		} catch (Exception e) {
-			LOG.warn("The color for variable type " + name + " isn't formatted correctly. Using color black for it");
+			LOG.warn("The color for variable type {} isn't formatted correctly. Using color black for it", name);
 			return Color.BLACK;
 		}
+	}
+
+	public boolean isSupportedInWorkspace(Workspace workspace) {
+		if (required_apis != null) {
+			for (String required_api : required_apis) {
+				if (!workspace.getWorkspaceSettings().getMCreatorDependencies().contains(required_api)) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	public boolean isIgnoredByCoverage() {

@@ -22,26 +22,17 @@ import net.mcreator.blockly.data.Dependency;
 import net.mcreator.element.types.Overlay;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.MCreatorApplication;
-import net.mcreator.ui.component.util.ComboBoxUtil;
-import net.mcreator.ui.component.util.ComponentUtils;
 import net.mcreator.ui.init.L10N;
-import net.mcreator.ui.laf.renderer.WTextureComboBoxRenderer;
 import net.mcreator.ui.procedure.ProcedureSelector;
-import net.mcreator.ui.validation.AggregatedValidationResult;
-import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.ui.wysiwyg.WYSIWYGEditor;
-import net.mcreator.util.ListUtils;
 import net.mcreator.workspace.elements.ModElement;
 import net.mcreator.workspace.elements.VariableTypeLoader;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.stream.Collectors;
 
 public class OverlayGUI extends ModElementGUI<Overlay> {
 
@@ -67,27 +58,18 @@ public class OverlayGUI extends ModElementGUI<Overlay> {
 
 		editor.ovst.add(displayCondition);
 
-		editor.overlayBaseTexture.setRenderer(
-				new WTextureComboBoxRenderer.TypeTextures(mcreator.getWorkspace(), TextureType.SCREEN));
-
 		editor.setPreferredSize(new Dimension(5, 550));
 
 		pane5.setOpaque(false);
-		pane5.add("Center", ComponentUtils.applyPadding(editor, 5, true, true, true, true));
+		pane5.add("Center", editor);
 
 		addPage(pane5, false);
-	}
-
-	@Override protected AggregatedValidationResult validatePage(int page) {
-		return new AggregatedValidationResult.PASS();
 	}
 
 	@Override public void reloadDataLists() {
 		super.reloadDataLists();
 
-		ComboBoxUtil.updateComboBoxContents(editor.overlayBaseTexture, ListUtils.merge(Collections.singleton(""),
-				mcreator.getFolderManager().getTexturesList(TextureType.SCREEN).stream().map(File::getName)
-						.collect(Collectors.toList())), "");
+		editor.overlayBaseTexture.reload();
 
 		displayCondition.refreshListKeepSelected();
 	}
@@ -95,7 +77,7 @@ public class OverlayGUI extends ModElementGUI<Overlay> {
 	@Override public void openInEditingMode(Overlay overlay) {
 		editor.priority.setSelectedItem(overlay.priority);
 		editor.setComponentList(overlay.components);
-		editor.overlayBaseTexture.setSelectedItem(overlay.baseTexture);
+		editor.overlayBaseTexture.setTextureFromTextureName(overlay.baseTexture);
 		editor.overlayTarget.setSelectedItem(overlay.overlayTarget);
 		displayCondition.setSelectedProcedure(overlay.displayCondition);
 
@@ -112,9 +94,9 @@ public class OverlayGUI extends ModElementGUI<Overlay> {
 
 	@Override public Overlay getElementFromGUI() {
 		Overlay overlay = new Overlay(modElement);
-		overlay.priority = (String) editor.priority.getSelectedItem();
+		overlay.priority = editor.priority.getSelectedItem();
 		overlay.components = editor.getComponentList();
-		overlay.baseTexture = editor.overlayBaseTexture.getSelectedItem();
+		overlay.baseTexture = editor.overlayBaseTexture.getTextureName();
 		overlay.overlayTarget = editor.overlayTarget.getSelectedItem();
 		overlay.displayCondition = displayCondition.getSelectedProcedure();
 

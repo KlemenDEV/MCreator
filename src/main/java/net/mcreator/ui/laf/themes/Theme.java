@@ -91,7 +91,7 @@ public class Theme {
 			consoleFont = consoleFont.deriveFont(12.0f);
 			GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(consoleFont);
 		} catch (NullPointerException | FontFormatException | IOException e2) {
-			LOG.info("Failed to init MCreator Theme! Error " + e2.getMessage());
+			LOG.info("Failed to init MCreator Theme! Error {}", e2.getMessage());
 		}
 
 		return this;
@@ -110,6 +110,11 @@ public class Theme {
 			overrides.put("@disabledForeground", ColorUtils.formatColor(Theme.current().getAltForegroundColor()));
 			overrides.put("@selectionInactiveBackground", "@accentSelectionBackground");
 			overrides.put("@selectionInactiveForeground", "@selectionForeground");
+
+			// Color overrides for com.formdev.flatlaf.FlatIconColors used in SVG icons
+			overrides.put("Objects.BlackText", "@foreground");
+			overrides.put("Objects.Grey", "@buttonArrowColor");
+			overrides.put("Objects.GreenAndroid", "@accentColor");
 		}
 
 		if (!disableMCreatorOverrides) {
@@ -122,13 +127,13 @@ public class Theme {
 			overrides.put("Component.focusWidth", "0");
 			overrides.put("Component.innerFocusWidth", "0");
 
-			overrides.put("ScrollBar.width", "7");
-
 			overrides.put("Table.showHorizontalLines", "true");
 			overrides.put("Table.showVerticalLines", "true");
 
 			overrides.put("TabbedPane.contentOpaque", "false");
 			overrides.put("Tree.rendererFillBackground", "false");
+
+			overrides.put("TabbedPane.focusColor", "@background");
 
 			overrides.put("List.focusCellHighlightBorder", "0,0,0,0");
 			overrides.put("List.border", "0,0,0,0");

@@ -41,7 +41,7 @@ import net.mcreator.ui.validation.Validator;
 import net.mcreator.ui.validation.component.VTextField;
 import net.mcreator.ui.validation.validators.NamespaceValidator;
 import net.mcreator.ui.validation.validators.RegistryNameValidator;
-import net.mcreator.ui.validation.validators.TextFieldValidatorJSON;
+import net.mcreator.ui.validation.validators.TextFieldValidator;
 import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.util.DesktopUtils;
 import net.mcreator.util.FilenameUtilsPatched;
@@ -65,9 +65,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.lang.module.ModuleDescriptor;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 public class WorkspaceDialogs {
 
@@ -82,7 +83,7 @@ public class WorkspaceDialogs {
 		workspaceDialog.add("South", buttons);
 		ok.addActionListener(e -> {
 			if (wdp.validationGroup.validateIsErrorFree())
-				workspaceDialog.setVisible(false);
+				workspaceDialog.dispose();
 			else
 				showErrorsMessage(mcreator, new AggregatedValidationResult(wdp.validationGroup));
 		});
@@ -93,7 +94,7 @@ public class WorkspaceDialogs {
 		buttons.add(cancel);
 		cancel.addActionListener(e -> {
 			canceled.set(true);
-			workspaceDialog.setVisible(false);
+			workspaceDialog.dispose();
 		});
 
 		workspaceDialog.getRootPane().setDefaultButton(ok);
@@ -144,26 +145,28 @@ public class WorkspaceDialogs {
 
 		private GeneratorFlavor flavorFilter = null;
 
-		JComponent generatorSelector;
-		ValidationGroup validationGroup = new ValidationGroup();
+		final JComponent generatorSelector;
+		final ValidationGroup validationGroup = new ValidationGroup();
 
-		VTextField modName = new VTextField(24);
-		VTextField modID = new VTextField(24);
+		final VTextField modName = new VTextField(24);
+		final VTextField modID = new VTextField(24);
 
-		VTextField packageName = new VTextField(24);
-		VTextField credits = new VTextField(24);
+		final VTextField packageName = new VTextField(24);
+		final VTextField credits = new VTextField(24);
 
-		VTextField version = new VTextField(24);
-		VTextField description = new VTextField(24);
-		VTextField author = new VTextField(24);
-		VTextField websiteURL = new VTextField(24);
+		final VTextField version = new VTextField(24);
+		final VTextField description = new VTextField(24);
+		final VTextField author = new VTextField(24);
+		final VTextField websiteURL = new VTextField(24);
 
-		JComboBox<String> modPicture = new JComboBox<>();
-		JCheckBox serverSideOnly = L10N.checkbox("dialog.workspace_settings.server_side_mod");
-		JTextField updateJSON = new JTextField(24);
-		JStringListField requiredMods, dependencies, dependants;
+		final JComboBox<String> modPicture = new JComboBox<>();
+		final JCheckBox serverSideOnly = L10N.checkbox("dialog.workspace_settings.server_side_mod");
+		final JTextField updateJSON = new JTextField(24);
+		final JStringListField requiredMods;
+		final JStringListField dependencies;
+		final JStringListField dependants;
 
-		JComboBox<String> license = new JComboBox<>(
+		final JComboBox<String> license = new JComboBox<>(
 				new String[] { "Not specified", "Academic Free License v3.0", "Ace3 Style BSD", "All Rights Reserved",
 						"Apache License version 2.0", "Apple Public Source License version 2.0 (APSL)",
 						"BSD License Common Development and Distribution License (CDDL)",
@@ -176,9 +179,9 @@ public class WorkspaceDialogs {
 						"MIT License", "Mozilla Public License 1.0 (MPL)", "Mozilla Public License 1.1 (MPL 1.1)",
 						"Mozilla Public License 2.0", "Public Domain", "WTFPL", "Custom license" });
 
-		Map<String, JCheckBox> apis = new HashMap<>();
+		final Map<String, JCheckBox> apis = new HashMap<>();
 
-		JComboBox<GeneratorConfiguration> generator = new JComboBox<>();
+		final JComboBox<GeneratorConfiguration> generator = new JComboBox<>();
 
 		private boolean modIDManuallyEntered = false;
 		private boolean packageNameManuallyEntered = false;
@@ -212,13 +215,19 @@ public class WorkspaceDialogs {
 			_external_apis.setLayout(new BoxLayout(_external_apis, BoxLayout.PAGE_AXIS));
 
 			if (workspace != null) {
-				JTabbedPane master = new JTabbedPane();
-				master.addTab(L10N.t("dialog.workspace_settings.tab.general"),
-						PanelUtils.pullElementUp(_basicSettings));
-				master.addTab(L10N.t("dialog.workspace_settings.tab.apis"), PanelUtils.pullElementUp(_external_apis));
-				master.addTab(L10N.t("dialog.workspace_settings.tab.advanced"),
-						PanelUtils.pullElementUp(_advancedSettings));
-				add("Center", master);
+				if (workspace.getGeneratorConfiguration().getGeneratorFlavor().getBaseLanguage()
+						== GeneratorFlavor.BaseLanguage.JAVA) {
+					JTabbedPane master = new JTabbedPane();
+					master.addTab(L10N.t("dialog.workspace_settings.tab.general"),
+							PanelUtils.pullElementUp(_basicSettings));
+					master.addTab(L10N.t("dialog.workspace_settings.tab.apis"),
+							PanelUtils.pullElementUp(_external_apis));
+					master.addTab(L10N.t("dialog.workspace_settings.tab.advanced"),
+							PanelUtils.pullElementUp(_advancedSettings));
+					add("Center", master);
+				} else {
+					add("Center", PanelUtils.pullElementUp(_basicSettings));
+				}
 			} else {
 				add("Center", _basicSettings);
 			}
@@ -258,8 +267,8 @@ public class WorkspaceDialogs {
 			});
 
 			modName.setValidator(new Validator() {
-				private final Validator parent = new TextFieldValidatorJSON(modName,
-						L10N.t("dialog.workspace_settings.mod_name.invalid"), false);
+				private final Validator parent = new TextFieldValidator(modName,
+						L10N.t("dialog.workspace_settings.mod_name.invalid"));
 
 				@Override public ValidationResult validate() {
 					if (modName.getText().matches(".*\\d+.*"))
@@ -270,27 +279,18 @@ public class WorkspaceDialogs {
 				}
 			});
 
-			version.setValidator(
-					new TextFieldValidatorJSON(version, L10N.t("dialog.workspace_settings.version.error"), false) {
-						@Override public ValidationResult validate() {
-							try {
-								ModuleDescriptor.Version.parse(version.getText());
-							} catch (Exception e) {
-								return new ValidationResult(ValidationResultType.ERROR,
-										L10N.t("dialog.workspace_settings.version.error2", e.getMessage()));
-							}
+			version.setValidator(new TextFieldValidator(version, L10N.t("dialog.workspace_settings.version.error")) {
+				@Override public ValidationResult validate() {
+					try {
+						ModuleDescriptor.Version.parse(version.getText());
+					} catch (Exception e) {
+						return new ValidationResult(ValidationResultType.ERROR,
+								L10N.t("dialog.workspace_settings.version.error2", e.getMessage()));
+					}
 
-							return super.validate();
-						}
-					});
-
-			description.setValidator(
-					new TextFieldValidatorJSON(description, L10N.t("dialog.workspace_settings.description.error"),
-							true));
-			author.setValidator(
-					new TextFieldValidatorJSON(author, L10N.t("dialog.workspace_settings.author.error"), true));
-			websiteURL.setValidator(
-					new TextFieldValidatorJSON(author, L10N.t("dialog.workspace_settings.website.error"), true));
+					return super.validate();
+				}
+			});
 
 			((AbstractDocument) modID.getDocument()).setDocumentFilter(new DocumentFilter() {
 				@Override
@@ -323,9 +323,20 @@ public class WorkspaceDialogs {
 			license.setEditable(true);
 			license.setPrototypeDisplayValue("XXXXXXXXXXXXXXXXXX");
 
-			modID.setValidator(
-					new RegistryNameValidator(modID, L10N.t("dialog.workspace.settings.workspace_modid")).setMaxLength(
-							32));
+			modID.setValidator(new Validator() {
+				private static final Pattern VALID_MODID = Pattern.compile(
+						"^(?=.{2,64}$)[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$");
+
+				private final Validator parent = new RegistryNameValidator(modID,
+						L10N.t("dialog.workspace.settings.workspace_modid")).setMaxLength(32);
+
+				@Override public ValidationResult validate() {
+					if (!VALID_MODID.matcher(modID.getText()).matches())
+						return new ValidationResult(ValidationResultType.ERROR,
+								L10N.t("dialog.workspace.settings.workspace_modid_invalid"));
+					return parent.validate();
+				}
+			});
 
 			modName.enableRealtimeValidation();
 			modID.enableRealtimeValidation();
@@ -337,9 +348,6 @@ public class WorkspaceDialogs {
 			validationGroup.addValidationElement(modName);
 			validationGroup.addValidationElement(modID);
 			validationGroup.addValidationElement(version);
-			validationGroup.addValidationElement(description);
-			validationGroup.addValidationElement(websiteURL);
-			validationGroup.addValidationElement(author);
 
 			modPicture.addItem(L10N.t("dialog.workspace.settings.workspace_nopic_default"));
 			if (workspace != null) {
@@ -351,7 +359,7 @@ public class WorkspaceDialogs {
 			}
 
 			websiteURL.setText(MCreatorApplication.SERVER_DOMAIN);
-			author.setText(System.getProperty("user.name") + ", MCreator");
+			author.setText("MCreator");
 			version.setText("1.0.0");
 
 			generator.setUI(new BasicComboBoxUI() {
@@ -428,13 +436,6 @@ public class WorkspaceDialogs {
 				descriptionSettings.add(license);
 
 				_basicSettings.add(new JEmptyBox(5, 5));
-
-				credits.setValidator(
-						new TextFieldValidatorJSON(credits, L10N.t("dialog.workspace_settings.credits.error"), true));
-				credits.enableRealtimeValidation();
-
-				validationGroup.addValidationElement(credits);
-
 			}
 
 			validationGroup.addValidationElement(packageName);

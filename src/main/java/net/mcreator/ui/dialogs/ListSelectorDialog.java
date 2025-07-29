@@ -47,21 +47,16 @@ public abstract class ListSelectorDialog<T> extends SearchableSelectorDialog<T> 
 		super(mcreator, entryProvider);
 
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
 		list.addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent evt) {
 				if (evt.getClickCount() == 2) {
-					setVisible(false);
 					dispose();
 				}
 			}
 		});
 
 		JButton selectButton = L10N.button("dialog.item_selector.use_selected");
-		selectButton.addActionListener(e -> {
-			setVisible(false);
-			dispose();
-		});
+		selectButton.addActionListener(e -> dispose());
 
 		message.setBorder(BorderFactory.createEmptyBorder(4, 4, 2, 0));
 
@@ -80,10 +75,6 @@ public abstract class ListSelectorDialog<T> extends SearchableSelectorDialog<T> 
 		add("South", PanelUtils.centerInPanel(selectButton));
 
 		setSize(360, 360);
-
-		Dimension dim = getToolkit().getScreenSize();
-		Rectangle abounds = getBounds();
-		setLocation((dim.width - abounds.width) / 2, (dim.height - abounds.height) / 2);
 		setLocationRelativeTo(mcreator);
 
 		// Don't add any selected value if the "Close window" button is pressed

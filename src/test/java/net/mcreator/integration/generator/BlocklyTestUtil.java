@@ -1,7 +1,7 @@
 /*
  * MCreator (https://mcreator.net/)
  * Copyright (C) 2012-2020, Pylo
- * Copyright (C) 2020-2023, Pylo, opensource contributors
+ * Copyright (C) 2020-2024, Pylo, opensource contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -101,7 +101,7 @@ public class BlocklyTestUtil {
 			}
 
 			if (!templatesDefined) {
-				LOG.warn("Skipping Blockly block with incomplete template: " + toolboxBlock.getMachineName());
+				LOG.warn("Skipping Blockly block with incomplete template: {}", toolboxBlock.getMachineName());
 				return false;
 			}
 		}
@@ -131,7 +131,7 @@ public class BlocklyTestUtil {
 			}
 
 			if (processed != toolboxBlock.getFields().size()) {
-				LOG.warn("Skipping Blockly block with special fields: " + toolboxBlock.getMachineName());
+				LOG.warn("Skipping Blockly block with special fields: {}", toolboxBlock.getMachineName());
 				return false;
 			}
 		}
@@ -153,8 +153,8 @@ public class BlocklyTestUtil {
 				}
 			}
 			if (processedFields != totalFields) {
-				LOG.warn("Skipping Blockly block with incorrectly defined repeating field: "
-						+ toolboxBlock.getMachineName());
+				LOG.warn("Skipping Blockly block with incorrectly defined repeating field: {}",
+						toolboxBlock.getMachineName());
 				return false;
 			}
 		}
@@ -171,14 +171,26 @@ public class BlocklyTestUtil {
 			processed++;
 		}
 		case "field_number" -> {
-			if (arg.has("precision") && arg.get("precision").getAsInt() == 1)
-				additionalXML.append("<field name=\"").append(field).append("\">1</field>");
-			else
-				additionalXML.append("<field name=\"").append(field).append("\">1.23</field>");
+			String value;
+			if (arg.has("value")) {
+				value = arg.get("value").getAsString();
+			} else {
+				double min = arg.has("min") ? arg.get("min").getAsDouble() : -1000;
+				double max = arg.has("max") ? arg.get("max").getAsDouble() : 1000;
+				if (arg.has("precision") && arg.get("precision").getAsInt() == 1)
+					value = String.valueOf(random.nextInt((int) min, (int) (max + 1)));
+				else
+					value = String.valueOf(random.nextDouble(min, max));
+			}
+			additionalXML.append("<field name=\"").append(field).append("\">").append(value).append("</field>");
 			processed++;
 		}
-		case "field_input", "field_javaname" -> {
-			additionalXML.append("<field name=\"").append(field).append("\">test</field>");
+		case "field_input", "field_javaname", "field_resourcelocation" -> {
+			String value = "test";
+			if (arg.has("text")) {
+				value = arg.get("text").getAsString();
+			}
+			additionalXML.append("<field name=\"").append(field).append("\">").append(value).append("</field>");
 			processed++;
 		}
 		case "field_dropdown" -> {
@@ -252,6 +264,14 @@ public class BlocklyTestUtil {
 		case "gamerulesnumber":
 			return ElementUtil.getAllNumberGameRules(workspace).stream().map(DataListEntry::getName)
 					.toArray(String[]::new);
+		case "eventparametersnumber":
+			return DataListLoader.loadDataList("eventparameters").stream()
+					.filter(ElementUtil.typeMatches(VariableTypeLoader.BuiltInTypes.NUMBER.getName()))
+					.map(DataListEntry::getName).toArray(String[]::new);
+		case "eventparametersboolean":
+			return DataListLoader.loadDataList("eventparameters").stream()
+					.filter(ElementUtil.typeMatches(VariableTypeLoader.BuiltInTypes.LOGIC.getName()))
+					.map(DataListEntry::getName).toArray(String[]::new);
 		case "sound":
 			return ElementUtil.getAllSounds(workspace);
 		case "structure":
@@ -262,13 +282,16 @@ public class BlocklyTestUtil {
 		case "arrowProjectile":
 			return ElementUtil.loadArrowProjectiles(workspace).stream().map(DataListEntry::getName)
 					.toArray(String[]::new);
+		case "configuredfeature":
+			return ElementUtil.loadAllConfiguredFeatures(workspace).stream().map(DataListEntry::getName)
+					.toArray(String[]::new);
 		default: {
 			if (datalist.startsWith("procedure_retval_")) {
 				var variableType = VariableTypeLoader.INSTANCE.fromName(
 						StringUtils.removeStart(datalist, "procedure_retval_"));
 				return ElementUtil.getProceduresOfType(workspace, variableType);
 			} else if (!DataListLoader.loadDataList(datalist).isEmpty()) {
-				return ElementUtil.loadDataListAndElements(workspace, datalist, false, typeFilter,
+				return ElementUtil.loadDataListAndElements(workspace, datalist, typeFilter,
 								StringUtils.split(customEntryProviders, ',')).stream().map(DataListEntry::getName)
 						.toArray(String[]::new);
 			}

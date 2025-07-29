@@ -49,7 +49,7 @@ public class NewLayerDialog extends MCreatorDialog {
 
 		templatesSorted = new ArrayList<>(ImageMakerTexturesCache.CACHE.keySet());
 		templatesSorted.sort(Comparator.comparing(resourcePointer -> resourcePointer.identifier.toString()));
-		selection = templatesSorted.get(0);
+		selection = templatesSorted.getFirst();
 		TextureSelectorDialog templateChooser = new TextureSelectorDialog(templatesSorted, window);
 
 		JPanel settings = new JPanel(new GridBagLayout());
@@ -101,7 +101,7 @@ public class NewLayerDialog extends MCreatorDialog {
 		templateChooserButton.addActionListener(event -> templateChooser.setVisible(true));
 
 		templateChooser.naprej.addActionListener(arg01 -> {
-			templateChooser.setVisible(false);
+			templateChooser.dispose();
 			selection = templateChooser.list.getSelectedValue();
 			ImageIcon icon = ImageMakerTexturesCache.CACHE.get(selection);
 			templateChooserButton.setIcon(new ImageIcon(ImageUtils.resize(icon.getImage(), 32)));
@@ -109,7 +109,7 @@ public class NewLayerDialog extends MCreatorDialog {
 			height.setValue(icon.getIconHeight());
 		});
 
-		cancel.addActionListener(e -> setVisible(false));
+		cancel.addActionListener(e -> dispose());
 
 		ok.addActionListener(e -> {
 			switch (layerType.getSelectedIndex()) {
@@ -127,7 +127,7 @@ public class NewLayerDialog extends MCreatorDialog {
 						ImageMakerTexturesCache.CACHE.get(selection).getImage()));
 				break;
 			}
-			setVisible(false);
+			dispose();
 		});
 
 		properties.add(L10N.label("dialog.imageeditor.new_layer_name"));

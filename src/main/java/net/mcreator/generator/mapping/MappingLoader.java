@@ -22,6 +22,7 @@ import net.mcreator.generator.GeneratorConfiguration;
 import net.mcreator.io.FileIO;
 import net.mcreator.minecraft.DataListLoader;
 import net.mcreator.plugin.PluginLoader;
+import net.mcreator.util.TestUtil;
 import net.mcreator.util.YamlUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,7 +44,7 @@ public class MappingLoader {
 		Set<String> fileNames = new LinkedHashSet<>();
 		for (String templateLoaderPath : generatorConfiguration.getGeneratorPaths("mappings")) {
 			fileNames.addAll(PluginLoader.INSTANCE.getResources(templateLoaderPath.replace('/', '.'),
-					Pattern.compile(".*\\.yaml")));
+					Pattern.compile(".*\\.yaml$")));
 		}
 
 		Load yamlLoad = new Load(YamlUtil.getSimpleLoadSettings());
@@ -75,12 +76,13 @@ public class MappingLoader {
 							mappings.put(mappingName, merged);
 						}
 					} catch (Exception e) {
-						LOG.error("[" + mappingName + "] Error: " + e.getMessage() + " for mapping file "
-								+ mappingResource);
+						LOG.error("[{}] Error: {} for mapping file {}", mappingName, e.getMessage(), mappingResource);
+						TestUtil.failIfTestingEnvironment();
 					}
 				});
 			} catch (IOException e) {
 				LOG.error("Failed to load mapping resource", e);
+				TestUtil.failIfTestingEnvironment();
 			}
 		}
 

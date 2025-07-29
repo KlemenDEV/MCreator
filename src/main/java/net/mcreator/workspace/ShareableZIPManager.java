@@ -27,20 +27,49 @@ import net.mcreator.workspace.elements.ModElement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ShareableZIPManager {
 
 	private static final Logger LOG = LogManager.getLogger("Shareable ZIP manager");
 
-	public static File importZIP(File file, File workspaceDir, Window window) {
+	private static final Set<String> EXCLUDES = new HashSet<>() {{
+		add(".eclipse/");
+		add(".gradle/");
+		add(".mcreator/");
+		add("build/");
+		add("gradle/");
+		add("#build.gradle");
+		add("#gradlew");
+		add("#gradlew.bat");
+		add("#mcreator.gradle");
+		add("#.classpath");
+		add("#.project");
+		add(".idea/");
+		add(".settings/");
+	}};
+
+	/**
+	 * Adds the specified workspace-relative path to the list of files/folders that should be excluded from shareable
+	 * workspace archive.
+	 *
+	 * @param fileOrFolder String identifying a file ({@code #<name>}) or a folder ({@code <name>/}) to be excluded
+	 */
+	public static void excludeWhenZipping(String fileOrFolder) {
+		EXCLUDES.add(fileOrFolder);
+	}
+
+	@Nullable public static ImportResult importZIP(File file, File workspaceDir, Window window) {
 		AtomicReference<File> retval = new AtomicReference<>();
+		AtomicBoolean regenerateRequired = new AtomicBoolean(false);
 
 		ProgressDialog dial = new ProgressDialog(window, L10N.t("dialog.workspace.import_from_zip.importing"));
 
@@ -94,8 +123,8 @@ public class ShareableZIPManager {
 							generatableElement.getModElement().reinit(workspace);
 						}
 					} else {
-						LOG.debug("Skipping preloading of mod element " + mod.getName()
-								+ " as it was converted to a different type");
+						LOG.debug("Skipping preloading of mod element {} as it was converted to a different type",
+								mod.getName());
 					}
 
 					i++;
@@ -104,6 +133,8 @@ public class ShareableZIPManager {
 
 				// make sure we store any potential changes made to the workspace
 				workspace.markDirty();
+
+				regenerateRequired.set(workspace.isRegenerateRequired());
 			} catch (UnsupportedGeneratorException | MissingGeneratorFeaturesException e) {
 				// Exception that already prompted user action resulting in us landing here happened before
 				// So we just cancel the import at this point by returning null
@@ -119,7 +150,7 @@ public class ShareableZIPManager {
 		t.start();
 		dial.setVisible(true);
 
-		return retval.get();
+		return retval.get() == null ? null : new ImportResult(retval.get(), regenerateRequired.get());
 	}
 
 	public static void exportZIP(String title, File file, MCreator mcreator, boolean excludeRunDir) {
@@ -130,10 +161,7 @@ public class ShareableZIPManager {
 			dial.addProgressUnit(p1);
 
 			try {
-				Set<String> excludes = new HashSet<>(
-						Set.of(".eclipse/", ".gradle/", ".mcreator/", "build/", "gradle/", "#build.gradle", "#gradlew",
-								"#gradlew.bat", "#mcreator.gradle", ".git/", "#.classpath", "#.project", ".idea/",
-								".settings/"));
+				Set<String> excludes = new HashSet<>(EXCLUDES);
 				if (excludeRunDir)
 					excludes.addAll(Set.of("run/", "runs/"));
 
@@ -149,5 +177,7 @@ public class ShareableZIPManager {
 		t.start();
 		dial.setVisible(true);
 	}
+
+	public record ImportResult(File file, boolean regenerateRequired) {}
 
 }

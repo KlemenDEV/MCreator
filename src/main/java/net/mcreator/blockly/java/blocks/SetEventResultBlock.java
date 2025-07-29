@@ -36,7 +36,7 @@ import java.util.Map;
 public class SetEventResultBlock implements IBlockGenerator {
 
 	@Override public void generateBlock(BlocklyToCode master, Element block) throws TemplateGeneratorException {
-		if (master instanceof BlocklyToProcedure) {
+		if (master instanceof BlocklyToProcedure blocklyToProcedure) {
 			List<Element> elements = XMLUtil.getDirectChildren(block);
 			String value = null;
 			for (Element element : elements) {
@@ -44,13 +44,13 @@ public class SetEventResultBlock implements IBlockGenerator {
 					value = element.getTextContent();
 			}
 
-			if (((BlocklyToProcedure) master).getExternalTrigger() != null) {
+			if (blocklyToProcedure.getExternalTrigger() != null) {
 				ExternalTrigger trigger = null;
 
 				List<ExternalTrigger> externalTriggers = BlocklyLoader.INSTANCE.getExternalTriggerLoader()
-						.getExternalTrigers();
+						.getExternalTriggers();
 				for (ExternalTrigger externalTrigger : externalTriggers) {
-					if (externalTrigger.getID().equals(((BlocklyToProcedure) master).getExternalTrigger())) {
+					if (externalTrigger.getID().equals(blocklyToProcedure.getExternalTrigger())) {
 						trigger = externalTrigger;
 						break;
 					}
@@ -62,11 +62,10 @@ public class SetEventResultBlock implements IBlockGenerator {
 				} else if (!trigger.has_result) {
 					master.getCompileNotes().add(new BlocklyCompileNote(BlocklyCompileNote.Type.ERROR,
 							L10N.t("blockly.error.event_result.external_trigger_no_result")));
-				}
-
-				if (master.getTemplateGenerator() != null) {
+				} else if (master.getTemplateGenerator() != null) {
 					Map<String, Object> dataModel = new HashMap<>();
 					dataModel.put("result", value);
+					dataModel.put("trigger", blocklyToProcedure.getExternalTrigger());
 					String code = master.getTemplateGenerator()
 							.generateFromTemplate("_set_event_result.java.ftl", dataModel);
 					master.append(code);

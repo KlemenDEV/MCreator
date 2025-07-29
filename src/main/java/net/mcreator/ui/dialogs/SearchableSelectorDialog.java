@@ -25,6 +25,8 @@ import net.mcreator.workspace.Workspace;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -62,11 +64,18 @@ public abstract class SearchableSelectorDialog<T> extends MCreatorDialog {
 				model.refilter();
 			}
 		});
+
+		addWindowListener(new WindowAdapter() {
+			@Override public void windowOpened(WindowEvent e) {
+				super.windowOpened(e);
+				reloadElements();
+			}
+		});
 	}
 
 	class FilterModel extends DefaultListModel<T> {
-		ArrayList<T> entries;
-		ArrayList<T> filterEntries;
+		final ArrayList<T> entries;
+		final ArrayList<T> filterEntries;
 
 		FilterModel() {
 			super();
@@ -119,13 +128,6 @@ public abstract class SearchableSelectorDialog<T> extends MCreatorDialog {
 	 * @return The predicate that will be used to filter the elements
 	 */
 	abstract Predicate<T> getFilter(String term);
-
-	@Override public void setVisible(boolean visible) {
-		if (visible) {
-			reloadElements();
-		}
-		super.setVisible(visible);
-	}
 
 	void reloadElements() {
 		model.removeAllElements();

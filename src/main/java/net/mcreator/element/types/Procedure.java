@@ -49,6 +49,7 @@ public class Procedure extends GeneratableElement {
 	public static final String XML_BASE = "<xml xmlns=\"https://developers.google.com/blockly/xml\"><block type=\"event_trigger\" deletable=\"false\" x=\"40\" y=\"40\"><field name=\"trigger\">no_ext_trigger</field></block></xml>";
 
 	@BlocklyXML("procedures") public String procedurexml;
+	public boolean skipDependencyNullCheck;
 
 	private transient List<Dependency> dependencies = null;
 
@@ -66,37 +67,38 @@ public class Procedure extends GeneratableElement {
 		return dependencies;
 	}
 
-	public List<Dependency> reloadDependencies() {
+	private List<Dependency> reloadDependencies() {
 		dependencies = new ArrayList<>();
-		List<?> dependenciesList = (List<?>) getModElement().getMetadata("dependencies");
-		for (Object depobj : dependenciesList) {
-			Dependency dependency = WorkspaceFileManager.gson.fromJson(
-					WorkspaceFileManager.gson.toJsonTree(depobj).getAsJsonObject(), Dependency.class);
-			dependencies.add(dependency);
+		if ((List<?>) getModElement().getMetadata("dependencies") instanceof List<?> dependenciesList) {
+			for (Object depobj : dependenciesList) {
+				Dependency dependency = WorkspaceFileManager.gson.fromJson(
+						WorkspaceFileManager.gson.toJsonTree(depobj).getAsJsonObject(), Dependency.class);
+				dependencies.add(dependency);
+			}
 		}
 
 		int idx = dependencies.indexOf(new Dependency("z", "number"));
 		if (idx != -1) {
 			Dependency dependency = dependencies.remove(idx);
-			dependencies.add(0, dependency);
+			dependencies.addFirst(dependency);
 		}
 
 		idx = dependencies.indexOf(new Dependency("y", "number"));
 		if (idx != -1) {
 			Dependency dependency = dependencies.remove(idx);
-			dependencies.add(0, dependency);
+			dependencies.addFirst(dependency);
 		}
 
 		idx = dependencies.indexOf(new Dependency("x", "number"));
 		if (idx != -1) {
 			Dependency dependency = dependencies.remove(idx);
-			dependencies.add(0, dependency);
+			dependencies.addFirst(dependency);
 		}
 
 		idx = dependencies.indexOf(new Dependency("world", "world"));
 		if (idx != -1) {
 			Dependency dependency = dependencies.remove(idx);
-			dependencies.add(0, dependency);
+			dependencies.addFirst(dependency);
 		}
 
 		return dependencies;
@@ -111,7 +113,7 @@ public class Procedure extends GeneratableElement {
 			BlocklyToProcedure blocklyToJava = getBlocklyToProcedure(additionalData);
 
 			List<ExternalTrigger> externalTriggers = BlocklyLoader.INSTANCE.getExternalTriggerLoader()
-					.getExternalTrigers();
+					.getExternalTriggers();
 			ExternalTrigger trigger = null;
 			for (ExternalTrigger externalTrigger : externalTriggers) {
 				if (externalTrigger.getID().equals(blocklyToJava.getExternalTrigger()))
@@ -120,18 +122,18 @@ public class Procedure extends GeneratableElement {
 
 			if (!this.skipDependencyRegeneration) {
 				// we update the dependency list of the procedure
-				this.getModElement().clearMetadata().putMetadata("dependencies", blocklyToJava.getDependencies())
-						.putMetadata("return_type", blocklyToJava.getReturnType() == null ?
-								null :
-								blocklyToJava.getReturnType().getName().toLowerCase(Locale.ENGLISH));
+				this.getModElement().putMetadata("dependencies", blocklyToJava.getDependencies());
+				this.getModElement().putMetadata("return_type", blocklyToJava.getReturnType() == null ?
+						null :
+						blocklyToJava.getReturnType().getName().toLowerCase(Locale.ENGLISH));
 			}
 
 			additionalData.put("dependencies", reloadDependencies());
 			additionalData.put("procedurecode", ProcedureCodeOptimizer.removeMarkers(blocklyToJava.getGeneratedCode()));
 			additionalData.put("return_type", blocklyToJava.getReturnType());
-			additionalData.put("has_trigger", trigger != null);
 			additionalData.put("localvariables", blocklyToJava.getLocalVariables());
 			additionalData.put("procedureblocks", blocklyToJava.getUsedBlocks());
+			additionalData.put("extra_templates_code", blocklyToJava.getExtraTemplatesCode());
 
 			String triggerCode = "";
 			if (trigger != null) {

@@ -21,12 +21,14 @@ package net.mcreator.generator.setup;
 import freemarker.template.Template;
 import net.mcreator.generator.Generator;
 import net.mcreator.generator.GeneratorConfiguration;
+import net.mcreator.generator.GeneratorFlavor;
 import net.mcreator.generator.GeneratorUtils;
 import net.mcreator.generator.setup.folders.AbstractFolderStructure;
 import net.mcreator.generator.template.InlineTemplatesHandler;
 import net.mcreator.io.FileIO;
 import net.mcreator.plugin.PluginLoader;
 import net.mcreator.ui.workspace.resources.TextureType;
+import net.mcreator.util.TestUtil;
 import net.mcreator.workspace.Workspace;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -52,25 +54,25 @@ public class WorkspaceGeneratorSetup {
 			if (workspace.getGeneratorConfiguration().getGeneratorName().equals(newGenerator.getGeneratorName()))
 				return;
 
-			LOG.info("Cleaning up generator for switch to " + newGenerator.getGeneratorName() + " from "
-					+ workspace.getGeneratorConfiguration().getGeneratorName());
+			LOG.info("Cleaning up generator for switch to {} from {}", newGenerator.getGeneratorName(),
+					workspace.getGeneratorConfiguration().getGeneratorName());
 
 			// close gradle connection so no files are locked
 			currentGenerator.close();
 		} else if (workspace.getWorkspaceSettings().getCurrentGenerator() != null) {
-			LOG.info("Cleaning up generator for switch to " + newGenerator.getGeneratorName()
-					+ " from non-existent generator " + workspace.getWorkspaceSettings().getCurrentGenerator());
+			LOG.info("Cleaning up generator for switch to {} from non-existent generator {}",
+					newGenerator.getGeneratorName(), workspace.getWorkspaceSettings().getCurrentGenerator());
 		}
 
 		// delete gradle dirs if present
-		if (new File(workspace.getWorkspaceFolder(), ".gradle/").isDirectory()) {
-			FileIO.deleteDir(new File(workspace.getWorkspaceFolder(), ".gradle/"));
-			FileIO.deleteDir(new File(workspace.getWorkspaceFolder(), "build/"));
-		}
+		FileIO.deleteDir(new File(workspace.getWorkspaceFolder(), ".gradle/"));
+		FileIO.deleteDir(new File(workspace.getWorkspaceFolder(), "build/"));
+		FileIO.deleteDir(new File(workspace.getWorkspaceFolder(), "lib/"));
 
-		// delete lib dir if present (we need new up-to-date libs)
-		if (new File(workspace.getWorkspaceFolder(), "lib/").isDirectory()) {
-			FileIO.deleteDir(new File(workspace.getWorkspaceFolder(), "lib/"));
+		// attempt to delete AT files if Java (so outdated ATs are not applied during generator setup)
+		// they will be regenerated with next workspace build
+		if (newGenerator.getGeneratorFlavor().getBaseLanguage() == GeneratorFlavor.BaseLanguage.JAVA) {
+			new File(workspace.getWorkspaceFolder(), "src/main/resources/META-INF/accesstransformer.cfg").delete();
 		}
 
 		// delete generator base files
@@ -85,10 +87,20 @@ public class WorkspaceGeneratorSetup {
 			}
 		}
 
+		if (newGenerator.getGeneratorFlavor()
+				== GeneratorFlavor.NEOFORGE) { // If switching to NeoForge, delete mods.toml (Minecraft Forge mod specification file)
+			new File(workspace.getWorkspaceFolder(), "src/main/resources/META-INF/mods.toml").delete();
+			new File(workspace.getWorkspaceFolder(),
+					"src/main/resources/mcmod.info").delete(); // also delete legacy mcmod.info used in early versions of Forge
+		} else if (newGenerator.getGeneratorFlavor()
+				== GeneratorFlavor.FORGE) { // If switching to Minecraft Forge, delete neoforge.mods.toml (NeoForge mod specification file)
+			new File(workspace.getWorkspaceFolder(), "src/main/resources/META-INF/neoforge.mods.toml").delete();
+		}
+
 		AbstractFolderStructure folderStructure = AbstractFolderStructure.getFolderStructure(workspace);
 
-		LOG.info("Moving files to new locations while assuming " + folderStructure.getClass().getSimpleName()
-				+ " for the generator converting from");
+		LOG.info("Moving files to new locations while assuming {} for the generator converting from",
+				folderStructure.getClass().getSimpleName());
 
 		// move folders to the new locations, starting from more nested folders down
 		moveFilesToAnotherDir(folderStructure.getStructuresDir(),
@@ -111,12 +123,12 @@ public class WorkspaceGeneratorSetup {
 		if (sourceDir != null && sourceDir.isDirectory() && destinationDir != null) {
 			try {
 				if (!sourceDir.getCanonicalPath().equals(destinationDir.getCanonicalPath())) {
-					LOG.info("Moving " + sourceDir.getName() + " to a new directory " + destinationDir.getName());
+					LOG.info("Moving {} to a new directory {}", sourceDir.getName(), destinationDir.getName());
 					FileIO.copyDirectory(sourceDir, destinationDir);
 					FileIO.deleteDir(sourceDir);
 				}
 			} catch (IOException e) {
-				LOG.warn("Failed to move " + sourceDir.getName() + " dirs", e);
+				LOG.warn("Failed to move {} dirs", sourceDir.getName(), e);
 			}
 		}
 	}
@@ -142,7 +154,8 @@ public class WorkspaceGeneratorSetup {
 					}
 				}
 			} catch (Exception e) {
-				LOG.error(file, e);
+				LOG.error("Failed to copy workspace base file", e);
+				TestUtil.failIfTestingEnvironment();
 			}
 		}
 	}

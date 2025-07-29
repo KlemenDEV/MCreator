@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 	public int x;
 	public int y;
 
+	public boolean locked = false;
 	public transient UUID uuid;
 
 	private static final Map<String, Class<? extends GUIComponent>> typeMappings = new HashMap<>() {{
@@ -52,6 +53,7 @@ import java.util.stream.Collectors;
 		put("imagebutton", ImageButton.class); //weight 25
 		put("button", Button.class);// weight 30
 		put("image", Image.class);// weight 40
+		put("sprite", Sprite.class);// weight 45
 		put("inputslot", InputSlot.class); // weight 50
 		put("outputslot", OutputSlot.class); // weight 50
 	}};
@@ -138,7 +140,8 @@ import java.util.stream.Collectors;
 		private static final Gson gson;
 
 		static {
-			GsonBuilder gsonBuilder = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().setLenient();
+			GsonBuilder gsonBuilder = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting()
+					.setStrictness(Strictness.LENIENT);
 
 			RetvalProcedure.GSON_ADAPTERS.forEach(gsonBuilder::registerTypeAdapter);
 

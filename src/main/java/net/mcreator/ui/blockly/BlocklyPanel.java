@@ -26,6 +26,7 @@ import javafx.scene.Scene;
 import javafx.scene.paint.Color;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import net.mcreator.blockly.data.ExternalTrigger;
 import net.mcreator.io.FileIO;
 import net.mcreator.io.OS;
 import net.mcreator.plugin.MCREvent;
@@ -37,6 +38,7 @@ import net.mcreator.ui.component.util.ThreadUtil;
 import net.mcreator.ui.init.BlocklyJavaScriptsLoader;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.laf.themes.Theme;
+import net.mcreator.util.TestUtil;
 import net.mcreator.workspace.elements.VariableElement;
 import net.mcreator.workspace.elements.VariableType;
 import net.mcreator.workspace.elements.VariableTypeLoader;
@@ -50,12 +52,14 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.io.Closeable;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
-public class BlocklyPanel extends JFXPanel {
+public class BlocklyPanel extends JFXPanel implements Closeable {
 
 	private static final Logger LOG = LogManager.getLogger("Blockly");
 
@@ -67,36 +71,21 @@ public class BlocklyPanel extends JFXPanel {
 
 	private boolean loaded = false;
 
-	private String currentXML = "";
-
 	private final MCreator mcreator;
 	private final BlocklyEditorType type;
 
-	private static final String MINIMAL_XML = "<xml xmlns=\"https://developers.google.com/blockly/xml\"></xml>";
-
-	private final List<ChangeListener> changeListeners = new ArrayList<>();
+	private final List<ChangeListener> changeListeners = new CopyOnWriteArrayList<>();
 
 	public BlocklyPanel(MCreator mcreator, @Nonnull BlocklyEditorType type) {
 		this.mcreator = mcreator;
 		this.type = type;
 
-		bridge = new BlocklyJavascriptBridge(mcreator, () -> {
-			String newXml = (String) executeJavaScriptSynchronously("workspaceToXML();");
-
-			if (newXml.length() > MINIMAL_XML.length()) {
-				this.currentXML = newXml;
-
-				ThreadUtil.runOnSwingThread(() -> changeListeners.forEach(
-						listener -> listener.stateChanged(new ChangeEvent(BlocklyPanel.this))));
-
-				return true;
-			}
-
-			return false;
-		});
+		bridge = new BlocklyJavascriptBridge(mcreator, () -> ThreadUtil.runOnSwingThread(
+				() -> changeListeners.forEach(listener -> listener.stateChanged(new ChangeEvent(BlocklyPanel.this)))));
 
 		ThreadUtil.runOnFxThread(() -> {
 			WebView browser = new WebView();
+			browser.setContextMenuEnabled(false);
 			Scene scene = new Scene(browser);
 			java.awt.Color bg = Theme.current().getSecondAltBackgroundColor();
 			scene.setFill(Color.rgb(bg.getRed(), bg.getGreen(), bg.getBlue()));
@@ -212,11 +201,18 @@ public class BlocklyPanel extends JFXPanel {
 	}
 
 	public String getXML() {
-		return this.currentXML;
+		return loaded ? (String) executeJavaScriptSynchronously("workspaceToXML();") : "";
 	}
 
-	public void setXMLDataOnly(String xml) {
-		this.currentXML = cleanupXML(xml);
+	public void setXML(String xml) {
+		executeJavaScriptSynchronously("""
+				workspace.clear();
+				Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom('%s'), workspace);
+				workspace.clearUndo();
+				""".formatted(escapeXML(xml)));
+
+		ThreadUtil.runOnSwingThread(
+				() -> changeListeners.forEach(listener -> listener.stateChanged(new ChangeEvent(BlocklyPanel.this))));
 	}
 
 	public void addBlocksFromXML(String xml) {
@@ -234,21 +230,6 @@ public class BlocklyPanel extends JFXPanel {
 					"Blockly.Xml.appendDomToWorkspace(Blockly.Xml.textToDom('<xml>" + cleanXML.substring(index)
 							+ "'), workspace)");
 		}
-	}
-
-	public void setXML(String xml) {
-		this.currentXML = xml;
-		executeJavaScriptSynchronously(
-				"Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom('" + escapeXML(xml) + "'), workspace)");
-		executeJavaScriptSynchronously("workspace.clearUndo()");
-	}
-
-	public void clearWorkspace() {
-		executeJavaScriptSynchronously("workspace.clear()");
-	}
-
-	public void triggerEventFunction() {
-		executeJavaScriptSynchronously("blocklyEventFunction()");
 	}
 
 	public void addGlobalVariable(String name, String type) {
@@ -294,14 +275,11 @@ public class BlocklyPanel extends JFXPanel {
 			ThreadUtil.runOnFxThread(query);
 			return query.get();
 		} catch (InterruptedException | ExecutionException e) {
+			TestUtil.failIfTestingEnvironment();
 			LOG.error(javaScript);
 			LOG.error(e.getMessage(), e);
 		}
 		return null;
-	}
-
-	public BlocklyJavascriptBridge getJSBridge() {
-		return bridge;
 	}
 
 	public MCreator getMCreator() {
@@ -319,6 +297,24 @@ public class BlocklyPanel extends JFXPanel {
 	private String escapeXML(String xml) {
 		return xml // escape single quotes, new lines, and escapes
 				.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r");
+	}
+
+	public void addExternalTriggerForProcedureEditor(ExternalTrigger external_trigger) {
+		if (type != BlocklyEditorType.PROCEDURE)
+			throw new RuntimeException("This method can only be called from procedure editor");
+		bridge.addExternalTrigger(external_trigger);
+	}
+
+	@Override public void close() {
+		if (webEngine != null) {
+			// Ensure that the web engine is not closed during the initialization
+			addTaskToRunAfterLoaded(() -> ThreadUtil.runOnFxThread(() -> {
+				// Free resources of the web engine (kill JS, load empty page and finally free the reference)
+				webEngine.setJavaScriptEnabled(false);
+				webEngine.load("");
+				webEngine = null;
+			}));
+		}
 	}
 
 }

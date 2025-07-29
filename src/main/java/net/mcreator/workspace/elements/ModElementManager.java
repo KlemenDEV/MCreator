@@ -21,6 +21,7 @@ package net.mcreator.workspace.elements;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.Strictness;
 import net.mcreator.element.GeneratableElement;
 import net.mcreator.element.ModElementType;
 import net.mcreator.element.parts.procedure.RetvalProcedure;
@@ -34,6 +35,7 @@ import org.apache.logging.log4j.Logger;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.NotThreadSafe;
 import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
@@ -63,7 +65,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 		GsonBuilder gsonBuilder = new GsonBuilder().registerTypeHierarchyAdapter(GeneratableElement.class,
 						new GeneratableElement.GSONAdapter(this.workspace)).disableHtmlEscaping().setPrettyPrinting()
-				.setLenient();
+				.setStrictness(Strictness.LENIENT);
 		RetvalProcedure.GSON_ADAPTERS.forEach(gsonBuilder::registerTypeAdapter);
 
 		this.gson = gsonBuilder.create();
@@ -104,7 +106,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 			if (generatableElement != null && workspace.getGenerator() != null)
 				workspace.getGenerator().removeElementFilesAndWorkspaceLinks(generatableElement);
 			else
-				LOG.warn("Failed to remove element files for element " + element);
+				LOG.warn("Failed to remove element files for element {}", element);
 		}
 
 		// after we don't need the definition anymore, remove actual files
@@ -172,8 +174,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 		try {
 			return gson.fromJson(json, GeneratableElement.class);
 		} catch (JsonSyntaxException e) {
-			LOG.warn("Failed to load generatable element " + modElement.getName()
-					+ " from JSON. This can lead to errors further down the road!", e);
+			LOG.warn("Failed to load generatable element {} from JSON. This can lead to errors further down the road!",
+					modElement.getName(), e);
 			return null;
 		} finally {
 			this.modElementsInConversion.pop();
@@ -205,12 +207,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 	public void storeModElementPicture(GeneratableElement element) {
 		try {
 			BufferedImage modImage = element.generateModElementPicture();
-			if (modImage != null)
-				FileIO.writeImageToPNGFile(modImage,
-						new File(workspace.getFolderManager().getModElementPicturesCacheDir(),
-								element.getModElement().getName() + ".png"));
+			File modImageFile = new File(workspace.getFolderManager().getModElementPicturesCacheDir(),
+					element.getModElement().getName() + ".png");
+			if (modImage != null) {
+				FileIO.writeImageToPNGFile(modImage, modImageFile);
+				Image image = new ImageIcon(modImage).getImage();
+				if (image != null)
+					image.flush();
+			} else if (modImageFile.isFile()) {
+				// If there is no preview image generated, we revert back to default one
+				modImageFile.delete();
+			}
 		} catch (Exception e1) {
-			LOG.warn("Failed to generate mod element picture for " + element.getModElement().getName(), e1);
+			LOG.warn("Failed to generate mod element picture for {}", element.getModElement().getName(), e1);
 		}
 	}
 

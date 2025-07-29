@@ -19,11 +19,13 @@
 
 package net.mcreator.ui.blockly;
 
-import com.google.gson.Gson;
 import javafx.application.Platform;
+import net.mcreator.blockly.data.Dependency;
 import net.mcreator.blockly.data.ExternalTrigger;
 import net.mcreator.blockly.java.BlocklyVariables;
 import net.mcreator.element.ModElementType;
+import net.mcreator.element.types.Procedure;
+import net.mcreator.generator.mapping.NameMapper;
 import net.mcreator.minecraft.*;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.dialogs.AIConditionEditor;
@@ -49,29 +51,30 @@ import javax.swing.*;
 import java.io.ByteArrayOutputStream;
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class BlocklyJavascriptBridge {
+public final class BlocklyJavascriptBridge {
 
 	private static final Logger LOG = LogManager.getLogger("Blockly JS Bridge");
 
-	private JavaScriptEventListener listener;
-	private final Supplier<Boolean> blocklyEvent;
+	private final Runnable blocklyEvent;
 	private final MCreator mcreator;
 
 	private final Object NESTED_LOOP_KEY = new Object();
 
-	BlocklyJavascriptBridge(@Nonnull MCreator mcreator, @Nonnull Supplier<Boolean> blocklyEvent) {
+	BlocklyJavascriptBridge(@Nonnull MCreator mcreator, @Nonnull Runnable blocklyEvent) {
 		this.blocklyEvent = blocklyEvent;
 		this.mcreator = mcreator;
 	}
 
 	// these methods are called from JavaScript so we suppress warnings
 	@SuppressWarnings("unused") public void triggerEvent() {
-		boolean success = blocklyEvent.get();
-		if (success && listener != null)
-			listener.event();
+		blocklyEvent.run();
+	}
+
+	@SuppressWarnings("unused") public String startBlockForEditor(String editorName) {
+		BlocklyEditorType bet = BlocklyEditorType.fromName(editorName);
+		return bet == null ? null : bet.startBlockName();
 	}
 
 	@SuppressWarnings("unused") public String getMCItemURI(String name) {
@@ -192,7 +195,7 @@ public class BlocklyJavascriptBridge {
 					"biome");
 			case "dimensionCustom" -> openStringEntrySelector(
 					w -> w.getModElements().stream().filter(m -> m.getType() == ModElementType.DIMENSION)
-							.map(m -> "CUSTOM:" + m.getName()).toArray(String[]::new), "dimension");
+							.map(m -> NameMapper.MCREATOR_PREFIX + m.getName()).toArray(String[]::new), "dimension");
 			case "fluid" -> openDataListEntrySelector(
 					w -> ElementUtil.loadAllFluids(w).stream().filter(e -> e.isSupportedInWorkspace(w)).toList(),
 					"fluids");
@@ -202,6 +205,14 @@ public class BlocklyJavascriptBridge {
 			case "gamerulesnumber" -> openDataListEntrySelector(
 					w -> ElementUtil.getAllNumberGameRules(w).stream().filter(e -> e.isSupportedInWorkspace(w))
 							.toList(), "gamerules");
+			case "eventparametersnumber" -> openDataListEntrySelector(
+					w -> DataListLoader.loadDataList("eventparameters").stream()
+							.filter(ElementUtil.typeMatches(VariableTypeLoader.BuiltInTypes.NUMBER.getName()))
+							.filter(e -> e.isSupportedInWorkspace(w)).toList(), "eventparameters");
+			case "eventparametersboolean" -> openDataListEntrySelector(
+					w -> DataListLoader.loadDataList("eventparameters").stream()
+							.filter(ElementUtil.typeMatches(VariableTypeLoader.BuiltInTypes.LOGIC.getName()))
+							.filter(e -> e.isSupportedInWorkspace(w)).toList(), "eventparameters");
 			case "sound" -> openStringEntrySelector(ElementUtil::getAllSounds, "sound");
 			case "structure" ->
 					openStringEntrySelector(w -> w.getFolderManager().getStructureList().toArray(String[]::new),
@@ -212,6 +223,20 @@ public class BlocklyJavascriptBridge {
 			case "arrowProjectile" -> openDataListEntrySelector(
 					w -> ElementUtil.loadArrowProjectiles(w).stream().filter(e -> e.isSupportedInWorkspace(w)).toList(),
 					"projectiles");
+			case "configuredfeature" -> openDataListEntrySelector(
+					w -> ElementUtil.loadAllConfiguredFeatures(w).stream().filter(e -> e.isSupportedInWorkspace(w))
+							.toList(), "configured_features");
+			case "global_triggers" -> {
+				String[] selectedEntry = openDataListEntrySelector(w -> ext_triggers.entrySet().stream()
+						.map(entry -> (DataListEntry) new DataListEntry.Dummy(entry.getKey()) {{
+							setReadableName(entry.getValue());
+						}}).toList(), "global_trigger");
+				// Legacy: for global triggers, "no_ext_trigger" is used to indicate no selected value, whereas normally it is ""
+				if (selectedEntry[0].isEmpty()) {
+					selectedEntry = new String[] { "no_ext_trigger", L10N.t("trigger.no_ext_trigger") };
+				}
+				yield selectedEntry;
+			}
 			default -> {
 				if (type.startsWith("procedure_retval_")) {
 					var variableType = VariableTypeLoader.INSTANCE.fromName(
@@ -220,7 +245,7 @@ public class BlocklyJavascriptBridge {
 				}
 
 				if (!DataListLoader.loadDataList(type).isEmpty()) {
-					yield openDataListEntrySelector(w -> ElementUtil.loadDataListAndElements(w, type, true, typeFilter,
+					yield openDataListEntrySelector(w -> ElementUtil.loadDataListAndElements(w, type, typeFilter,
 							StringUtils.split(customEntryProviders, ',')), type);
 				}
 
@@ -235,16 +260,19 @@ public class BlocklyJavascriptBridge {
 		put("no_ext_trigger", L10N.t("trigger.no_ext_trigger"));
 	}};
 
-	public void addExternalTrigger(ExternalTrigger external_trigger) {
+	void addExternalTrigger(ExternalTrigger external_trigger) {
 		ext_triggers.put(external_trigger.getID(), external_trigger.getName());
+	}
+
+	@SuppressWarnings("unused") public Dependency[] getDependencies(String procedureName) {
+		ModElement me = mcreator.getWorkspace().getModElementByName(procedureName);
+		return me != null && me.getGeneratableElement() instanceof Procedure procedure ?
+				procedure.getDependencies().toArray(Dependency[]::new) :
+				new Dependency[0];
 	}
 
 	@SuppressWarnings("unused") public String t(String key) {
 		return L10N.t(key);
-	}
-
-	@SuppressWarnings("unused") public String getGlobalTriggers() {
-		return new Gson().toJson(ext_triggers, Map.class);
 	}
 
 	@SuppressWarnings("unused") public String[] getListOf(String type) {
@@ -299,10 +327,7 @@ public class BlocklyJavascriptBridge {
 			return ElementUtil.loadAllBiomes(workspace).stream().map(DataListEntry::getName).toArray(String[]::new);
 		case "dimension_custom":
 			retval = workspace.getModElements().stream().filter(mu -> mu.getType() == ModElementType.DIMENSION)
-					.map(mu -> "CUSTOM:" + mu.getName()).collect(Collectors.toList());
-			break;
-		case "material":
-			retval = ElementUtil.loadMaterials().stream().map(DataListEntry::getName).collect(Collectors.toList());
+					.map(mu -> NameMapper.MCREATOR_PREFIX + mu.getName()).collect(Collectors.toList());
 			break;
 		case "villagerprofessions":
 			return ElementUtil.loadAllVillagerProfessions(workspace).stream().map(DataListEntry::getName)
@@ -347,7 +372,7 @@ public class BlocklyJavascriptBridge {
 	 * @return The readable name of the passed entry, or an empty string if it can't find a readable name
 	 */
 	@SuppressWarnings("unused") public String getReadableNameOf(String value, String type) {
-		if (value.startsWith("CUSTOM:"))
+		if (value.startsWith(NameMapper.MCREATOR_PREFIX))
 			return value.substring(7);
 
 		String datalist;
@@ -355,17 +380,15 @@ public class BlocklyJavascriptBridge {
 		case "entity", "spawnableEntity" -> datalist = "entities";
 		case "biome" -> datalist = "biomes";
 		case "arrowProjectile", "projectiles" -> datalist = "projectiles";
-		default -> {
-			return "";
+		case "eventparametersnumber", "eventparametersboolean" -> datalist = "eventparameters";
+		case "global_triggers" -> {
+			return ext_triggers.get(value);
 		}
+		default -> datalist = type;
 		}
 		return DataListLoader.loadDataMap(datalist).containsKey(value) ?
 				DataListLoader.loadDataMap(datalist).get(value).getReadableName() :
 				"";
-	}
-
-	public void setJavaScriptEventListener(JavaScriptEventListener listener) {
-		this.listener = listener;
 	}
 
 }

@@ -21,6 +21,7 @@ package net.mcreator.generator.template.base;
 import net.mcreator.generator.Generator;
 import net.mcreator.generator.GeneratorConfiguration;
 import net.mcreator.plugin.PluginLoader;
+import net.mcreator.util.TestUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,7 +54,8 @@ import java.util.Map;
 					}
 				}
 			} catch (Exception e) {
-				LOG.error("Failed to load file provider for " + key, e);
+				LOG.error("Failed to load file provider for {}", key, e);
+				TestUtil.failIfTestingEnvironment();
 			}
 			return null;
 		});

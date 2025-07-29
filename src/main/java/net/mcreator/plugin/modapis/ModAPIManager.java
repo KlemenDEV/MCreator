@@ -41,7 +41,7 @@ public class ModAPIManager {
 	private static final Map<String, ModAPI> modApiList = new HashMap<>();
 
 	public static void initAPIs() {
-		Set<String> fileNames = PluginLoader.INSTANCE.getResources("apis", Pattern.compile(".*\\.yaml"));
+		Set<String> fileNames = PluginLoader.INSTANCE.getResources("apis", Pattern.compile(".*\\.yaml$"));
 
 		Load yamlLoad = new Load(YamlUtil.getSimpleLoadSettings());
 
@@ -61,15 +61,20 @@ public class ModAPIManager {
 						Map<?, ?> impldef = (Map<?, ?>) apiconfiguration.get(keyraw);
 						String gradle = (String) impldef.get("gradle");
 						List<?> updateFiles = (List<?>) impldef.get("update_files");
+						Map<?, ?> resPaths = (Map<?, ?>) impldef.get("resource_paths");
 						boolean requiredWhenEnabled =
 								impldef.get("required_when_enabled") != null && Boolean.parseBoolean(
 										impldef.get("required_when_enabled").toString());
 
 						if (updateFiles == null)
 							updateFiles = Collections.emptyList();
+						if (resPaths == null)
+							resPaths = Collections.emptyMap();
 
 						ModAPIImplementation implementation = new ModAPIImplementation(modAPI, gradle,
 								updateFiles.stream().map(Object::toString).collect(Collectors.toList()),
+								resPaths.entrySet().stream().collect(
+										Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString())),
 								requiredWhenEnabled);
 						modAPI.implementations().put(key, implementation);
 					}
@@ -77,9 +82,9 @@ public class ModAPIManager {
 
 				modApiList.put(FilenameUtilsPatched.getBaseName(apidefinition), modAPI);
 
-				LOG.debug("Loaded mod API definition: " + FilenameUtilsPatched.getBaseName(apidefinition));
+				LOG.debug("Loaded mod API definition: {}", FilenameUtilsPatched.getBaseName(apidefinition));
 			} catch (YamlEngineException e) {
-				LOG.error("Failed to load mod API definition for: " + apidefinition + ": " + e.getMessage());
+				LOG.error("Failed to load mod API definition for: {}: {}", apidefinition, e.getMessage());
 			}
 		}
 	}

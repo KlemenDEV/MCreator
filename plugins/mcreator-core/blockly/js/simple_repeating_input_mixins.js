@@ -4,7 +4,7 @@
 // The input provider is a function that accepts the block being mutated, the input name and the input index
 // If the input provider returns a dummy input (i.e. only repeating fields are being added), isProperInput must be set to false
 function simpleRepeatingInputMixin(mutatorContainer, mutatorInput, inputName, inputProvider, isProperInput = true,
-        fieldNames = [], disableIfEmpty) {
+                                   fieldNames = [], disableIfEmpty) {
     return {
         // Store number of inputs in XML as '<mutation inputs="inputCount_"></mutation>'
         mutationToDom: function () {
@@ -228,3 +228,62 @@ Blockly.Extensions.registerMutator('direction_list_mutator', simpleRepeatingInpu
                 .appendField(new FieldDataListDropdown('direction'), 'direction' + index);
         }, false, ['direction'], true),
     undefined, ['direction_list_mutator_input']);
+
+// Mutator for feature blockstate selector
+Blockly.Extensions.registerMutator('blockstate_selector_mutator', simpleRepeatingInputMixin(
+        'blockstate_selector_mutator_container', 'blockstate_selector_mutator_input', 'state',
+        function (thisBlock, inputName, index) {
+            thisBlock.appendDummyInput(inputName + index)
+                .appendField(javabridge.t('blockly.block.' + thisBlock.type + '.with_property'))
+                .appendField(new Blockly.FieldTextInput('property'), 'property' + index)
+                .appendField(javabridge.t('blockly.block.' + thisBlock.type + '.set_to'))
+                .appendField(new Blockly.FieldTextInput('value'), 'value' + index);
+        }, false, ['property', 'value'], false),
+    undefined, ['blockstate_selector_mutator_input']);
+
+// Mutator for repeating block column layers
+Blockly.Extensions.registerMutator('feature_block_column_mutator', simpleRepeatingInputMixin(
+        'feature_block_column_mutator_container', 'feature_block_column_mutator_input', 'layer',
+        function (thisBlock, inputName, index) {
+            thisBlock.appendValueInput(inputName + index).setCheck('BlockColumnLayer').setAlign(Blockly.Input.Align.RIGHT)
+                .appendField(javabridge.t('blockly.block.' + thisBlock.type + '.input'));
+        }),
+    undefined, ['feature_block_column_mutator_input']);
+
+// Mutator for disk feature rules
+Blockly.Extensions.registerMutator('disk_feature_mutator', simpleRepeatingInputMixin(
+        'feature_disk_mutator_container', 'feature_disk_mutator_input', 'rule',
+        function (thisBlock, inputName, index) {
+            thisBlock.appendValueInput(inputName + index).setCheck('DiskRule').setAlign(Blockly.Input.Align.RIGHT)
+                .appendField(javabridge.t(
+                    index == 0 ? 'blockly.block.feature_disk_mutator.try' : 'blockly.block.feature_disk_mutator.else_try'));
+        }),
+    undefined, ['feature_disk_mutator_input']);
+
+// Mutator for random feature selector
+Blockly.Extensions.registerMutator('random_feature_selector_mutator', simpleRepeatingInputMixin(
+        'feature_simple_random_mutator_container', 'feature_simple_random_mutator_input', 'feature',
+        function (thisBlock, inputName, index) {
+            thisBlock.appendValueInput(inputName + index).setCheck(['Feature', 'PlacedFeature'])
+                .setAlign(Blockly.Input.Align.RIGHT)
+                .appendField(javabridge.t(
+                    index == 0 ? 'blockly.block.feature_random_selector.with_chance' : 'blockly.block.feature_random_selector.else_with_chance'
+                ))
+                .appendField(new Blockly.FieldNumber(0.5, 0, 1), 'chance' + index)
+                .appendField(javabridge.t('blockly.block.feature_random_selector.select_feature'))
+        }, true, ['chance']),
+    undefined, ['feature_simple_random_mutator_input']);
+
+// Mutator for fixed placement modifier
+Blockly.Extensions.registerMutator('fixed_placement_mutator', simpleRepeatingInputMixin(
+        'fixed_placement_mutator_container', 'fixed_placement_mutator_input', 'position',
+        function (thisBlock, inputName, index) {
+            thisBlock.appendDummyInput(inputName + index)
+                .appendField(javabridge.t('blockly.block.' + thisBlock.type + '.x'))
+                .appendField(new Blockly.FieldNumber(0, null, null, 1), 'x' + index)
+                .appendField(javabridge.t('blockly.block.' + thisBlock.type + '.y'))
+                .appendField(new Blockly.FieldNumber(0, null, null, 1), 'y' + index)
+                .appendField(javabridge.t('blockly.block.' + thisBlock.type + '.z'))
+                .appendField(new Blockly.FieldNumber(0, null, null, 1), 'z' + index)
+        }, false, ['x', 'y', 'z']),
+    undefined, ['fixed_placement_mutator_input']);

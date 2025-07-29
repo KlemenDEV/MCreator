@@ -21,10 +21,10 @@ package net.mcreator.ui.modgui;
 import net.mcreator.blockly.data.Dependency;
 import net.mcreator.element.parts.TabEntry;
 import net.mcreator.element.types.Tool;
-import net.mcreator.minecraft.DataListEntry;
 import net.mcreator.minecraft.ElementUtil;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.MCreatorApplication;
+import net.mcreator.ui.component.JEmptyBox;
 import net.mcreator.ui.component.JStringListField;
 import net.mcreator.ui.component.SearchableComboBox;
 import net.mcreator.ui.component.util.ComboBoxUtil;
@@ -36,18 +36,17 @@ import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.laf.renderer.ItemTexturesComboBoxRenderer;
 import net.mcreator.ui.laf.renderer.ModelComboBoxRenderer;
 import net.mcreator.ui.laf.themes.Theme;
-import net.mcreator.ui.minecraft.DataListComboBox;
 import net.mcreator.ui.minecraft.MCItemListField;
-import net.mcreator.ui.minecraft.TextureHolder;
+import net.mcreator.ui.minecraft.TabListField;
+import net.mcreator.ui.minecraft.TextureSelectionButton;
 import net.mcreator.ui.procedure.AbstractProcedureSelector;
 import net.mcreator.ui.procedure.LogicProcedureSelector;
 import net.mcreator.ui.procedure.ProcedureSelector;
 import net.mcreator.ui.procedure.StringListProcedureSelector;
-import net.mcreator.ui.validation.AggregatedValidationResult;
 import net.mcreator.ui.validation.ValidationGroup;
 import net.mcreator.ui.validation.component.VTextField;
 import net.mcreator.ui.validation.validators.TextFieldValidator;
-import net.mcreator.ui.validation.validators.TileHolderValidator;
+import net.mcreator.ui.validation.validators.TextureSelectionButtonValidator;
 import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.util.ListUtils;
 import net.mcreator.util.StringUtils;
@@ -61,21 +60,27 @@ import java.awt.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ToolGUI extends ModElementGUI<Tool> {
 
-	private TextureHolder texture;
+	private TextureSelectionButton texture;
+	private TextureSelectionButton guiTexture;
 
-	private final JSpinner harvestLevel = new JSpinner(new SpinnerNumberModel(1, 0, 128000, 1));
 	private final JSpinner efficiency = new JSpinner(new SpinnerNumberModel(4, 0, 128000, 0.5));
-	private final JSpinner enchantability = new JSpinner(new SpinnerNumberModel(2, 0, 128000, 1));
+	private final JSpinner enchantability = new JSpinner(new SpinnerNumberModel(2, 1, 128000, 1));
 	private final JSpinner damageVsEntity = new JSpinner(new SpinnerNumberModel(4, 0, 128000, 0.1));
 	private final JSpinner attackSpeed = new JSpinner(new SpinnerNumberModel(1, 0, 100, 0.1));
 	private final JSpinner usageCount = new JSpinner(new SpinnerNumberModel(100, 0, 128000, 1));
 
-	private final VTextField name = new VTextField(28);
+	private final JComboBox<String> blockDropsTier = new JComboBox<>(
+			new String[] { "WOOD", "STONE", "IRON", "DIAMOND", "GOLD", "NETHERITE" });
+
+	private ProcedureSelector additionalDropCondition;
+
+	private final VTextField name = new VTextField(30);
 
 	private final JComboBox<String> toolType = new JComboBox<>(
 			new String[] { "Pickaxe", "Axe", "Sword", "Spade", "Hoe", "Shield", "Shears", "Fishing rod", "Special",
@@ -107,7 +112,7 @@ public class ToolGUI extends ModElementGUI<Tool> {
 
 	private MCItemListField repairItems;
 
-	private final DataListComboBox creativeTab = new DataListComboBox(mcreator);
+	private final TabListField creativeTabs = new TabListField(mcreator);
 
 	private final ValidationGroup page1group = new ValidationGroup();
 
@@ -152,6 +157,12 @@ public class ToolGUI extends ModElementGUI<Tool> {
 				L10N.checkbox("elementgui.common.enable"), 160,
 				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity/itemstack:itemstack"));
 
+		additionalDropCondition = new ProcedureSelector(this.withEntry("tool/event_additional_drop_condition"),
+				mcreator, L10N.t("elementgui.tool.event_additional_drop_condition"),
+				VariableTypeLoader.BuiltInTypes.LOGIC,
+				Dependency.fromString("itemstack:itemstack/blockstate:blockstate")).setDefaultName(
+				L10N.t("condition.common.no_additional")).makeInline();
+
 		blocksAffected = new MCItemListField(mcreator, ElementUtil::loadBlocksAndTags, false, true);
 
 		repairItems = new MCItemListField(mcreator, ElementUtil::loadBlocksAndItemsAndTags, false, true);
@@ -162,20 +173,27 @@ public class ToolGUI extends ModElementGUI<Tool> {
 		JPanel pane3 = new JPanel(new BorderLayout(10, 10));
 		JPanel pane4 = new JPanel(new BorderLayout(10, 10));
 
-		texture = new TextureHolder(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM));
+		texture = new TextureSelectionButton(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM));
 		texture.setOpaque(false);
+
+		guiTexture = new TextureSelectionButton(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM), 32);
+		guiTexture.setOpaque(false);
 
 		immuneToFire.setOpaque(false);
 		stayInGridWhenCrafting.setOpaque(false);
+		stayInGridWhenCrafting.addActionListener(e -> updateCraftingSettings());
 		damageOnCrafting.setOpaque(false);
 
-		JPanel rent = new JPanel();
-		rent.setLayout(new BoxLayout(rent, BoxLayout.PAGE_AXIS));
-
+		JPanel rent = new JPanel(new GridLayout(-1, 2, 2, 2));
 		rent.setOpaque(false);
-		rent.add(PanelUtils.join(
-				HelpUtils.wrapWithHelpButton(this.withEntry("item/model"), L10N.label("elementgui.common.item_model")),
-				PanelUtils.join(renderType)));
+
+		rent.add(
+				HelpUtils.wrapWithHelpButton(this.withEntry("item/model"), L10N.label("elementgui.common.item_model")));
+		rent.add(renderType);
+
+		rent.add(HelpUtils.wrapWithHelpButton(this.withEntry("item/gui_texture"),
+				L10N.label("elementgui.common.item_gui_texture")));
+		rent.add(PanelUtils.centerInPanel(guiTexture));
 
 		renderType.setFont(renderType.getFont().deriveFont(16.0f));
 		renderType.setPreferredSize(new Dimension(350, 42));
@@ -194,15 +212,11 @@ public class ToolGUI extends ModElementGUI<Tool> {
 						ComponentUtils.squareAndBorder(texture, L10N.t("elementgui.tool.texture")), rent), visualBottom,
 				0, 5)));
 
-		JPanel selp = new JPanel(new GridLayout(15, 2, 10, 2));
+		JPanel selp = new JPanel(new GridLayout(16, 2, 0, 2));
 		selp.setOpaque(false);
 
 		ComponentUtils.deriveFont(name, 16);
 
-		harvestLevel.setOpaque(false);
-		efficiency.setOpaque(false);
-
-		blockingModel.setFont(blockingModel.getFont().deriveFont(16.0f));
 		blockingModel.setRenderer(new ModelComboBoxRenderer());
 		blockingModel.setEnabled(false);
 
@@ -213,13 +227,16 @@ public class ToolGUI extends ModElementGUI<Tool> {
 		selp.add(HelpUtils.wrapWithHelpButton(this.withEntry("tool/type"), L10N.label("elementgui.tool.type")));
 		selp.add(toolType);
 
-		selp.add(HelpUtils.wrapWithHelpButton(this.withEntry("common/creative_tab"),
-				L10N.label("elementgui.common.creative_tab")));
-		selp.add(creativeTab);
+		selp.add(HelpUtils.wrapWithHelpButton(this.withEntry("common/creative_tabs"),
+				L10N.label("elementgui.common.creative_tabs")));
+		selp.add(creativeTabs);
 
-		selp.add(HelpUtils.wrapWithHelpButton(this.withEntry("tool/harvest_level"),
-				L10N.label("elementgui.tool.harvest_level")));
-		selp.add(harvestLevel);
+		selp.add(HelpUtils.wrapWithHelpButton(this.withEntry("tool/blocks_drop_tier"),
+				L10N.label("elementgui.tool.blocks_drop_tier")));
+		selp.add(blockDropsTier);
+
+		selp.add(new JEmptyBox());
+		selp.add(additionalDropCondition);
 
 		selp.add(HelpUtils.wrapWithHelpButton(this.withEntry("tool/efficiency"),
 				L10N.label("elementgui.tool.efficiency")));
@@ -241,13 +258,13 @@ public class ToolGUI extends ModElementGUI<Tool> {
 				L10N.label("elementgui.tool.usage_count")));
 		selp.add(usageCount);
 
-		selp.add(HelpUtils.wrapWithHelpButton(this.withEntry("tool/shield_blocking_model"),
-				L10N.label("elementgui.tool.shield_blocking_model")));
-		selp.add(blockingModel);
-
 		selp.add(HelpUtils.wrapWithHelpButton(this.withEntry("tool/repair_items"),
 				L10N.label("elementgui.common.repair_items")));
 		selp.add(repairItems);
+
+		selp.add(HelpUtils.wrapWithHelpButton(this.withEntry("tool/shield_blocking_model"),
+				L10N.label("elementgui.tool.shield_blocking_model")));
+		selp.add(blockingModel);
 
 		selp.add(HelpUtils.wrapWithHelpButton(this.withEntry("tool/blocks_affected"),
 				L10N.label("elementgui.tool.blocks_affected")));
@@ -258,12 +275,14 @@ public class ToolGUI extends ModElementGUI<Tool> {
 		selp.add(immuneToFire);
 
 		selp.add(HelpUtils.wrapWithHelpButton(this.withEntry("item/container_item"),
-				L10N.label("elementgui.tool.stays_in_grid_when_crafting")));
+				L10N.label("elementgui.item.container_item")));
 		selp.add(stayInGridWhenCrafting);
 
 		selp.add(HelpUtils.wrapWithHelpButton(this.withEntry("item/container_item_damage"),
-				L10N.label("elementgui.tool.damaged_on_crafting")));
+				L10N.label("elementgui.item.container_item_damage")));
 		selp.add(damageOnCrafting);
+
+		usageCount.addChangeListener(e -> updateCraftingSettings());
 
 		blocksAffected.setEnabled(false);
 
@@ -287,23 +306,30 @@ public class ToolGUI extends ModElementGUI<Tool> {
 		events.setOpaque(false);
 		pane3.add(PanelUtils.totalCenterInPanel(events));
 
-		texture.setValidator(new TileHolderValidator(texture));
+		texture.setValidator(new TextureSelectionButtonValidator(texture));
 
 		page1group.addValidationElement(texture);
 
 		name.setValidator(new TextFieldValidator(name, L10N.t("elementgui.tool.needs_a_name")));
 		name.enableRealtimeValidation();
 
-		addPage(L10N.t("elementgui.common.page_visual"), pane2);
-		addPage(L10N.t("elementgui.common.page_properties"), pane4);
+		addPage(L10N.t("elementgui.common.page_visual"), pane2).validate(page1group);
+		addPage(L10N.t("elementgui.common.page_properties"), pane4).validate(name);
 		addPage(L10N.t("elementgui.common.page_triggers"), pane3);
 
 		if (!isEditingMode()) {
+			creativeTabs.setListElements(List.of(new TabEntry(mcreator.getWorkspace(), "TOOLS")));
+
 			String readableNameFromModElement = StringUtils.machineToReadableName(modElement.getName());
 			name.setText(readableNameFromModElement);
 		}
 
+		updateCraftingSettings();
 		updateFields();
+	}
+
+	private void updateCraftingSettings() {
+		damageOnCrafting.setEnabled(stayInGridWhenCrafting.isSelected() && ((int) usageCount.getValue() > 0));
 	}
 
 	private void updateFields() {
@@ -314,7 +340,8 @@ public class ToolGUI extends ModElementGUI<Tool> {
 				blockingModel.setSelectedItem(normalBlocking);
 			}
 
-			harvestLevel.setEnabled(true);
+			blockDropsTier.setEnabled(true);
+			additionalDropCondition.setEnabled(true);
 			efficiency.setEnabled(true);
 			damageVsEntity.setEnabled(true);
 			attackSpeed.setEnabled(true);
@@ -322,17 +349,19 @@ public class ToolGUI extends ModElementGUI<Tool> {
 			repairItems.setEnabled(true);
 
 			if (toolType.getSelectedItem().equals("Special")) {
-				harvestLevel.setEnabled(false);
+				blockDropsTier.setEnabled(false);
 				repairItems.setEnabled(false);
 			} else if (toolType.getSelectedItem().equals("Fishing rod") || toolType.getSelectedItem()
 					.equals("Shield")) {
-				harvestLevel.setEnabled(false);
+				blockDropsTier.setEnabled(false);
+				additionalDropCondition.setEnabled(false);
 				efficiency.setEnabled(false);
 				damageVsEntity.setEnabled(false);
 				attackSpeed.setEnabled(false);
 				blocksAffected.setEnabled(false);
 			} else if (toolType.getSelectedItem().equals("Shears")) {
-				harvestLevel.setEnabled(false);
+				blockDropsTier.setEnabled(false);
+				additionalDropCondition.setEnabled(false);
 				damageVsEntity.setEnabled(false);
 				attackSpeed.setEnabled(false);
 				blocksAffected.setEnabled(false);
@@ -356,8 +385,7 @@ public class ToolGUI extends ModElementGUI<Tool> {
 		glowCondition.refreshListKeepSelected();
 		specialInformation.refreshListKeepSelected();
 
-		ComboBoxUtil.updateComboBoxContents(creativeTab, ElementUtil.loadAllTabs(mcreator.getWorkspace()),
-				new DataListEntry.Dummy("TOOLS"));
+		additionalDropCondition.refreshListKeepSelected();
 
 		ComboBoxUtil.updateComboBoxContents(renderType, ListUtils.merge(Collections.singletonList(normal),
 				Model.getModelsWithTextureMaps(mcreator.getWorkspace()).stream()
@@ -370,20 +398,14 @@ public class ToolGUI extends ModElementGUI<Tool> {
 						.collect(Collectors.toList())));
 	}
 
-	@Override protected AggregatedValidationResult validatePage(int page) {
-		if (page == 1)
-			return new AggregatedValidationResult(name);
-		else if (page == 0)
-			return new AggregatedValidationResult(page1group);
-		return new AggregatedValidationResult.PASS();
-	}
-
 	@Override public void openInEditingMode(Tool tool) {
-		creativeTab.setSelectedItem(tool.creativeTab);
+		creativeTabs.setListElements(tool.creativeTabs);
 		name.setText(tool.name);
-		texture.setTextureFromTextureName(tool.texture);
+		texture.setTexture(tool.texture);
+		guiTexture.setTexture(tool.guiTexture);
 		toolType.setSelectedItem(tool.toolType);
-		harvestLevel.setValue(tool.harvestLevel);
+		blockDropsTier.setSelectedItem(tool.blockDropsTier);
+		additionalDropCondition.setSelectedProcedure(tool.additionalDropCondition);
 		efficiency.setValue(tool.efficiency);
 		enchantability.setValue(tool.enchantability);
 		attackSpeed.setValue(tool.attackSpeed);
@@ -406,6 +428,7 @@ public class ToolGUI extends ModElementGUI<Tool> {
 
 		blocksAffected.setListElements(tool.blocksAffected);
 
+		updateCraftingSettings();
 		updateFields();
 
 		if (toolType.getSelectedItem() != null)
@@ -423,9 +446,10 @@ public class ToolGUI extends ModElementGUI<Tool> {
 	@Override public Tool getElementFromGUI() {
 		Tool tool = new Tool(modElement);
 		tool.name = name.getText();
-		tool.creativeTab = new TabEntry(mcreator.getWorkspace(), creativeTab.getSelectedItem());
+		tool.creativeTabs = creativeTabs.getListElements();
 		tool.toolType = (String) toolType.getSelectedItem();
-		tool.harvestLevel = (int) harvestLevel.getValue();
+		tool.blockDropsTier = (String) blockDropsTier.getSelectedItem();
+		tool.additionalDropCondition = additionalDropCondition.getSelectedProcedure();
 		tool.efficiency = (double) efficiency.getValue();
 		tool.enchantability = (int) enchantability.getValue();
 		tool.attackSpeed = (double) attackSpeed.getValue();
@@ -448,7 +472,8 @@ public class ToolGUI extends ModElementGUI<Tool> {
 		tool.immuneToFire = immuneToFire.isSelected();
 		tool.damageOnCrafting = damageOnCrafting.isSelected();
 
-		tool.texture = texture.getID();
+		tool.texture = texture.getTextureHolder();
+		tool.guiTexture = guiTexture.getTextureHolder();
 
 		Model.Type modelType = (Objects.requireNonNull(renderType.getSelectedItem())).getType();
 		tool.renderType = 0;

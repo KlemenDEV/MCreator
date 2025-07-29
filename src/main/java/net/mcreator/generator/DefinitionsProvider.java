@@ -29,6 +29,7 @@ import org.apache.logging.log4j.Logger;
 import org.snakeyaml.engine.v2.api.Load;
 import org.snakeyaml.engine.v2.exceptions.YamlEngineException;
 
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,10 +42,12 @@ public class DefinitionsProvider {
 
 	private final Map<BaseType, Map<?, ?>> global_cache = new ConcurrentHashMap<>();
 
-	public DefinitionsProvider(String generatorName) {
+	public DefinitionsProvider(GeneratorConfiguration generatorConfiguration) {
+		final String generatorName = generatorConfiguration.getGeneratorName();
+
 		Load yamlLoad = new Load(YamlUtil.getSimpleLoadSettings());
 
-		for (ModElementType<?> type : ModElementTypeLoader.REGISTRY) {
+		for (ModElementType<?> type : ModElementTypeLoader.getAllModElementTypes()) {
 			String config = FileIO.readResourceToString(PluginLoader.INSTANCE,
 					"/" + generatorName + "/" + type.getRegistryName().toLowerCase(Locale.ENGLISH)
 							+ ".definition.yaml");
@@ -56,7 +59,7 @@ public class DefinitionsProvider {
 				cache.put(type, new ConcurrentHashMap<>(
 						(Map<?, ?>) yamlLoad.loadFromString(config))); // add definition to the cache
 			} catch (YamlEngineException e) {
-				LOG.error("[" + generatorName + "] Error: " + e.getMessage());
+				LOG.error("[{}] Error: {}", generatorName, e.getMessage());
 			}
 		}
 
@@ -71,7 +74,7 @@ public class DefinitionsProvider {
 				global_cache.put(type, new ConcurrentHashMap<>(
 						(Map<?, ?>) yamlLoad.loadFromString(config))); // add definition to the cache
 			} catch (YamlEngineException e) {
-				LOG.info("[" + generatorName + "] Error: " + e.getMessage());
+				LOG.info("[{}] Error: {}", generatorName, e.getMessage());
 			}
 		}
 	}
@@ -82,6 +85,10 @@ public class DefinitionsProvider {
 
 	public Map<?, ?> getBaseTypeDefinition(BaseType baseType) {
 		return global_cache.get(baseType);
+	}
+
+	public Map<ModElementType<?>, Map<?, ?>> getModElementDefinitions() {
+		return Collections.unmodifiableMap(cache);
 	}
 
 }

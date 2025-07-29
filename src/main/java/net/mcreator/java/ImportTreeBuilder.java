@@ -95,7 +95,7 @@ public class ImportTreeBuilder {
 							if ((accessFlags & AccessFlag.PUBLIC) == 0 && (accessFlags & AccessFlag.PROTECTED) == 0)
 								continue;
 						} catch (Exception e) {
-							LOG.debug("Failed to check access flags of " + entryName + " - assuming public");
+							LOG.debug("Failed to check access flags of {} - assuming public", entryName);
 						}
 
 						String fqdn = entryName.replace('\\', '.').replace('/', '.');
@@ -139,7 +139,8 @@ public class ImportTreeBuilder {
 
 	private static void addClassToTree(String packageName, String className, Map<String, List<String>> store) {
 		if (store.get(className) == null) {
-			store.put(className, new ArrayList<>(Collections.singletonList(packageName + '.' + className)));
+			store.put(className, Collections.synchronizedList(
+					new ArrayList<>(Collections.singletonList(packageName + '.' + className))));
 		} else {
 			store.get(className).add(packageName + '.' + className);
 		}

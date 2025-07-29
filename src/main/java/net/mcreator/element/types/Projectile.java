@@ -33,6 +33,7 @@ import net.mcreator.workspace.elements.ModElement;
 import net.mcreator.workspace.references.TextureReference;
 import net.mcreator.workspace.resources.Model;
 
+import javax.annotation.Nullable;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,22 +44,32 @@ public class Projectile extends GeneratableElement implements IEntityWithModel, 
 	public boolean showParticles;
 	public Sound actionSound;
 	public boolean igniteFire;
+	public boolean disableGravity;
 	public double power;
 	public double damage;
 	public int knockback;
 	public String entityModel;
 	@TextureReference(TextureType.ENTITY) public String customModelTexture;
 
+	public double modelWidth, modelHeight;
+
 	public Procedure onHitsBlock;
 	public Procedure onHitsPlayer;
 	public Procedure onHitsEntity;
 	public Procedure onFlyingTick;
 
-	public Projectile(ModElement element) {
-		super(element);
+	private Projectile() {
+		this(null);
 	}
 
-	@Override public Model getEntityModel() {
+	public Projectile(ModElement element) {
+		super(element);
+
+		this.modelWidth = 0.5f;
+		this.modelHeight = 0.5f;
+	}
+
+	@Override @Nullable public Model getEntityModel() {
 		Model.Type modelType = Model.Type.BUILTIN;
 		if (!entityModel.equals("Default"))
 			modelType = Model.Type.JAVA;

@@ -84,7 +84,7 @@ public class ZipIO {
 			Enumeration<? extends ZipEntry> entries = zipFile.entries();
 			while (entries.hasMoreElements()) {
 				ZipEntry zipEntry = entries.nextElement();
-				if (zipEntry.toString().startsWith(path)) {
+				if (zipEntry.toString().equals(path)) {
 					return transformer.apply(zipFile, zipEntry);
 				}
 			}
@@ -202,7 +202,7 @@ public class ZipIO {
 	}
 
 	private static void reportError(String action, String path, Throwable exception) {
-		LOG.error(action + ": " + exception.getMessage() + " - for file: " + path, exception);
+		LOG.error("{}: {} - for file: {}", action, exception.getMessage(), path, exception);
 	}
 
 }

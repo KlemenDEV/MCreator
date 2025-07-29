@@ -24,6 +24,7 @@ import net.mcreator.ui.component.TechnicalButton;
 import net.mcreator.ui.dialogs.workspace.GeneratorSelector;
 import net.mcreator.ui.help.HelpLoader;
 import net.mcreator.util.FilenameUtilsPatched;
+import net.mcreator.util.TestUtil;
 import net.mcreator.util.locale.LocaleRegistration;
 import net.mcreator.util.locale.UTF8Control;
 import org.apache.logging.log4j.LogManager;
@@ -38,14 +39,12 @@ public class L10N {
 
 	private static final Logger LOG = LogManager.getLogger("L10N");
 
-	public static final Locale DEFAULT_LOCALE = new Locale("en", "US");
+	public static final Locale DEFAULT_LOCALE = Locale.of("en", "US");
 
 	private static ResourceBundle rb;
 	private static ResourceBundle rb_en;
 
 	private static Map<Locale, LocaleRegistration> supportedLocales;
-
-	private static boolean isTestingEnvironment = false;
 
 	private static Locale selectedLocale = null;
 
@@ -58,12 +57,12 @@ public class L10N {
 		if (supportedLocales.containsKey(getLocale())) {
 			rb = supportedLocales.get(getLocale()).resourceBundle();
 		} else {
-			LOG.warn("Locale " + getLocale() + " is not supported. Falling back to default locale.");
+			LOG.warn("Locale {} is not supported. Falling back to default locale.", getLocale());
 
 			rb = supportedLocales.get(DEFAULT_LOCALE).resourceBundle();
 		}
 
-		LOG.info("Setting default locale to: " + getLocale());
+		LOG.info("Setting default locale to: {}", getLocale());
 		Locale.setDefault(getLocale());
 		JComponent.setDefaultLocale(getLocale());
 	}
@@ -78,7 +77,7 @@ public class L10N {
 
 		Set<String> localeFiles = PluginLoader.INSTANCE.getResourcesInPackage("lang");
 		supportedLocales = localeFiles.stream().map(FilenameUtilsPatched::getBaseName).filter(e -> e.contains("_"))
-				.map(e -> e.split("_")).map(e -> new Locale(e[1], e[2])).collect(Collectors.toMap(key -> key, value -> {
+				.map(e -> e.split("_")).map(e -> Locale.of(e[1], e[2])).collect(Collectors.toMap(key -> key, value -> {
 					ResourceBundle rb = ResourceBundle.getBundle("lang/texts", value, PluginLoader.INSTANCE,
 							new UTF8Control());
 					return new LocaleRegistration(rb,
@@ -123,19 +122,12 @@ public class L10N {
 	public static String getBlocklyLangName() {
 		Locale locale = getLocale();
 
-		if (new Locale("zh", "TW").equals(locale)) // Chinese Traditional
+		if (Locale.of("zh", "TW").equals(locale)) // Chinese Traditional
 			return "zh-hant";
-		else if (new Locale("zh", "CN").equals(locale)) // Chinese Simplified
+		else if (Locale.of("zh", "CN").equals(locale)) // Chinese Simplified
 			return "zh-hans";
 
 		return getLocaleString().split("_")[0].replace("iw", "he");
-	}
-
-	/**
-	 * Test mode will make JVM crash with runtime exception if translation key is not found when requested
-	 */
-	public static void enterTestingMode() {
-		isTestingEnvironment = true;
 	}
 
 	public static String t(String key, Object... parameters) {
@@ -155,7 +147,7 @@ public class L10N {
 		else if (key.startsWith("blockly.") && (key.endsWith(".tooltip") || key.endsWith(".tip") || key.endsWith(
 				".description")))
 			return null;
-		else if (isTestingEnvironment)
+		else if (TestUtil.isTestingEnvironment())
 			throw new RuntimeException("Failed to load any translation for key: " + key);
 		else if (key.startsWith("blockly.") || key.startsWith("trigger.") || key.startsWith(GeneratorSelector.covpfx))
 			return null;

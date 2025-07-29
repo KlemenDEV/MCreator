@@ -32,16 +32,15 @@ import java.util.Locale;
 
 public class UISection extends PreferencesSection {
 
-	public PreferencesEntry<Locale> language;
-	public ColorEntry interfaceAccentColor;
-	public StringEntry backgroundSource;
-	public BooleanEntry usemacOSMenuBar;
-	public BooleanEntry nativeFileChooser;
-	public BooleanEntry expandSectionsByDefault;
-	public BooleanEntry use2DAcceleration;
-	public BooleanEntry autoReloadTabs;
-	public BooleanEntry remindOfUnsavedChanges;
-	public BooleanEntry discordRichPresenceEnable;
+	public final PreferencesEntry<Locale> language;
+	public final ColorEntry interfaceAccentColor;
+	public final StringEntry backgroundSource;
+	public final BooleanEntry usemacOSMenuBar;
+	public final BooleanEntry nativeFileChooser;
+	public final BooleanEntry expandSectionsByDefault;
+	public final BooleanEntry autoReloadTabs;
+	public final BooleanEntry remindOfUnsavedChanges;
+	public final BooleanEntry discordRichPresenceEnable;
 
 	public UISection(String preferencesIdentifier) {
 		super(preferencesIdentifier);
@@ -53,7 +52,6 @@ public class UISection extends PreferencesSection {
 		usemacOSMenuBar = addEntry(new BooleanEntry("useMacOSMenuBar", true));
 		nativeFileChooser = addEntry(new BooleanEntry("nativeFileChooser", true));
 		expandSectionsByDefault = addEntry(new BooleanEntry("expandSectionsByDefault", false));
-		use2DAcceleration = addEntry(new BooleanEntry("use2DAcceleration", false));
 		autoReloadTabs = addEntry(new BooleanEntry("autoReloadTabs", true));
 		remindOfUnsavedChanges = addEntry(new BooleanEntry("remindOfUnsavedChanges", false));
 		discordRichPresenceEnable = addEntry(new BooleanEntry("discordRichPresenceEnable", true));

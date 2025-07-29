@@ -21,8 +21,8 @@ package net.mcreator.ui.modgui;
 import net.mcreator.element.parts.MItemBlock;
 import net.mcreator.element.types.Structure;
 import net.mcreator.io.FileIO;
-import net.mcreator.io.Transliteration;
 import net.mcreator.minecraft.ElementUtil;
+import net.mcreator.minecraft.RegistryNameFixer;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.MCreatorApplication;
 import net.mcreator.ui.component.JMinMaxSpinner;
@@ -37,7 +37,6 @@ import net.mcreator.ui.init.UIRES;
 import net.mcreator.ui.minecraft.BiomeListField;
 import net.mcreator.ui.minecraft.MCItemListField;
 import net.mcreator.ui.minecraft.jigsaw.JJigsawPoolsList;
-import net.mcreator.ui.validation.AggregatedValidationResult;
 import net.mcreator.ui.validation.CompoundValidator;
 import net.mcreator.ui.validation.ValidationGroup;
 import net.mcreator.ui.validation.Validator;
@@ -64,7 +63,7 @@ public class StructureGUI extends ModElementGUI<Structure> {
 					"MOTION_BLOCKING_NO_LEAVES" });
 
 	private final JComboBox<String> terrainAdaptation = new JComboBox<>(
-			new String[] { "none", "beard_thin", "beard_box", "bury" });
+			new String[] { "none", "beard_thin", "beard_box", "bury", "encapsulate" });
 
 	private final JComboBox<String> projection = new JComboBox<>(new String[] { "rigid", "terrain_matching" });
 
@@ -73,12 +72,17 @@ public class StructureGUI extends ModElementGUI<Structure> {
 	private final JMinMaxSpinner separation_spacing = new JMinMaxSpinner(2, 5, 0, 1000000, 1,
 			L10N.t("elementgui.structuregen.separation"), L10N.t("elementgui.structuregen.spacing"));
 
+	private final JCheckBox useStartHeight = L10N.checkbox("elementgui.common.enable");
+	private final JComboBox<String> startHeightProviderType = new JComboBox<>(
+			new String[] { "UNIFORM", "BIASED_TO_BOTTOM", "VERY_BIASED_TO_BOTTOM", "TRAPEZOID" });
+	private final JMinMaxSpinner startHeightRange = new JMinMaxSpinner(0, 128, -1024, 1024, 1);
+
 	private SearchableComboBox<String> structureSelector;
 
 	private final JComboBox<String> generationStep = new JComboBox<>(
 			ElementUtil.getDataListAsStringArray("generationsteps"));
 
-	private final JSpinner size = new JSpinner(new SpinnerNumberModel(1, 0, 7, 1));
+	private final JSpinner size = new JSpinner(new SpinnerNumberModel(1, 0, 20, 1));
 	private final JSpinner maxDistanceFromCenter = new JSpinner(new SpinnerNumberModel(64, 1, 128, 1));
 	private JJigsawPoolsList jigsaw;
 
@@ -97,7 +101,6 @@ public class StructureGUI extends ModElementGUI<Structure> {
 		ignoreBlocks = new MCItemListField(mcreator, ElementUtil::loadBlocks);
 		jigsaw = new JJigsawPoolsList(mcreator, this, modElement);
 
-		separation_spacing.setAllowEqualValues(false);
 		terrainAdaptation.addActionListener(e -> {
 			int max = "none".equals(terrainAdaptation.getSelectedItem()) ? 128 : 116;
 			SpinnerNumberModel spinnerModel = (SpinnerNumberModel) maxDistanceFromCenter.getModel();
@@ -115,7 +118,7 @@ public class StructureGUI extends ModElementGUI<Structure> {
 			ignoreBlocks.setListElements(List.of(new MItemBlock(modElement.getWorkspace(), "Blocks.STRUCTURE_BLOCK")));
 		}
 
-		JPanel params = new JPanel(new GridLayout(8, 2, 50, 2));
+		JPanel params = new JPanel(new GridLayout(9, 2, 5, 2));
 		params.setOpaque(false);
 
 		JButton importnbt = new JButton(UIRES.get("18px.add"));
@@ -124,8 +127,7 @@ public class StructureGUI extends ModElementGUI<Structure> {
 		importnbt.addActionListener(e -> {
 			File sch = FileDialogs.getOpenDialog(mcreator, new String[] { ".nbt" });
 			if (sch != null) {
-				String strname = Transliteration.transliterateString(sch.getName().toLowerCase(Locale.ENGLISH))
-						.replace(" ", "_");
+				String strname = RegistryNameFixer.fix(sch.getName().toLowerCase(Locale.ENGLISH));
 				FileIO.copyFile(sch, new File(mcreator.getFolderManager().getStructuresDir(), strname));
 				structureSelector.removeAllItems();
 				mcreator.getFolderManager().getStructureList().forEach(structureSelector::addItem);
@@ -148,6 +150,13 @@ public class StructureGUI extends ModElementGUI<Structure> {
 		params.add(HelpUtils.wrapWithHelpButton(this.withEntry("structure/ground_detection"),
 				L10N.label("elementgui.structuregen.surface_detection_type")));
 		params.add(surfaceDetectionType);
+
+		params.add(HelpUtils.wrapWithHelpButton(this.withEntry("structure/start_height"),
+				L10N.label("elementgui.structuregen.start_height")));
+		params.add(PanelUtils.westAndCenterElement(useStartHeight,
+				PanelUtils.westAndCenterElement(startHeightProviderType, startHeightRange, 5, 5), 5, 5));
+
+		useStartHeight.addActionListener(e -> updateEnabledFields());
 
 		params.add(HelpUtils.wrapWithHelpButton(this.withEntry("structure/terrain_adaptation"),
 				L10N.label("elementgui.structuregen.terrain_adaptation")));
@@ -206,8 +215,16 @@ public class StructureGUI extends ModElementGUI<Structure> {
 		});
 		page1group.addValidationElement(structureSelector);
 
-		addPage(L10N.t("elementgui.common.page_properties"), pane5);
-		addPage(L10N.t("elementgui.structuregen.page_jigsaw"), pane7, false);
+		addPage(L10N.t("elementgui.common.page_properties"), pane5).validate(page1group);
+		addPage(L10N.t("elementgui.structuregen.page_jigsaw"), pane7, false).lazyValidate(jigsaw::getValidationResult);
+
+		updateEnabledFields();
+	}
+
+	private void updateEnabledFields() {
+		surfaceDetectionType.setEnabled(!useStartHeight.isSelected());
+		startHeightProviderType.setEnabled(useStartHeight.isSelected());
+		startHeightRange.setEnabled(useStartHeight.isSelected());
 	}
 
 	@Override public void reloadDataLists() {
@@ -218,16 +235,14 @@ public class StructureGUI extends ModElementGUI<Structure> {
 		jigsaw.reloadDataLists();
 	}
 
-	@Override protected AggregatedValidationResult validatePage(int page) {
-		if (page == 1)
-			return jigsaw.getValidationResult();
-		return new AggregatedValidationResult(page1group);
-	}
-
 	@Override public void openInEditingMode(Structure structure) {
 		ignoreBlocks.setListElements(structure.ignoredBlocks);
 		projection.setSelectedItem(structure.projection);
 		surfaceDetectionType.setSelectedItem(structure.surfaceDetectionType);
+		useStartHeight.setSelected(structure.useStartHeight);
+		startHeightProviderType.setSelectedItem(structure.startHeightProviderType);
+		startHeightRange.setMinValue(structure.startHeightMin);
+		startHeightRange.setMaxValue(structure.startHeightMax);
 		terrainAdaptation.setSelectedItem(structure.terrainAdaptation);
 		structureSelector.setSelectedItem(structure.structure);
 		restrictionBiomes.setListElements(structure.restrictionBiomes);
@@ -237,6 +252,8 @@ public class StructureGUI extends ModElementGUI<Structure> {
 		size.setValue(structure.size);
 		maxDistanceFromCenter.setValue(structure.maxDistanceFromCenter);
 		jigsaw.setEntries(structure.jigsawPools);
+
+		updateEnabledFields();
 	}
 
 	@Override public Structure getElementFromGUI() {
@@ -244,6 +261,10 @@ public class StructureGUI extends ModElementGUI<Structure> {
 		structure.ignoredBlocks = ignoreBlocks.getListElements();
 		structure.projection = (String) projection.getSelectedItem();
 		structure.surfaceDetectionType = (String) surfaceDetectionType.getSelectedItem();
+		structure.useStartHeight = useStartHeight.isSelected();
+		structure.startHeightProviderType = (String) startHeightProviderType.getSelectedItem();
+		structure.startHeightMin = startHeightRange.getIntMinValue();
+		structure.startHeightMax = startHeightRange.getIntMaxValue();
 		structure.terrainAdaptation = (String) terrainAdaptation.getSelectedItem();
 		structure.restrictionBiomes = restrictionBiomes.getListElements();
 		structure.structure = structureSelector.getSelectedItem();
