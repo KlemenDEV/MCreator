@@ -19,10 +19,14 @@
 
 package net.mcreator.ui.laf;
 
-import ModernDocking.internal.DockedTabbedPanel;
-import ModernDocking.internal.DockingInternal;
-import ModernDocking.settings.Settings;
-import ModernDocking.ui.*;
+import io.github.andrewauclair.moderndocking.DockableTabPreference;
+import io.github.andrewauclair.moderndocking.internal.DockedTabbedPanel;
+import io.github.andrewauclair.moderndocking.internal.DockingInternal;
+import io.github.andrewauclair.moderndocking.settings.Settings;
+import io.github.andrewauclair.moderndocking.ui.DefaultHeaderUI;
+import io.github.andrewauclair.moderndocking.ui.DockingSettings;
+import io.github.andrewauclair.moderndocking.ui.HeaderController;
+import io.github.andrewauclair.moderndocking.ui.HeaderModel;
 import net.mcreator.ui.init.UIRES;
 
 import javax.swing.*;
@@ -33,8 +37,8 @@ public class DockingUI {
 		DockingSettings.setHighlighterSelectedBorderProperty("Component.borderColor");
 		DockingSettings.setHighlighterNotSelectedBorderProperty("Component.borderColor");
 
-		Settings.setAlwaysDisplayTabMode(true);
-		// TODO: Settings.setActiveHighlighterEnabled(false);
+		Settings.setDefaultTabPreference(DockableTabPreference.TOP_ALWAYS);
+		Settings.setActiveHighlighterEnabled(false);
 
 		DockedTabbedPanel.setSettingsIcon(UIRES.get("settings"));
 

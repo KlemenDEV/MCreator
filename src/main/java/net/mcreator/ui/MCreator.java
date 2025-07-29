@@ -18,6 +18,10 @@
 
 package net.mcreator.ui;
 
+import io.github.andrewauclair.moderndocking.DockingRegion;
+import io.github.andrewauclair.moderndocking.app.Docking;
+import io.github.andrewauclair.moderndocking.app.RootDockingPanel;
+import io.github.andrewauclair.moderndocking.ui.DefaultDockingPanel;
 import net.mcreator.Launcher;
 import net.mcreator.generator.GeneratorFlavor;
 import net.mcreator.generator.setup.WorkspaceGeneratorSetup;
@@ -27,14 +31,12 @@ import net.mcreator.preferences.PreferencesManager;
 import net.mcreator.ui.action.ActionRegistry;
 import net.mcreator.ui.action.impl.workspace.RegenerateCodeAction;
 import net.mcreator.ui.browser.WorkspaceFileBrowser;
-import net.mcreator.ui.component.JAdaptiveSplitPane;
 import net.mcreator.ui.component.JEmptyBox;
 import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.debug.DebugPanel;
 import net.mcreator.ui.dialogs.workspace.WorkspaceGeneratorSetupDialog;
 import net.mcreator.ui.gradle.GradleConsole;
 import net.mcreator.ui.init.L10N;
-import net.mcreator.ui.laf.OpaqueFlatSplitPaneUI;
 import net.mcreator.ui.laf.themes.Theme;
 import net.mcreator.ui.search.GlobalSearchListener;
 import net.mcreator.ui.variants.modmaker.ModMaker;
@@ -71,8 +73,6 @@ public abstract class MCreator extends MCreatorFrame {
 
 	private final MainMenuBar menuBar;
 	private final MainToolBar toolBar;
-
-	@Nullable private final JSplitPane splitPane;
 
 	private final DebugPanel debugPanel;
 
@@ -172,32 +172,61 @@ public abstract class MCreator extends MCreatorFrame {
 
 		JComponent rightPanel = PanelUtils.northAndCenterElement(pon, mcreatorTabs.getContainer());
 
+		Docking docking = new Docking(this);
+		RootDockingPanel dockingPanelRoot = new RootDockingPanel(docking, this);
+
+		DefaultDockingPanel dockingPanelTest = new DefaultDockingPanel("workspace", "Workspace") {
+			@Override public boolean isWrappableInScrollpane() {
+				return false;
+			}
+		};
+		dockingPanelTest.setLayout(new BorderLayout(0, 0));
+		dockingPanelTest.add("Center", rightPanel);
+		docking.registerDockable(dockingPanelTest);
+		docking.dock(dockingPanelTest, this, DockingRegion.CENTER);
+
 		if (hasProjectBrowser) {
-			splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, workspaceFileBrowser, rightPanel);
-			splitPane.setOpaque(false);
-			splitPane.setOneTouchExpandable(true);
-			splitPane.setDividerLocation(280);
-			splitPane.setDividerLocation(workspace.getWorkspaceUserSettings().projectBrowserSplitPos);
-
-			OpaqueFlatSplitPaneUI ui = new OpaqueFlatSplitPaneUI();
-			splitPane.setUI(ui);
-			ui.setDividerColor(Theme.current().getAltBackgroundColor());
-			splitPane.addPropertyChangeListener("dividerLocation", evt -> {
-				if ((Integer) evt.getNewValue() == 0) {
-					ui.setDividerColor(Theme.current().getAltBackgroundColor());
-				} else {
-					ui.setDividerColor(Theme.current().getBackgroundColor());
+			DefaultDockingPanel dockingPanelTest2 = new DefaultDockingPanel("project_browser", "Project browser") {
+				@Override public boolean isWrappableInScrollpane() {
+					return false;
 				}
-			});
-
-			rightPanel.setMinimumSize(new Dimension(0, 0));
-			workspaceFileBrowser.setMinimumSize(new Dimension(0, 0));
-
-			setMainContent(new JAdaptiveSplitPane(JSplitPane.VERTICAL_SPLIT, splitPane, debugPanel, 0.65));
-		} else {
-			splitPane = null;
-			setMainContent(new JAdaptiveSplitPane(JSplitPane.VERTICAL_SPLIT, rightPanel, debugPanel, 0.65));
+			};
+			dockingPanelTest2.setLayout(new BorderLayout(0, 0));
+			dockingPanelTest2.add("Center", workspaceFileBrowser);
+			docking.registerDockable(dockingPanelTest2);
+			docking.dock(dockingPanelTest2, this, DockingRegion.WEST);
+			//docking.minimize(dockingPanelTest2);
 		}
+
+		DefaultDockingPanel dockingPanelTest3 = new DefaultDockingPanel("gradle_console", "Console") {
+			@Override public boolean isWrappableInScrollpane() {
+				return false;
+			}
+		};
+		dockingPanelTest3.setLayout(new BorderLayout(0, 0));
+		dockingPanelTest3.add("Center", gradleConsole);
+		docking.registerDockable(dockingPanelTest3);
+		docking.dock(dockingPanelTest3, this, DockingRegion.SOUTH);
+		//docking.minimize(dockingPanelTest3);
+
+		DefaultDockingPanel dockingPanelTest4 = new DefaultDockingPanel("debugger", "Debugger") {
+			@Override public boolean isWrappableInScrollpane() {
+				return false;
+			}
+		};
+		dockingPanelTest4.setLayout(new BorderLayout(0, 0));
+		dockingPanelTest4.add("Center", debugPanel);
+		docking.registerDockable(dockingPanelTest4);
+		docking.dock("debugger", "gradle_console", DockingRegion.CENTER);
+		//docking.minimize(dockingPanelTest4);
+
+		//docking.unpinDockable(dockingPanelTest2);
+		//docking.unpinDockable(dockingPanelTest3);
+		//docking.unpinDockable(dockingPanelTest4);
+
+		docking.display(dockingPanelTest);
+
+		setMainContent(dockingPanelRoot);
 
 		add("North", toolBar);
 
@@ -311,8 +340,9 @@ public abstract class MCreator extends MCreatorFrame {
 		if (safetoexit) {
 			LOG.info("Closing MCreator window ...");
 			PreferencesManager.PREFERENCES.hidden.fullScreen.set(getExtendedState() == MAXIMIZED_BOTH);
-			if (splitPane != null)
-				workspace.getWorkspaceUserSettings().projectBrowserSplitPos = splitPane.getDividerLocation();
+			//TODO: remove this preference
+			//if (splitPane != null)
+			//	workspace.getWorkspaceUserSettings().projectBrowserSplitPos = splitPane.getDividerLocation();
 
 			mcreatorTabs.getTabs().forEach(tab -> {
 				if (tab.getTabClosedListener() != null)
@@ -359,9 +389,7 @@ public abstract class MCreator extends MCreatorFrame {
 	}
 
 	public void showProjectBrowser(boolean visible) {
-		if (splitPane != null) {
-			splitPane.setDividerLocation(visible ? 280 : 0);
-		}
+		//TODO: implement docking
 	}
 
 	public GradleConsole getGradleConsole() {
