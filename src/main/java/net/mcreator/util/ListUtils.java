@@ -82,4 +82,12 @@ public class ListUtils {
 		return list.get(randomIndex);
 	}
 
+	public static <T> List<List<T>> splitList(List<T> list, int limit) {
+		List<List<T>> chunks = new ArrayList<>();
+		for (int i = 0; i < list.size(); i += limit) {
+			chunks.add(list.subList(i, Math.min(list.size(), i + limit)));
+		}
+		return chunks;
+	}
+
 }

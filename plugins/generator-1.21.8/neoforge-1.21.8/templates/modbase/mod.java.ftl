@@ -22,24 +22,24 @@ import org.apache.logging.log4j.Logger;
 
 		<#compress>
 		<#if w.hasSounds()>${JavaModName}Sounds.REGISTRY.register(modEventBus);</#if>
-		<#if types["base:blocks"]??>${JavaModName}Blocks.REGISTRY.register(modEventBus);</#if>
-		<#if types["base:blockentities"]??>${JavaModName}BlockEntities.REGISTRY.register(modEventBus);</#if>
-		<#if types["base:items"]??>${JavaModName}Items.REGISTRY.register(modEventBus);</#if>
-		<#if types["base:entities"]??>${JavaModName}Entities.REGISTRY.register(modEventBus);</#if>
+		<@defineRegistry "base:blocks" "Blocks"/>
+		<@defineRegistry "base:blockentities" "BlockEntities"/>
+		<@defineRegistry "base:items" "Items" 3 />
+		<@defineRegistry "base:entities" "Entities"/>
 		<#if w.hasItemsInTabs()>${JavaModName}Tabs.REGISTRY.register(modEventBus);</#if>
 		<#if w.hasVariables()>${JavaModName}Variables.ATTACHMENT_TYPES.register(modEventBus);</#if>
-		<#if types["base:features"]??>${JavaModName}Features.REGISTRY.register(modEventBus);</#if>
+		<@defineRegistry "base:features" "Features"/>
 		<#if w.getElementsOfType("feature")?filter(e -> e.getMetadata("has_nbt_structure")??)?size != 0>StructureFeature.REGISTRY.register(modEventBus);</#if>
-		<#if types["potions"]??>${JavaModName}Potions.REGISTRY.register(modEventBus);</#if>
-		<#if types["potioneffects"]??>${JavaModName}MobEffects.REGISTRY.register(modEventBus);</#if>
-		<#if types["guis"]??>${JavaModName}Menus.REGISTRY.register(modEventBus);</#if>
-		<#if types["particles"]??>${JavaModName}ParticleTypes.REGISTRY.register(modEventBus);</#if>
-		<#if types["villagerprofessions"]??>${JavaModName}VillagerProfessions.PROFESSIONS.register(modEventBus);</#if>
+		<@defineRegistry "potions" "Potions"/>
+		<@defineRegistry "potioneffects" "MobEffects"/>
+		<@defineRegistry "guis" "Menus"/>
+		<@defineRegistry "particles" "ParticleTypes"/>
+		<@defineRegistry "villagerprofessions" "VillagerProfessions"/>
 		<#if types["fluids"]??>
 			${JavaModName}Fluids.REGISTRY.register(modEventBus);
 			${JavaModName}FluidTypes.REGISTRY.register(modEventBus);
 		</#if>
-		<#if types["attributes"]??>${JavaModName}Attributes.REGISTRY.register(modEventBus);</#if>
+		<@defineRegistry "attributes" "Attributes"/>
 		</#compress>
 
 		// Start of user code block mod init
@@ -110,4 +110,23 @@ import org.apache.logging.log4j.Logger;
 	}
 
 }
+
+<#macro defineRegistry typeKey javaName limit=0>
+	<#if types[typeKey]??>
+		<#if limit != 0>
+			<#assign templateCount = (types[typeKey] / limit)?ceiling>
+		<#else>
+			<#assign templateCount = 1>
+		</#if>
+
+		<#if templateCount == 1>
+			${JavaModName}${javaName}.REGISTRY.register(modEventBus);
+		<#else>
+			<#list 1..templateCount as i>
+				${JavaModName}${javaName}${i}.REGISTRY.register(modEventBus);
+			</#list>
+		</#if>
+	</#if>
+</#macro>
+
 <#-- @formatter:on -->

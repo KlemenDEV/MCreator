@@ -356,10 +356,8 @@ public class Generator implements IGenerator, Closeable {
 					.filter(e -> e.getModElement().getType() == type).toList();
 
 			if (!filteredGeneratableElements.isEmpty()) {
-				globalTemplatesList.forEach(
-						e -> e.addDataModelEntry(type.getPluralName(), filteredGeneratableElements));
-
-				files.addAll(globalTemplatesList);
+				files.addAll(
+						TemplateSplitter.split(globalTemplatesList, filteredGeneratableElements, type.getPluralName()));
 
 				typesReport.put(type.getPluralName(), filteredGeneratableElements.size());
 			} // No need to delete elements here as previous stale files will be removed by used files metadata systems
@@ -382,10 +380,8 @@ public class Generator implements IGenerator, Closeable {
 					generatorConfiguration.getDefinitionsProvider().getBaseTypeDefinition(baseType), templateID);
 
 			if (baseTypeListMap.containsKey(baseType) && !baseTypeListMap.get(baseType).isEmpty()) {
-				globalTemplatesList.forEach(
-						e -> e.addDataModelEntry(baseType.getPluralName(), baseTypeListMap.get(baseType)));
-
-				files.addAll(globalTemplatesList);
+				files.addAll(TemplateSplitter.split(globalTemplatesList, baseTypeListMap.get(baseType),
+						baseType.getPluralName()));
 
 				typesReport.put("base:" + baseType.getPluralName(), baseTypeListMap.get(baseType).size());
 			} // No need to delete elements here as previous stale files will be removed by used files metadata systems

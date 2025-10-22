@@ -20,6 +20,7 @@ package net.mcreator.generator;
 
 import net.mcreator.generator.template.TemplateExpressionParser;
 import net.mcreator.workspace.Workspace;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 import java.util.HashMap;
@@ -44,6 +45,18 @@ public class GeneratorTemplate {
 		this.file = file;
 		this.templateIdentifier = templateIdentifier;
 		this.templateDefinition = templateDefinition;
+	}
+
+	/**
+	 * Returns a copy of this GeneratorTemplate with index i applied to the end of the file name, but before the extension
+	 *
+	 * @param i Index to apply to the end of the file name
+	 * @return Copy of this GeneratorTemplate with index i applied to the end of the file name, but before the extension
+	 */
+	public GeneratorTemplate withIndex(int i) {
+		File indexedFile = new File(file.getParent(),
+				FilenameUtils.getBaseName(file.getName()) + i + "." + FilenameUtils.getExtension(file.getName()));
+		return new GeneratorTemplate(indexedFile, templateIdentifier, templateDefinition);
 	}
 
 	/**
@@ -77,6 +90,12 @@ public class GeneratorTemplate {
 	 */
 	public String getUsercodeComment() {
 		return (String) templateDefinition.get("usercodeComment");
+	}
+
+	public int getListLimit() {
+		return templateDefinition.get("list_limit") != null ?
+				Integer.parseInt(templateDefinition.get("list_limit").toString()) :
+				0;
 	}
 
 	/**

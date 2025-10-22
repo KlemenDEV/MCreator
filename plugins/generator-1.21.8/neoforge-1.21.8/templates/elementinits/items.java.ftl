@@ -47,7 +47,7 @@ package ${package}.init;
 <#if itemsWithInventory?size != 0>
 @EventBusSubscriber
 </#if>
-public class ${JavaModName}Items {
+public class ${JavaModName}Items${chunkIndex!""} {
 
 	public static final DeferredRegister.Items REGISTRY = DeferredRegister.createItems(${JavaModName}.MODID);
 
