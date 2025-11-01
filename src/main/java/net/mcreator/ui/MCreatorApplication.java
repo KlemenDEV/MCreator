@@ -38,6 +38,8 @@ import net.mcreator.plugin.events.PreGeneratorsLoadingEvent;
 import net.mcreator.plugin.modapis.ModAPIManager;
 import net.mcreator.preferences.PreferencesManager;
 import net.mcreator.ui.action.impl.AboutAction;
+import net.mcreator.ui.chromium.CefUtils;
+import net.mcreator.ui.chromium.WebView;
 import net.mcreator.ui.component.util.DiscordClient;
 import net.mcreator.ui.component.util.ThreadUtil;
 import net.mcreator.ui.dialogs.preferences.PreferencesDialog;
@@ -113,6 +115,9 @@ public final class MCreatorApplication {
 			taskbarIntegration = new TaskbarIntegration();
 
 			splashScreen.setProgress(25, "Loading interface components");
+
+			// preload CEF into RAM so it loads faster when needed
+			WebView.preload();
 
 			// preload help entries cache
 			HelpLoader.preloadCache();
@@ -384,6 +389,9 @@ public final class MCreatorApplication {
 			Platform.exit();
 		} catch (Exception ignored) {
 		}
+
+		// Close CEF
+		CefUtils.close();
 
 		try {
 			PluginLoader.INSTANCE.close();
