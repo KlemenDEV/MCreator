@@ -20,9 +20,11 @@
 package net.mcreator.ui.chromium;
 
 import net.mcreator.ui.laf.themes.Theme;
+import net.mcreator.util.TestUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cef.CefClient;
+import org.cef.OS;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.browser.CefMessageRouter;
@@ -34,6 +36,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ContainerAdapter;
 import java.awt.event.ContainerEvent;
+import java.awt.event.FocusEvent;
 import java.awt.event.HierarchyEvent;
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -123,6 +126,20 @@ public class WebView extends JPanel implements Closeable {
 				forceCefScaleDetectAndResize();
 			}
 		});
+	}
+
+	@Override public void removeNotify() {
+		if (OS.isWindows()) {
+			if (browser.getUIComponent().hasFocus()) {
+				browser.setFocus(false);
+			}
+		}
+		super.removeNotify();
+	}
+
+	@Override public Dimension getPreferredSize() {
+		Dimension size = super.getPreferredSize();
+		return size.width > 0 && size.height > 0 ? size : new Dimension(800, 600);
 	}
 
 	private void forceCefScaleDetectAndResize() {
