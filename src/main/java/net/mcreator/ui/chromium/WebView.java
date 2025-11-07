@@ -125,6 +125,8 @@ public class WebView extends JPanel implements Closeable {
 		addHierarchyListener(e -> {
 			if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
 				if (isShowing()) {
+					add(cefComponent, BorderLayout.CENTER);
+
 					forceCefScaleDetectAndResize();
 
 					// request focus when shown
@@ -133,11 +135,11 @@ public class WebView extends JPanel implements Closeable {
 				} else { // editor hidden
 					browser.setFocus(false);
 					KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
+
+					removeAll();
 				}
 			}
 		});
-
-		add(cefComponent, BorderLayout.CENTER);
 	}
 
 	@Override public void removeNotify() {
