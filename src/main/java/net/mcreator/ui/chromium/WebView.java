@@ -123,12 +123,17 @@ public class WebView extends JPanel implements Closeable {
 		cefComponent.setBackground(Theme.current().getBackgroundColor());
 
 		addHierarchyListener(e -> {
-			if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
-				forceCefScaleDetectAndResize();
+			if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+				if (isShowing()) {
+					forceCefScaleDetectAndResize();
 
-				// if shown again, make sure we regain focus on the browser
-				cefComponent.requestFocus();
-				browser.setFocus(true);
+					// request focus when shown
+					cefComponent.requestFocusInWindow();
+					browser.setFocus(true);
+				} else { // editor hidden
+					browser.setFocus(false);
+					KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
+				}
 			}
 		});
 
