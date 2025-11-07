@@ -239,7 +239,13 @@ public class WebView extends JPanel implements Closeable {
 
 	public static void preload() {
 		LOG.debug("Preloading CEF WebView");
-		new WebView("about:blank").close();
+		CountDownLatch latch = new CountDownLatch(1);
+		WebView preloader = new WebView("about:blank");
+		try (preloader) {
+			preloader.addLoadListener(latch::countDown);
+			latch.await();
+		} catch (InterruptedException ignored) {
+		}
 	}
 
 }
