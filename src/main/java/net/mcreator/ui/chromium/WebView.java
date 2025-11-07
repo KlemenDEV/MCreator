@@ -20,7 +20,6 @@
 package net.mcreator.ui.chromium;
 
 import net.mcreator.ui.laf.themes.Theme;
-import net.mcreator.util.TestUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cef.CefClient;
@@ -36,7 +35,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ContainerAdapter;
 import java.awt.event.ContainerEvent;
-import java.awt.event.FocusEvent;
 import java.awt.event.HierarchyEvent;
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -79,7 +77,6 @@ public class WebView extends JPanel implements Closeable {
 		this.client.addMessageRouter(this.router);
 		this.browser = this.client.createBrowser(url, CefUtils.useOSR(), false);
 		this.browser.setCloseAllowed(); // workaround for https://github.com/chromiumembedded/java-cef/issues/364
-		this.browser.createImmediately(); // needed so tests that don't render also work
 
 		// Register persistent JS handler once
 		// message router sends callback to all adapters
@@ -101,8 +98,6 @@ public class WebView extends JPanel implements Closeable {
 		this.client.addLoadHandler(new CefLoadHandlerAdapter() {
 			@Override public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
 				callbackExecutor.execute(() -> pageLoadListeners.forEach(PageLoadListener::pageLoaded));
-
-				SwingUtilities.invokeLater(() -> add(cefComponent, BorderLayout.CENTER));
 			}
 		});
 
@@ -117,6 +112,10 @@ public class WebView extends JPanel implements Closeable {
 		addHierarchyListener(e -> {
 			if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing()) {
 				forceCefScaleDetectAndResize();
+
+				// if shown again, make sure we regain focus on the browser
+				cefComponent.requestFocus();
+				browser.setFocus(true);
 			}
 		});
 
@@ -126,6 +125,10 @@ public class WebView extends JPanel implements Closeable {
 				forceCefScaleDetectAndResize();
 			}
 		});
+
+		add(cefComponent, BorderLayout.CENTER);
+
+		this.browser.createImmediately(); // needed so tests that don't render also work
 	}
 
 	@Override public void removeNotify() {
@@ -145,12 +148,10 @@ public class WebView extends JPanel implements Closeable {
 	private void forceCefScaleDetectAndResize() {
 		// This hack is only needed for WR rendering, not for OSR - workaround for https://github.com/chromiumembedded/java-cef/issues/438
 		if (!CefUtils.useOSR()) {
-			SwingUtilities.invokeLater(() -> {
-				// First, call the paint method to update scaleFactor_ in CefBrowserWr
-				cefComponent.paint(cefComponent.getGraphics());
-				// After new scaleFactor_ is known, call setBounds to invoke wasResized of CefBrowser
-				cefComponent.setBounds(cefComponent.getBounds());
-			});
+			// First, call the paint method to update scaleFactor_ in CefBrowserWr
+			cefComponent.paint(cefComponent.getGraphics());
+			// After new scaleFactor_ is known, call setBounds to invoke wasResized of CefBrowser
+			cefComponent.setBounds(cefComponent.getBounds());
 		}
 	}
 
