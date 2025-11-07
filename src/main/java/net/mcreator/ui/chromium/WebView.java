@@ -20,6 +20,7 @@
 package net.mcreator.ui.chromium;
 
 import net.mcreator.ui.laf.themes.Theme;
+import net.mcreator.util.TestUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.cef.CefClient;
@@ -69,6 +70,10 @@ public class WebView extends JPanel implements Closeable {
 	});
 
 	public WebView(String url) {
+		this(url, false);
+	}
+
+	private WebView(String url, boolean forcePreload) {
 		setLayout(new BorderLayout());
 		setOpaque(false);
 
@@ -77,6 +82,14 @@ public class WebView extends JPanel implements Closeable {
 		this.client.addMessageRouter(this.router);
 		this.browser = this.client.createBrowser(url, CefUtils.useOSR(), false);
 		this.browser.setCloseAllowed(); // workaround for https://github.com/chromiumembedded/java-cef/issues/364
+		/*
+		 * Immediately create the browser if:
+		 * - forcePreload set in preload() function so when preloading we don't infinitely wait for the browser to appear
+		 * - on Windows, it reduces loading flickering
+		 * - on tests, brwoser is never shown so we need to preload it so it actually loads content
+		 */
+		if (forcePreload || OS.isWindows() || TestUtil.isTestingEnvironment())
+			this.browser.createImmediately(); // needed so tests that don't render also work
 
 		// Register persistent JS handler once
 		// message router sends callback to all adapters
@@ -127,8 +140,6 @@ public class WebView extends JPanel implements Closeable {
 		});
 
 		add(cefComponent, BorderLayout.CENTER);
-
-		this.browser.createImmediately(); // needed so tests that don't render also work
 	}
 
 	@Override public void removeNotify() {
@@ -241,7 +252,7 @@ public class WebView extends JPanel implements Closeable {
 	public static void preload() {
 		LOG.debug("Preloading CEF WebView");
 		CountDownLatch latch = new CountDownLatch(1);
-		WebView preloader = new WebView("about:blank");
+		WebView preloader = new WebView("about:blank", true);
 		try (preloader) {
 			preloader.addLoadListener(latch::countDown);
 			latch.await();
