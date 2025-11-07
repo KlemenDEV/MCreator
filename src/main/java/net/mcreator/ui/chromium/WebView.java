@@ -34,8 +34,6 @@ import org.cef.handler.CefMessageRouterHandlerAdapter;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ContainerAdapter;
-import java.awt.event.ContainerEvent;
 import java.awt.event.HierarchyEvent;
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -125,21 +123,22 @@ public class WebView extends JPanel implements Closeable {
 		addHierarchyListener(e -> {
 			if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
 				if (isShowing()) {
-					add(cefComponent, BorderLayout.CENTER);
+					if (OS.isMacintosh()) {
+						add(cefComponent, BorderLayout.CENTER);
+					}
 
 					forceCefScaleDetectAndResize();
-
-					// request focus when shown
-					cefComponent.requestFocusInWindow();
-					browser.setFocus(true);
 				} else { // editor hidden
-					browser.setFocus(false);
-					KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
-
-					removeAll();
+					if (OS.isMacintosh()) {
+						removeAll();
+					}
 				}
 			}
 		});
+
+		if (!OS.isMacintosh()) {
+			add(cefComponent, BorderLayout.CENTER);
+		}
 	}
 
 	@Override public void removeNotify() {
