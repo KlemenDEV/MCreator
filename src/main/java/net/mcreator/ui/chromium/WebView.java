@@ -137,13 +137,6 @@ public class WebView extends JPanel implements Closeable {
 			}
 		});
 
-		addContainerListener(new ContainerAdapter() {
-			@Override public void componentAdded(ContainerEvent e) {
-				super.componentAdded(e);
-				forceCefScaleDetectAndResize();
-			}
-		});
-
 		add(cefComponent, BorderLayout.CENTER);
 	}
 
@@ -154,11 +147,6 @@ public class WebView extends JPanel implements Closeable {
 			}
 		}
 		super.removeNotify();
-	}
-
-	@Override public Dimension getPreferredSize() {
-		Dimension size = super.getPreferredSize();
-		return size.width > 0 && size.height > 0 ? size : new Dimension(800, 600);
 	}
 
 	private void forceCefScaleDetectAndResize() {
