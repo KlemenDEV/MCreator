@@ -188,8 +188,8 @@ public class CefUtils {
 			}
 		});
 
-		// Prevent client from owning the focus so other text fields around the CEF component work (on non-OSR rendering)
-		if (!useOSR()) {
+		// Prevent client from owning the focus so other text fields around the CEF component work (needed on non-OSR rendering on Windows only)
+		if (!useOSR() && OS.isWindows()) {
 			cefClient.addFocusHandler(new CefFocusHandlerAdapter() {
 				@Override public void onGotFocus(CefBrowser browser) {
 					KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
