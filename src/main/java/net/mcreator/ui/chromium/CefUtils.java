@@ -32,6 +32,7 @@ import org.apache.logging.log4j.Logger;
 import org.cef.CefApp;
 import org.cef.CefClient;
 import org.cef.CefSettings;
+import org.cef.OS;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.callback.CefContextMenuParams;
@@ -66,13 +67,13 @@ public class CefUtils {
 	}
 
 	public static boolean useOSR() {
-		return false;
+		return OS.isLinux();
 	}
 
 	private static CefApp createApp() {
 		CefAppBuilder builder = new CefAppBuilder();
 
-		// TODO: maybe we want to disable auto-download and instead extract natives in build folder of Gradle
+		// TODO: disable auto-download and instead extract natives in build folder of Gradle
 		// and point there for install directory and call setSkipInstallation, then for distribution include
 		// those natives in lib/jcef, for example and here detect if running build or distribution to decide
 		// which folder to use
@@ -187,19 +188,14 @@ public class CefUtils {
 			}
 		});
 
-		// Prevent client from owning the focus so other text fields around the CEF component work
-		cefClient.addFocusHandler(new CefFocusHandlerAdapter() {
-			@Override public void onGotFocus(CefBrowser browser) {
-				SwingUtilities.invokeLater(() -> {
-					try {
-						browser.setFocus(false);
-						KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
-						browser.setFocus(false);
-					} catch (Exception ignored) {
-					}
-				});
-			}
-		});
+		// Prevent client from owning the focus so other text fields around the CEF component work (on non-OSR rendering)
+		if (!useOSR()) {
+			cefClient.addFocusHandler(new CefFocusHandlerAdapter() {
+				@Override public void onGotFocus(CefBrowser browser) {
+					KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
+				}
+			});
+		}
 
 		return cefClient;
 	}
