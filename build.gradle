@@ -64,15 +64,15 @@ configurations {
     linux64
 
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        runtimeOnly.extendsFrom win64
+        implementation.extendsFrom win64
     } else if (Os.isFamily(Os.FAMILY_MAC)) {
         if (System.getProperty("os.arch").contains("aarch64")) {
-            runtimeOnly.extendsFrom macAarch64
+            implementation.extendsFrom macAarch64
         } else {
-            runtimeOnly.extendsFrom macX64
+            implementation.extendsFrom macX64
         }
     } else if (Os.isFamily(Os.FAMILY_UNIX)) {
-        runtimeOnly.extendsFrom linux64
+        implementation.extendsFrom linux64
     }
 }
 
@@ -152,7 +152,7 @@ dependencies {
 
 javafx {
     version = '21.0.8' // 21.0.9 crashes sometimes when adding to clipboard (e.g. Ctrl+C)
-    modules = ['javafx.web', 'javafx.swing']
+    modules = ['javafx.swing']
     configurations = ['provided', 'win64', 'macX64', 'macAarch64', 'linux64']
     // we provide natives during deployment or with SDK
 }
