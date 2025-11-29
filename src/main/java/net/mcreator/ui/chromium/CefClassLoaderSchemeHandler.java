@@ -27,7 +27,10 @@ import org.apache.logging.log4j.Logger;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.callback.CefCallback;
+import org.cef.callback.CefResourceReadCallback;
 import org.cef.handler.CefResourceHandler;
+import org.cef.handler.CefResourceHandlerAdapter;
+import org.cef.misc.BoolRef;
 import org.cef.misc.IntRef;
 import org.cef.misc.StringRef;
 import org.cef.network.CefRequest;
@@ -36,7 +39,7 @@ import org.cef.network.CefResponse;
 import java.io.IOException;
 import java.io.InputStream;
 
-class CefClassLoaderSchemeHandler implements CefResourceHandler {
+class CefClassLoaderSchemeHandler extends CefResourceHandlerAdapter {
 
 	private static final Logger LOG = LogManager.getLogger(CefClassLoaderSchemeHandler.class);
 
@@ -58,7 +61,7 @@ class CefClassLoaderSchemeHandler implements CefResourceHandler {
 	public CefClassLoaderSchemeHandler(CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {
 	}
 
-	@Override public boolean processRequest(CefRequest request, CefCallback callback) {
+	@Override public boolean open(CefRequest request, BoolRef handleRequest, CefCallback callback) {
 		String path = request.getURL().replaceFirst("^classloader://", "/")
 				//@formatter:off
 				.replace("[LANG]", L10N.getBlocklyLangName())
@@ -72,12 +75,14 @@ class CefClassLoaderSchemeHandler implements CefResourceHandler {
 			inputStream = PluginLoader.INSTANCE.getResourceAsStream(path.substring(1));
 			if (inputStream == null) {
 				LOG.warn("Resource not found: {}", path);
+				handleRequest.set(false);
 				return false; // resource not found
 			}
 		}
 
 		contentType = detectMimeType(path);
 		callback.Continue();
+		handleRequest.set(true);
 		return true;
 	}
 
@@ -87,7 +92,7 @@ class CefClassLoaderSchemeHandler implements CefResourceHandler {
 		responseLength.set(-1);
 	}
 
-	@Override public boolean readResponse(byte[] dataOut, int bytesToRead, IntRef bytesRead, CefCallback callback) {
+	@Override public boolean read(byte[] dataOut, int bytesToRead, IntRef bytesRead, CefResourceReadCallback callback) {
 		try {
 			int n = inputStream.read(dataOut, 0, bytesToRead);
 			if (n == -1)
