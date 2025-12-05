@@ -67,7 +67,7 @@ public class CefUtils {
 	}
 
 	public static boolean useOSR() {
-		return true;
+		return OS.isLinux() && !TestUtil.isTestingEnvironment();
 	}
 
 	private static CefApp createApp() {
