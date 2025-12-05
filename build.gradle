@@ -143,11 +143,11 @@ dependencies {
     macAarch64 "com.formdev:flatlaf:3.7:macos-arm64@dylib"
     linux64 "com.formdev:flatlaf:3.7:linux-x86_64@so"
 
-    implementation group: 'me.friwi', name: 'jcefmaven', version: '141.0.10'
-    win64 group: 'me.friwi', name: 'jcef-natives-windows-amd64', version: 'jcef-2caef5a+cef-141.0.10+g1d65b0d+chromium-141.0.7390.123'
-    macX64 group: 'me.friwi', name: 'jcef-natives-macos-amd64', version: 'jcef-2caef5a+cef-141.0.10+g1d65b0d+chromium-141.0.7390.123'
-    macAarch64 group: 'me.friwi', name: 'jcef-natives-macos-arm64', version: 'jcef-2caef5a+cef-141.0.10+g1d65b0d+chromium-141.0.7390.123'
-    linux64 group: 'me.friwi', name: 'jcef-natives-linux-amd64', version: 'jcef-2caef5a+cef-141.0.10+g1d65b0d+chromium-141.0.7390.123'
+    implementation "me.friwi:jcefmaven:141.0.10"
+    win64 "me.friwi':jcef-natives-windows-amd64:jcef-2caef5a+cef-141.0.10+g1d65b0d+chromium-141.0.7390.123"
+    macX64 "me.friwi:jcef-natives-macos-amd64:jcef-2caef5a+cef-141.0.10+g1d65b0d+chromium-141.0.7390.123"
+    macAarch64 "me.friwi:jcef-natives-macos-arm64:jcef-2caef5a+cef-141.0.10+g1d65b0d+chromium-141.0.7390.123"
+    linux64 "me.friwi:jcef-natives-linux-amd64:jcef-2caef5a+cef-141.0.10+g1d65b0d+chromium-141.0.7390.123"
 
     // test dependencies
     testImplementation platform("org.junit:junit-bom:6.0.1")
