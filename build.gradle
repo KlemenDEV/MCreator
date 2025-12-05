@@ -143,7 +143,12 @@ dependencies {
     macAarch64 "com.formdev:flatlaf:3.7:macos-arm64@dylib"
     linux64 "com.formdev:flatlaf:3.7:linux-x86_64@so"
 
-    implementation "me.friwi:jcefmaven:141.0.10"
+    implementation ("me.friwi:jcefmaven:141.0.10") {
+        dep -> dep.exclude group: 'me.friwi', module: 'jcef-api'
+    }
+    // manually add jogl dependencies as they are excluded above
+    implementation "me.friwi:jogl-all:v2.4.0"
+    implementation "me.friwi:gluegen-rt:v2.4.0"
     win64 "me.friwi':jcef-natives-windows-amd64:jcef-2caef5a+cef-141.0.10+g1d65b0d+chromium-141.0.7390.123"
     macX64 "me.friwi:jcef-natives-macos-amd64:jcef-2caef5a+cef-141.0.10+g1d65b0d+chromium-141.0.7390.123"
     macAarch64 "me.friwi:jcef-natives-macos-arm64:jcef-2caef5a+cef-141.0.10+g1d65b0d+chromium-141.0.7390.123"
