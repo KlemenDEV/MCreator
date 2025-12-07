@@ -30,9 +30,10 @@ import org.cef.browser.CefFrame;
 import org.cef.browser.CefMessageRouter;
 import org.cef.callback.CefJSDialogCallback;
 import org.cef.callback.CefQueryCallback;
+import org.cef.handler.CefJSDialogHandler;
+import org.cef.handler.CefJSDialogHandlerAdapter;
 import org.cef.handler.CefLoadHandlerAdapter;
 import org.cef.handler.CefMessageRouterHandlerAdapter;
-import org.cef.handler.*;
 import org.cef.misc.BoolRef;
 
 import javax.swing.*;
@@ -253,9 +254,7 @@ public class WebView extends JPanel implements Closeable {
 	@Override public void close() {
 		remove(cefComponent);
 
-		callbackExecutor.shutdownNow();
-
-		browser.stopLoad();
+		browser.loadURL("about:blank");
 		browser.setCloseAllowed();
 		browser.close(true);
 
@@ -270,6 +269,8 @@ public class WebView extends JPanel implements Closeable {
 		client.removeLoadHandler();
 		client.removeJSDialogHandler();
 		client.dispose();
+
+		callbackExecutor.shutdownNow();
 	}
 
 	public interface PageLoadListener {
