@@ -292,7 +292,7 @@ Blockly.Extensions.registerMutator('fixed_placement_mutator', simpleRepeatingInp
 Blockly.Extensions.registerMutator('player_effect_changed_mutator', simpleRepeatingInputMixin(
         'player_effect_changed_mutator_container', 'player_effect_changed_mutator_input', 'effect',
         function (thisBlock, inputName, index) {
-            thisBlock.appendValueInput(inputName + index).setCheck('Effect').setAlign(Blockly.Input.Align.RIGHT)
+            thisBlock.appendValueInput(inputName + index).setCheck('Effect').setAlign(Blockly.ALIGN_RIGHT)
                 .appendField(javabridge.t('blockly.block.' + thisBlock.type + '.input'));
         }),
     undefined, ['player_effect_changed_mutator_input']);
@@ -300,7 +300,7 @@ Blockly.Extensions.registerMutator('player_effect_changed_mutator', simpleRepeat
 Blockly.Extensions.registerMutator('item_enchanted_mutator', simpleRepeatingInputMixin(
         'item_enchanted_mutator_container', 'item_enchanted_mutator_input', 'enchantment',
         function (thisBlock, inputName, index) {
-            thisBlock.appendValueInput(inputName + index).setCheck('Enchantment').setAlign(Blockly.Input.Align.RIGHT)
+            thisBlock.appendValueInput(inputName + index).setCheck('Enchantment').setAlign(Blockly.ALIGN_RIGHT)
                 .appendField(javabridge.t('blockly.block.' + thisBlock.type + '.input'));
         }),
     undefined, ['item_enchanted_mutator_input']);
@@ -308,7 +308,7 @@ Blockly.Extensions.registerMutator('item_enchanted_mutator', simpleRepeatingInpu
 Blockly.Extensions.registerMutator('any_item_mutator', simpleRepeatingInputMixin(
         'any_item_mutator_container', 'any_item_mutator_input', 'item',
         function (thisBlock, inputName, index) {
-            thisBlock.appendDummyInput(inputName + index).setAlign(Blockly.Input.Align.RIGHT)
+            thisBlock.appendDummyInput(inputName + index).setAlign(Blockly.ALIGN_RIGHT)
                 .appendField(javabridge.t('blockly.block.' + thisBlock.type + '.input'))
                 .appendField(new FieldMCItemSelector(), 'item' + index);
         }, false, ['item']),
