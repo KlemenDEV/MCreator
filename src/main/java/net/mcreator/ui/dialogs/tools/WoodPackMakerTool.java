@@ -19,13 +19,15 @@
 package net.mcreator.ui.dialogs.tools;
 
 import net.mcreator.element.ModElementType;
-import net.mcreator.element.parts.*;
+import net.mcreator.element.parts.MItemBlock;
+import net.mcreator.element.parts.StepSound;
+import net.mcreator.element.parts.TabEntry;
+import net.mcreator.element.parts.TextureHolder;
 import net.mcreator.element.types.Block;
 import net.mcreator.element.types.Recipe;
 import net.mcreator.generator.GeneratorConfiguration;
 import net.mcreator.generator.GeneratorStats;
 import net.mcreator.io.FileIO;
-import net.mcreator.io.ResourcePointer;
 import net.mcreator.minecraft.RegistryNameFixer;
 import net.mcreator.minecraft.TagType;
 import net.mcreator.ui.MCreator;
@@ -33,16 +35,12 @@ import net.mcreator.ui.action.ActionRegistry;
 import net.mcreator.ui.action.BasicAction;
 import net.mcreator.ui.component.JColor;
 import net.mcreator.ui.component.util.PanelUtils;
-import net.mcreator.ui.dialogs.MCreatorDialog;
-import net.mcreator.ui.init.ImageMakerTexturesCache;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.init.UIRES;
-import net.mcreator.ui.validation.Validator;
 import net.mcreator.ui.validation.component.VTextField;
 import net.mcreator.ui.validation.validators.ModElementNameValidator;
 import net.mcreator.ui.variants.modmaker.ModMaker;
 import net.mcreator.ui.workspace.resources.TextureType;
-import net.mcreator.util.ListUtils;
 import net.mcreator.util.StringUtils;
 import net.mcreator.util.image.ImageUtils;
 import net.mcreator.workspace.Workspace;
@@ -51,25 +49,21 @@ import net.mcreator.workspace.elements.ModElement;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
-public class WoodPackMakerTool {
+public class WoodPackMakerTool extends AbstractPackMakerTool {
 
-	private static void open(MCreator mcreator) {
-		MCreatorDialog dialog = new MCreatorDialog(mcreator, L10N.t("dialog.tools.wood_pack_title"), true);
-		dialog.setLayout(new BorderLayout(10, 10));
+	private final VTextField name = new VTextField(25);
+	private final JColor color;
+	private final JSpinner power = new JSpinner(new SpinnerNumberModel(1, 0.1, 10, 0.1));
 
-		dialog.setIconImage(UIRES.get("16px.woodpack").getImage());
-
-		dialog.add("North", PanelUtils.centerInPanel(L10N.label("dialog.tools.wood_pack_info")));
+	private WoodPackMakerTool(MCreator mcreator) {
+		super(mcreator, "wood_pack", UIRES.get("16px.woodpack").getImage());
 
 		JPanel props = new JPanel(new GridLayout(4, 2, 5, 2));
 
-		VTextField name = new VTextField(25);
-		JColor color = new JColor(mcreator, false, false);
-		JSpinner power = new JSpinner(new SpinnerNumberModel(1, 0.1, 10, 0.1));
-
+		color = new JColor(mcreator, false, false);
 		name.enableRealtimeValidation();
 
 		props.add(L10N.label("dialog.tools.wood_pack_name"));
@@ -84,39 +78,36 @@ public class WoodPackMakerTool {
 		name.setValidator(new ModElementNameValidator(mcreator.getWorkspace(), name,
 				L10N.t("dialog.tools.wood_pack_name_validator")));
 
-		dialog.add("Center", PanelUtils.centerInPanel(props));
-		JButton ok = L10N.button("dialog.tools.wood_pack_create");
-		JButton cancel = new JButton(UIManager.getString("OptionPane.cancelButtonText"));
-		cancel.addActionListener(e -> dialog.setVisible(false));
-		dialog.add("South", PanelUtils.join(ok, cancel));
+		validableElements.addValidationElement(name);
 
-		ok.addActionListener(e -> {
-			if (name.getValidationStatus().getValidationResultType() != Validator.ValidationResultType.ERROR) {
-				dialog.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-				addWoodPackToWorkspace(mcreator, mcreator.getWorkspace(), name.getText(), color.getColor(),
-						(Double) power.getValue());
-				mcreator.reloadWorkspaceTabContents();
-				dialog.setCursor(Cursor.getDefaultCursor());
-				dialog.setVisible(false);
-			}
-		});
+		this.add("Center", PanelUtils.centerInPanel(props));
 
-		dialog.getRootPane().setDefaultButton(ok);
-		dialog.setSize(600, 260);
-		dialog.setLocationRelativeTo(mcreator);
-		dialog.setVisible(true);
+		this.setSize(600, 260);
+		this.setLocationRelativeTo(mcreator);
+		this.setVisible(true);
 	}
 
-	private static void addWoodPackToWorkspace(MCreator mcreator, Workspace workspace, String name, Color color,
+	@Override protected void generatePack(MCreator mcreator) {
+		addWoodPackToWorkspace(mcreator, mcreator.getWorkspace(), name.getText(), color.getColor(),
+				(Double) power.getValue());
+	}
+
+	public static void addWoodPackToWorkspace(MCreator mcreator, Workspace workspace, String name, Color color,
 			double factor) {
 		String registryName = RegistryNameFixer.fromCamelCase(name);
 		String readableName = StringUtils.machineToReadableName(name);
 
-		if (!PackMakerToolUtils.checkIfNamesAvailable(workspace, name + "Wood", name + "Log", name + "Planks",
-				name + "Leaves", name + "Stairs", name + "Slab", name + "Fence", name + "FenceGate",
-				name + "PressurePlate", name + "Button", name + "WoodRecipe", name + "PlanksRecipe",
-				name + "StairsRecipe", name + "SlabRecipe", name + "FenceRecipe", name + "FenceGateRecipe",
-				name + "PressurePlateRecipe", name + "ButtonRecipe"))
+		// Use a slightly desaturated, darker color for stripped log textures
+		float[] colorHSB = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
+		Color strippedColor = Color.getHSBColor(colorHSB[0], colorHSB[1] * 0.9f, colorHSB[2] * 0.85f);
+
+		if (!checkIfNamesAvailable(workspace, name + "Wood", name + "Log",
+				"Stripped" + name + "Wood", "Stripped" + name + "Log", name + "Planks", name + "Leaves",
+				name + "Stairs", name + "Slab", name + "Fence", name + "FenceGate", name + "Door", name + "Trapdoor",
+				name + "PressurePlate", name + "Button", name + "WoodRecipe", "Stripped" + name + "WoodRecipe",
+				name + "PlanksRecipe", name + "StairsRecipe", name + "SlabRecipe", name + "FenceRecipe",
+				name + "FenceGateRecipe", name + "DoorRecipe", name + "TrapdoorRecipe", name + "PressurePlateRecipe",
+				name + "ButtonRecipe"))
 			return;
 
 		// select folder the mod pack should be in
@@ -125,40 +116,71 @@ public class WoodPackMakerTool {
 				null;
 
 		// first we generate wood texture
-		ImageIcon wood = ImageUtils.colorize(ImageMakerTexturesCache.CACHE.get(new ResourcePointer(
-						"templates/textures/texturemaker/" + ListUtils.getRandomItem(
-								Arrays.asList("log_side_1", "log_side_2", "log_side_3", "log_side_4", "log_side_5")) + ".png")),
-				color, true);
-		String woodTextureName = registryName + "_log_side";
+		ImageIcon wood = ImageUtils.colorize(
+				getCachedTexture("log_side_1", "log_side_2", "log_side_3", "log_side_4", "log_side_5"), color, true);
+		String woodTextureName = registryName + "_log";
 		FileIO.writeImageToPNGFile(ImageUtils.toBufferedImage(wood.getImage()),
 				mcreator.getFolderManager().getTextureFile(woodTextureName, TextureType.BLOCK));
 
 		//then we generate the missing log texture
-		ImageIcon log = ImageUtils.colorize(
-				ImageMakerTexturesCache.CACHE.get(new ResourcePointer("templates/textures/texturemaker/log_top.png")),
-				color, true);
+		ImageIcon log = ImageUtils.colorize(getCachedTexture("log_top"), color, true);
 		String logTextureName = registryName + "_log_top";
 		FileIO.writeImageToPNGFile(ImageUtils.toBufferedImage(log.getImage()),
 				mcreator.getFolderManager().getTextureFile(logTextureName, TextureType.BLOCK));
 
+		// then we generate the stripped log side texture
+		ImageIcon strippedLogSide = ImageUtils.colorize(getCachedTexture("stripped_log_side"), strippedColor, true);
+		String strippedLogSideTextureName = "stripped_" + registryName + "_log";
+		FileIO.writeImageToPNGFile(ImageUtils.toBufferedImage(strippedLogSide.getImage()),
+				mcreator.getFolderManager().getTextureFile(strippedLogSideTextureName, TextureType.BLOCK));
+
+		// then we generate the stripped log top texture
+		ImageIcon strippedLogTop = ImageUtils.drawOver(log,
+				ImageUtils.colorize(getCachedTexture("stripped_log_top_outside"), strippedColor, true));
+		String strippedLogTopTextureName = "stripped_" + registryName + "_log_top";
+		FileIO.writeImageToPNGFile(ImageUtils.toBufferedImage(strippedLogTop.getImage()),
+				mcreator.getFolderManager().getTextureFile(strippedLogTopTextureName, TextureType.BLOCK));
+
 		//then we generate the planks texture
-		ImageIcon planks = ImageUtils.colorize(ImageMakerTexturesCache.CACHE.get(new ResourcePointer(
-				"templates/textures/texturemaker/" + ListUtils.getRandomItem(Arrays.asList("planks_0", "planks_1"))
-						+ ".png")), color, true);
+		ImageIcon planks = ImageUtils.colorize(getCachedTexture("planks_0", "planks_1"), color, true);
 		String planksTextureName = registryName + "_planks";
-		FileIO.writeImageToPNGFile(ImageUtils.toBufferedImage(planks.getImage()), mcreator.getFolderManager()
-				.getTextureFile(planksTextureName, TextureType.BLOCK));
+		FileIO.writeImageToPNGFile(ImageUtils.toBufferedImage(planks.getImage()),
+				mcreator.getFolderManager().getTextureFile(planksTextureName, TextureType.BLOCK));
 
 		//then we generate the leaves texture
-		ImageIcon leaves = ImageUtils.colorize(ImageMakerTexturesCache.CACHE.get(new ResourcePointer(
-				"templates/textures/texturemaker/" + ListUtils.getRandomItem(
-						Arrays.asList("leaves_0", "leaves_1", "leaves_2", "leaves_3", "leaves_4", "leaves_5",
-								"leaves_new1", "leaves_new2", "leaves2")) + ".png")), color, true);
+		ImageIcon leaves = ImageUtils.colorize(
+				getCachedTexture("leaves_0", "leaves_1", "leaves_2", "leaves_3", "leaves_4", "leaves_5", "leaves_new1",
+						"leaves_new2", "leaves2"), color, true);
 		String leavesTextureName = registryName + "_leaves";
-		FileIO.writeImageToPNGFile(ImageUtils.toBufferedImage(leaves.getImage()), mcreator.getFolderManager()
-				.getTextureFile(leavesTextureName, TextureType.BLOCK));
+		FileIO.writeImageToPNGFile(ImageUtils.toBufferedImage(leaves.getImage()),
+				mcreator.getFolderManager().getTextureFile(leavesTextureName, TextureType.BLOCK));
 
-		// we use Block GUI to get default values for the block element (kinda hacky!)
+		// Generate door and trapdoor textures (matching textures have the same suffix)
+		int doorSuffix = new Random().nextInt(2) + 1;
+
+		ImageIcon doorBottom = ImageUtils.colorize(getCachedTexture("door_bottom_" + doorSuffix), color, true);
+		doorBottom = ImageUtils.drawOver(doorBottom, getCachedTexture("door_hinges_bottom"));
+		String doorBottomTextureName = registryName + "_door_bottom";
+		FileIO.writeImageToPNGFile(ImageUtils.toBufferedImage(doorBottom.getImage()),
+				mcreator.getFolderManager().getTextureFile(doorBottomTextureName, TextureType.BLOCK));
+
+		ImageIcon doorTop = ImageUtils.colorize(getCachedTexture("door_top_" + doorSuffix), color, true);
+		doorTop = ImageUtils.drawOver(doorTop, getCachedTexture("door_hinges_top"));
+		String doorTopTextureName = registryName + "_door_top";
+		FileIO.writeImageToPNGFile(ImageUtils.toBufferedImage(doorTop.getImage()),
+				mcreator.getFolderManager().getTextureFile(doorTopTextureName, TextureType.BLOCK));
+
+		ImageIcon doorItem = ImageUtils.colorize(getCachedTexture("door_item_" + doorSuffix), color, true);
+		String doorItemTextureName = registryName + "_door_item";
+		FileIO.writeImageToPNGFile(ImageUtils.toBufferedImage(doorItem.getImage()),
+				mcreator.getFolderManager().getTextureFile(doorItemTextureName, TextureType.ITEM));
+
+		ImageIcon trapdoor = ImageUtils.colorize(getCachedTexture("trapdoor_" + doorSuffix), color, true);
+		String trapdoorTextureName = registryName + "_trapdoor";
+		FileIO.writeImageToPNGFile(ImageUtils.toBufferedImage(trapdoor.getImage()),
+				mcreator.getFolderManager().getTextureFile(trapdoorTextureName, TextureType.BLOCK));
+
+		// We use element GUIs to get the default values for the elements
 		Block logBlock = (Block) ModElementType.BLOCK.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "Log", ModElementType.BLOCK), false).getElementFromGUI();
 		logBlock.name = readableName + " Log";
@@ -174,14 +196,14 @@ public class WoodPackMakerTool {
 		logBlock.hardness = 2.0 * factor;
 		logBlock.resistance = 2.0 * Math.pow(factor, 0.8);
 		logBlock.destroyTool = "axe";
-		logBlock.noteBlockInstrument = "BASS";
+		logBlock.noteBlockInstrument = "bass";
 		logBlock.ignitedByLava = true;
-		logBlock.flammability = (int) Math.round(5 * factor);
+		logBlock.flammability = 5;
+		logBlock.fireSpreadSpeed = 5;
 		logBlock.rotationMode = 5; // log rotation
 		logBlock.creativeTabs = List.of(new TabEntry(workspace, "BUILDING_BLOCKS"));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, logBlock);
+		addGeneratableElementToWorkspace(workspace, folder, logBlock);
 
-		// we use Block GUI to get default values for the block element (kinda hacky!)
 		Block woodBlock = (Block) ModElementType.BLOCK.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "Wood", ModElementType.BLOCK), false).getElementFromGUI();
 		woodBlock.name = readableName + " Wood";
@@ -192,14 +214,63 @@ public class WoodPackMakerTool {
 		woodBlock.hardness = 2.0 * factor;
 		woodBlock.resistance = 2.0 * Math.pow(factor, 0.8);
 		woodBlock.destroyTool = "axe";
-		woodBlock.noteBlockInstrument = "BASS";
+		woodBlock.noteBlockInstrument = "bass";
 		woodBlock.ignitedByLava = true;
-		woodBlock.flammability = (int) Math.round(5 * factor);
+		woodBlock.flammability = 5;
+		woodBlock.fireSpreadSpeed = 5;
 		woodBlock.rotationMode = 5; // log rotation
 		woodBlock.creativeTabs = List.of(new TabEntry(workspace, "BUILDING_BLOCKS"));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, woodBlock);
+		addGeneratableElementToWorkspace(workspace, folder, woodBlock);
 
-		// we use Block GUI to get default values for the block element (kinda hacky!)
+		Block strippedLogBlock = (Block) ModElementType.BLOCK.getModElementGUI(mcreator,
+				new ModElement(workspace, "Stripped" + name + "Log", ModElementType.BLOCK), false).getElementFromGUI();
+		strippedLogBlock.name = "Stripped " + readableName + " Log";
+		strippedLogBlock.texture = new TextureHolder(workspace, strippedLogTopTextureName);
+		strippedLogBlock.textureTop = new TextureHolder(workspace, strippedLogTopTextureName);
+		strippedLogBlock.textureBack = new TextureHolder(workspace, strippedLogSideTextureName);
+		strippedLogBlock.textureFront = new TextureHolder(workspace, strippedLogSideTextureName);
+		strippedLogBlock.textureLeft = new TextureHolder(workspace, strippedLogSideTextureName);
+		strippedLogBlock.textureRight = new TextureHolder(workspace, strippedLogSideTextureName);
+		strippedLogBlock.renderType = 10; // normal
+		strippedLogBlock.customModelName = "Normal";
+		strippedLogBlock.soundOnStep = new StepSound(workspace, "WOOD");
+		strippedLogBlock.hardness = 2.0 * factor;
+		strippedLogBlock.resistance = 2.0 * Math.pow(factor, 0.8);
+		strippedLogBlock.destroyTool = "axe";
+		strippedLogBlock.noteBlockInstrument = "bass";
+		strippedLogBlock.ignitedByLava = true;
+		strippedLogBlock.flammability = 5;
+		strippedLogBlock.fireSpreadSpeed = 5;
+		strippedLogBlock.rotationMode = 5; // log rotation
+		strippedLogBlock.creativeTabs = List.of(new TabEntry(workspace, "BUILDING_BLOCKS"));
+		addGeneratableElementToWorkspace(workspace, folder, strippedLogBlock);
+
+		Block strippedWoodBlock = (Block) ModElementType.BLOCK.getModElementGUI(mcreator,
+				new ModElement(workspace, "Stripped" + name + "Wood", ModElementType.BLOCK), false).getElementFromGUI();
+		strippedWoodBlock.name = "Stripped " + readableName + " Wood";
+		strippedWoodBlock.texture = new TextureHolder(workspace, strippedLogSideTextureName);
+		strippedWoodBlock.renderType = 11; // single texture
+		strippedWoodBlock.customModelName = "Single texture";
+		strippedWoodBlock.soundOnStep = new StepSound(workspace, "WOOD");
+		strippedWoodBlock.hardness = 2.0 * factor;
+		strippedWoodBlock.resistance = 2.0 * Math.pow(factor, 0.8);
+		strippedWoodBlock.destroyTool = "axe";
+		strippedWoodBlock.noteBlockInstrument = "bass";
+		strippedWoodBlock.ignitedByLava = true;
+		strippedWoodBlock.flammability = 5;
+		strippedWoodBlock.fireSpreadSpeed = 5;
+		strippedWoodBlock.rotationMode = 5; // log rotation
+		strippedWoodBlock.creativeTabs = List.of(new TabEntry(workspace, "BUILDING_BLOCKS"));
+		addGeneratableElementToWorkspace(workspace, folder, strippedWoodBlock);
+
+		// we update stripping results of log blocks *after* we add the stripped variants to the workspace
+		logBlock.strippingResult = new MItemBlock(workspace, "CUSTOM:Stripped" + name + "Log");
+		woodBlock.strippingResult = new MItemBlock(workspace, "CUSTOM:Stripped" + name + "Wood");
+		workspace.getGenerator().generateElement(logBlock);
+		workspace.getModElementManager().storeModElement(logBlock);
+		workspace.getGenerator().generateElement(woodBlock);
+		workspace.getModElementManager().storeModElement(woodBlock);
+
 		Block planksBlock = (Block) ModElementType.BLOCK.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "Planks", ModElementType.BLOCK), false).getElementFromGUI();
 		planksBlock.name = readableName + " Planks";
@@ -210,28 +281,30 @@ public class WoodPackMakerTool {
 		planksBlock.hardness = 2.0 * factor;
 		planksBlock.resistance = 3.0 * Math.pow(factor, 0.8);
 		planksBlock.destroyTool = "axe";
-		planksBlock.noteBlockInstrument = "BASS";
+		planksBlock.noteBlockInstrument = "bass";
 		planksBlock.ignitedByLava = true;
-		planksBlock.flammability = (int) Math.round(5 * factor);
+		planksBlock.flammability = 20;
+		planksBlock.fireSpreadSpeed = 5;
 		planksBlock.creativeTabs = List.of(new TabEntry(workspace, "BUILDING_BLOCKS"));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, planksBlock);
+		addGeneratableElementToWorkspace(workspace, folder, planksBlock);
 
-		// we use Block GUI to get default values for the block element (kinda hacky!)
 		Block leavesBlock = (Block) ModElementType.BLOCK.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "Leaves", ModElementType.BLOCK), false).getElementFromGUI();
 		leavesBlock.name = readableName + " Leaves";
 		leavesBlock.blockBase = "Leaves";
+		leavesBlock.hasTransparency = true;
 		leavesBlock.texture = new TextureHolder(workspace, leavesTextureName);
 		leavesBlock.soundOnStep = new StepSound(workspace, "PLANT");
 		leavesBlock.hardness = 0.2 * factor;
 		leavesBlock.resistance = 0.2 * factor;
 		leavesBlock.ignitedByLava = true;
-		leavesBlock.flammability = (int) Math.round(30 * factor);
+		leavesBlock.flammability = 60;
+		leavesBlock.fireSpreadSpeed = 30;
 		leavesBlock.lightOpacity = 1;
 		leavesBlock.creativeTabs = List.of(new TabEntry(workspace, "DECORATIONS"));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, leavesBlock);
+		leavesBlock.reactionToPushing = "DESTROY";
+		addGeneratableElementToWorkspace(workspace, folder, leavesBlock);
 
-		// we use Block GUI to get default values for the block element (kinda hacky!)
 		Block stairsBlock = (Block) ModElementType.BLOCK.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "Stairs", ModElementType.BLOCK), false).getElementFromGUI();
 		stairsBlock.name = readableName + " Stairs";
@@ -240,16 +313,17 @@ public class WoodPackMakerTool {
 		stairsBlock.textureTop = new TextureHolder(workspace, planksTextureName);
 		stairsBlock.textureFront = new TextureHolder(workspace, planksTextureName);
 		stairsBlock.soundOnStep = new StepSound(workspace, "WOOD");
-		stairsBlock.hardness = 3 * factor;
-		stairsBlock.resistance = 2 * factor;
-		stairsBlock.noteBlockInstrument = "BASS";
+		stairsBlock.hardness = 2 * factor;
+		stairsBlock.resistance = 3 * factor;
+		stairsBlock.destroyTool = "axe";
+		stairsBlock.noteBlockInstrument = "bass";
 		stairsBlock.ignitedByLava = true;
-		stairsBlock.flammability = (int) Math.round(5 * factor);
+		stairsBlock.flammability = 20;
+		stairsBlock.fireSpreadSpeed = 5;
 		stairsBlock.lightOpacity = 0;
 		stairsBlock.creativeTabs = List.of(new TabEntry(workspace, "BUILDING_BLOCKS"));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, stairsBlock);
+		addGeneratableElementToWorkspace(workspace, folder, stairsBlock);
 
-		// we use Block GUI to get default values for the block element (kinda hacky!)
 		Block slabBlock = (Block) ModElementType.BLOCK.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "Slab", ModElementType.BLOCK), false).getElementFromGUI();
 		slabBlock.name = readableName + " Slab";
@@ -260,14 +334,15 @@ public class WoodPackMakerTool {
 		slabBlock.soundOnStep = new StepSound(workspace, "WOOD");
 		slabBlock.hardness = 2 * factor;
 		slabBlock.resistance = 3 * factor;
-		slabBlock.noteBlockInstrument = "BASS";
+		slabBlock.destroyTool = "axe";
+		slabBlock.noteBlockInstrument = "bass";
 		slabBlock.ignitedByLava = true;
-		slabBlock.flammability = (int) Math.round(5 * factor);
+		slabBlock.flammability = 20;
+		slabBlock.fireSpreadSpeed = 5;
 		slabBlock.lightOpacity = 0;
 		slabBlock.creativeTabs = List.of(new TabEntry(workspace, "BUILDING_BLOCKS"));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, slabBlock);
+		addGeneratableElementToWorkspace(workspace, folder, slabBlock);
 
-		// we use Block GUI to get default values for the block element (kinda hacky!)
 		Block fenceBlock = (Block) ModElementType.BLOCK.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "Fence", ModElementType.BLOCK), false).getElementFromGUI();
 		fenceBlock.name = readableName + " Fence";
@@ -276,14 +351,15 @@ public class WoodPackMakerTool {
 		fenceBlock.soundOnStep = new StepSound(workspace, "WOOD");
 		fenceBlock.hardness = 2 * factor;
 		fenceBlock.resistance = 3 * factor;
-		fenceBlock.noteBlockInstrument = "BASS";
+		fenceBlock.destroyTool = "axe";
+		fenceBlock.noteBlockInstrument = "bass";
 		fenceBlock.ignitedByLava = true;
-		fenceBlock.flammability = (int) Math.round(5 * factor);
+		fenceBlock.flammability = 20;
+		fenceBlock.fireSpreadSpeed = 5;
 		fenceBlock.lightOpacity = 0;
 		fenceBlock.creativeTabs = List.of(new TabEntry(workspace, "BUILDING_BLOCKS"));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, fenceBlock);
+		addGeneratableElementToWorkspace(workspace, folder, fenceBlock);
 
-		// we use Block GUI to get default values for the block element (kinda hacky!)
 		Block fenceGateBlock = (Block) ModElementType.BLOCK.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "FenceGate", ModElementType.BLOCK), false).getElementFromGUI();
 		fenceGateBlock.name = readableName + " Fence Gate";
@@ -292,63 +368,101 @@ public class WoodPackMakerTool {
 		fenceGateBlock.soundOnStep = new StepSound(workspace, "WOOD");
 		fenceGateBlock.hardness = 2 * factor;
 		fenceGateBlock.resistance = 3 * factor;
-		fenceGateBlock.noteBlockInstrument = "BASS";
+		fenceGateBlock.destroyTool = "axe";
+		fenceGateBlock.noteBlockInstrument = "bass";
 		fenceGateBlock.ignitedByLava = true;
-		fenceGateBlock.flammability = (int) Math.round(5 * factor);
+		fenceGateBlock.flammability = 20;
+		fenceGateBlock.fireSpreadSpeed = 5;
 		fenceGateBlock.lightOpacity = 0;
 		fenceGateBlock.creativeTabs = List.of(new TabEntry(workspace, "BUILDING_BLOCKS"));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, fenceGateBlock);
+		addGeneratableElementToWorkspace(workspace, folder, fenceGateBlock);
 
-		// we use Block GUI to get default values for the block element (kinda hacky!)
+		Block doorBlock = (Block) ModElementType.BLOCK.getModElementGUI(mcreator,
+				new ModElement(workspace, name + "Door", ModElementType.BLOCK), false).getElementFromGUI();
+		doorBlock.name = readableName + " Door";
+		doorBlock.blockBase = "Door";
+		doorBlock.texture = new TextureHolder(workspace, doorBottomTextureName);
+		doorBlock.textureTop = new TextureHolder(workspace, doorTopTextureName);
+		doorBlock.itemTexture = new TextureHolder(workspace, doorItemTextureName);
+		doorBlock.hasTransparency = true;
+		doorBlock.transparencyType = "CUTOUT";
+		doorBlock.soundOnStep = new StepSound(workspace, "WOOD");
+		doorBlock.hardness = 3 * factor;
+		doorBlock.resistance = 3 * factor;
+		doorBlock.destroyTool = "axe";
+		doorBlock.noteBlockInstrument = "bass";
+		doorBlock.ignitedByLava = true;
+		doorBlock.lightOpacity = 0;
+		doorBlock.creativeTabs = List.of(new TabEntry(workspace, "BUILDING_BLOCKS"));
+		addGeneratableElementToWorkspace(workspace, folder, doorBlock);
+
+		Block trapdoorBlock = (Block) ModElementType.BLOCK.getModElementGUI(mcreator,
+				new ModElement(workspace, name + "Trapdoor", ModElementType.BLOCK), false).getElementFromGUI();
+		trapdoorBlock.name = readableName + " Trapdoor";
+		trapdoorBlock.blockBase = "TrapDoor";
+		trapdoorBlock.texture = new TextureHolder(workspace, trapdoorTextureName);
+		trapdoorBlock.hasTransparency = true;
+		trapdoorBlock.transparencyType = "CUTOUT";
+		trapdoorBlock.soundOnStep = new StepSound(workspace, "WOOD");
+		trapdoorBlock.hardness = 3 * factor;
+		trapdoorBlock.resistance = 3 * factor;
+		trapdoorBlock.destroyTool = "axe";
+		trapdoorBlock.noteBlockInstrument = "bass";
+		trapdoorBlock.ignitedByLava = true;
+		trapdoorBlock.lightOpacity = 0;
+		trapdoorBlock.creativeTabs = List.of(new TabEntry(workspace, "BUILDING_BLOCKS"));
+		addGeneratableElementToWorkspace(workspace, folder, trapdoorBlock);
+
 		Block pressurePlateBlock = (Block) ModElementType.BLOCK.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "PressurePlate", ModElementType.BLOCK), false).getElementFromGUI();
 		pressurePlateBlock.name = readableName + " Pressure Plate";
 		pressurePlateBlock.blockBase = "PressurePlate";
 		pressurePlateBlock.texture = new TextureHolder(workspace, planksTextureName);
 		pressurePlateBlock.soundOnStep = new StepSound(workspace, "WOOD");
-		pressurePlateBlock.hardness = 2 * factor;
-		pressurePlateBlock.resistance = 3 * factor;
-		pressurePlateBlock.noteBlockInstrument = "BASS";
+		pressurePlateBlock.hardness = 0.5 * factor;
+		pressurePlateBlock.resistance = 0.5 * factor;
+		pressurePlateBlock.destroyTool = "axe";
+		pressurePlateBlock.noteBlockInstrument = "bass";
 		pressurePlateBlock.ignitedByLava = true;
-		pressurePlateBlock.flammability = (int) Math.round(5 * factor);
 		pressurePlateBlock.lightOpacity = 0;
 		pressurePlateBlock.creativeTabs = List.of(new TabEntry(workspace, "BUILDING_BLOCKS"));
 		pressurePlateBlock.isNotColidable = true;
 		pressurePlateBlock.reactionToPushing = "DESTROY";
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, pressurePlateBlock);
+		addGeneratableElementToWorkspace(workspace, folder, pressurePlateBlock);
 
-		// we use Block GUI to get default values for the block element (kinda hacky!)
 		Block buttonBlock = (Block) ModElementType.BLOCK.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "Button", ModElementType.BLOCK), false).getElementFromGUI();
 		buttonBlock.name = readableName + " Button";
 		buttonBlock.blockBase = "Button";
 		buttonBlock.texture = new TextureHolder(workspace, planksTextureName);
 		buttonBlock.soundOnStep = new StepSound(workspace, "WOOD");
-		buttonBlock.hardness = 2 * factor;
-		buttonBlock.resistance = 3 * factor;
+		buttonBlock.hardness = 0.5 * factor;
+		buttonBlock.resistance = 0.5 * factor;
+		buttonBlock.destroyTool = "axe";
 		buttonBlock.lightOpacity = 0;
-		buttonBlock.flammability = (int) Math.round(5 * factor);
 		buttonBlock.creativeTabs = List.of(new TabEntry(workspace, "BUILDING_BLOCKS"));
 		buttonBlock.isNotColidable = true;
 		buttonBlock.reactionToPushing = "DESTROY";
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, buttonBlock);
+		addGeneratableElementToWorkspace(workspace, folder, buttonBlock);
 
 		// Tags
 		String planksEntry = "CUSTOM:" + name + "Planks";
 		String logEntry = "CUSTOM:" + name + "Log";
 		String woodEntry = "CUSTOM:" + name + "Wood";
-		PackMakerToolUtils.addTagEntries(workspace, TagType.BLOCKS, "mod:" + registryName + "_logs", logEntry,
-				woodEntry);
-		PackMakerToolUtils.addTagEntries(workspace, TagType.BLOCKS, "minecraft:logs_that_burn",
+		String strippedLogEntry = "CUSTOM:Stripped" + name + "Log";
+		String strippedWoodEntry = "CUSTOM:Stripped" + name + "Wood";
+		addTagEntries(workspace, TagType.BLOCKS, "mod:" + registryName + "_logs", logEntry,
+				woodEntry, strippedLogEntry, strippedWoodEntry);
+		addTagEntries(workspace, TagType.BLOCKS, "minecraft:logs_that_burn",
 				"TAG:mod:" + registryName + "_logs");
-		PackMakerToolUtils.addTagEntries(workspace, TagType.BLOCKS, "minecraft:planks", planksEntry);
-		PackMakerToolUtils.addTagEntries(workspace, TagType.ITEMS, "mod:" + registryName + "_logs", logEntry,
-				woodEntry);
-		PackMakerToolUtils.addTagEntries(workspace, TagType.ITEMS, "minecraft:logs_that_burn",
+		addTagEntries(workspace, TagType.BLOCKS, "minecraft:planks", planksEntry);
+		addTagEntries(workspace, TagType.ITEMS, "mod:" + registryName + "_logs", logEntry, woodEntry,
+				strippedLogEntry, strippedWoodEntry);
+		addTagEntries(workspace, TagType.ITEMS, "minecraft:logs_that_burn",
 				"TAG:mod:" + registryName + "_logs");
-		PackMakerToolUtils.addTagEntries(workspace, TagType.ITEMS, "minecraft:planks", planksEntry);
+		addTagEntries(workspace, TagType.ITEMS, "minecraft:planks", planksEntry);
 
-		//Recipes
+		// Recipes
 		Recipe woodRecipe = (Recipe) ModElementType.RECIPE.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "WoodRecipe", ModElementType.RECIPE), false).getElementFromGUI();
 		woodRecipe.craftingBookCategory = "BUILDING";
@@ -360,7 +474,21 @@ public class WoodPackMakerTool {
 		woodRecipe.recipeReturnStack = new MItemBlock(workspace, woodEntry);
 		woodRecipe.recipeRetstackSize = 3;
 		woodRecipe.unlockingItems.add(new MItemBlock(workspace, logEntry));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, woodRecipe);
+		addGeneratableElementToWorkspace(workspace, folder, woodRecipe);
+
+		Recipe strippedWoodRecipe = (Recipe) ModElementType.RECIPE.getModElementGUI(mcreator,
+						new ModElement(workspace, "Stripped" + name + "WoodRecipe", ModElementType.RECIPE), false)
+				.getElementFromGUI();
+		strippedWoodRecipe.craftingBookCategory = "BUILDING";
+		strippedWoodRecipe.group = "bark";
+		strippedWoodRecipe.recipeSlots[0] = new MItemBlock(workspace, strippedLogEntry);
+		strippedWoodRecipe.recipeSlots[1] = new MItemBlock(workspace, strippedLogEntry);
+		strippedWoodRecipe.recipeSlots[3] = new MItemBlock(workspace, strippedLogEntry);
+		strippedWoodRecipe.recipeSlots[4] = new MItemBlock(workspace, strippedLogEntry);
+		strippedWoodRecipe.recipeReturnStack = new MItemBlock(workspace, strippedWoodEntry);
+		strippedWoodRecipe.recipeRetstackSize = 3;
+		strippedWoodRecipe.unlockingItems.add(new MItemBlock(workspace, strippedLogEntry));
+		addGeneratableElementToWorkspace(workspace, folder, strippedWoodRecipe);
 
 		Recipe planksLogRecipe = (Recipe) ModElementType.RECIPE.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "PlanksRecipe", ModElementType.RECIPE), false).getElementFromGUI();
@@ -373,7 +501,7 @@ public class WoodPackMakerTool {
 		planksLogRecipe.recipeRetstackSize = 4;
 		planksLogRecipe.unlockingItems.add(new MItemBlock(workspace,
 				"TAG:" + workspace.getWorkspaceSettings().getModID() + ":" + registryName + "_logs"));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, planksLogRecipe);
+		addGeneratableElementToWorkspace(workspace, folder, planksLogRecipe);
 
 		Recipe stairsRecipe = (Recipe) ModElementType.RECIPE.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "StairsRecipe", ModElementType.RECIPE), false).getElementFromGUI();
@@ -388,7 +516,7 @@ public class WoodPackMakerTool {
 		stairsRecipe.recipeReturnStack = new MItemBlock(workspace, "CUSTOM:" + name + "Stairs");
 		stairsRecipe.recipeRetstackSize = 4;
 		stairsRecipe.unlockingItems.add(new MItemBlock(workspace, planksEntry));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, stairsRecipe);
+		addGeneratableElementToWorkspace(workspace, folder, stairsRecipe);
 
 		Recipe slabRecipe = (Recipe) ModElementType.RECIPE.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "SlabRecipe", ModElementType.RECIPE), false).getElementFromGUI();
@@ -400,7 +528,7 @@ public class WoodPackMakerTool {
 		slabRecipe.recipeReturnStack = new MItemBlock(workspace, "CUSTOM:" + name + "Slab");
 		slabRecipe.recipeRetstackSize = 6;
 		slabRecipe.unlockingItems.add(new MItemBlock(workspace, planksEntry));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, slabRecipe);
+		addGeneratableElementToWorkspace(workspace, folder, slabRecipe);
 
 		Recipe fenceRecipe = (Recipe) ModElementType.RECIPE.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "FenceRecipe", ModElementType.RECIPE), false).getElementFromGUI();
@@ -414,7 +542,7 @@ public class WoodPackMakerTool {
 		fenceRecipe.recipeReturnStack = new MItemBlock(workspace, "CUSTOM:" + name + "Fence");
 		fenceRecipe.recipeRetstackSize = 3;
 		fenceRecipe.unlockingItems.add(new MItemBlock(workspace, planksEntry));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, fenceRecipe);
+		addGeneratableElementToWorkspace(workspace, folder, fenceRecipe);
 
 		Recipe fenceGateRecipe = (Recipe) ModElementType.RECIPE.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "FenceGateRecipe", ModElementType.RECIPE), false).getElementFromGUI();
@@ -429,7 +557,37 @@ public class WoodPackMakerTool {
 		fenceGateRecipe.recipeReturnStack = new MItemBlock(workspace, "CUSTOM:" + name + "FenceGate");
 		fenceGateRecipe.recipeRetstackSize = 1;
 		fenceGateRecipe.unlockingItems.add(new MItemBlock(workspace, planksEntry));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, fenceGateRecipe);
+		addGeneratableElementToWorkspace(workspace, folder, fenceGateRecipe);
+
+		Recipe doorRecipe = (Recipe) ModElementType.RECIPE.getModElementGUI(mcreator,
+				new ModElement(workspace, name + "DoorRecipe", ModElementType.RECIPE), false).getElementFromGUI();
+		doorRecipe.craftingBookCategory = "REDSTONE";
+		doorRecipe.group = "wooden_door";
+		doorRecipe.recipeSlots[0] = new MItemBlock(workspace, planksEntry);
+		doorRecipe.recipeSlots[1] = new MItemBlock(workspace, planksEntry);
+		doorRecipe.recipeSlots[3] = new MItemBlock(workspace, planksEntry);
+		doorRecipe.recipeSlots[4] = new MItemBlock(workspace, planksEntry);
+		doorRecipe.recipeSlots[6] = new MItemBlock(workspace, planksEntry);
+		doorRecipe.recipeSlots[7] = new MItemBlock(workspace, planksEntry);
+		doorRecipe.recipeReturnStack = new MItemBlock(workspace, "CUSTOM:" + name + "Door");
+		doorRecipe.recipeRetstackSize = 3;
+		doorRecipe.unlockingItems.add(new MItemBlock(workspace, planksEntry));
+		addGeneratableElementToWorkspace(workspace, folder, doorRecipe);
+
+		Recipe trapdoorRecipe = (Recipe) ModElementType.RECIPE.getModElementGUI(mcreator,
+				new ModElement(workspace, name + "TrapdoorRecipe", ModElementType.RECIPE), false).getElementFromGUI();
+		trapdoorRecipe.craftingBookCategory = "REDSTONE";
+		trapdoorRecipe.group = "wooden_trapdoor";
+		trapdoorRecipe.recipeSlots[0] = new MItemBlock(workspace, planksEntry);
+		trapdoorRecipe.recipeSlots[1] = new MItemBlock(workspace, planksEntry);
+		trapdoorRecipe.recipeSlots[2] = new MItemBlock(workspace, planksEntry);
+		trapdoorRecipe.recipeSlots[3] = new MItemBlock(workspace, planksEntry);
+		trapdoorRecipe.recipeSlots[4] = new MItemBlock(workspace, planksEntry);
+		trapdoorRecipe.recipeSlots[5] = new MItemBlock(workspace, planksEntry);
+		trapdoorRecipe.recipeReturnStack = new MItemBlock(workspace, "CUSTOM:" + name + "Trapdoor");
+		trapdoorRecipe.recipeRetstackSize = 2;
+		trapdoorRecipe.unlockingItems.add(new MItemBlock(workspace, planksEntry));
+		addGeneratableElementToWorkspace(workspace, folder, trapdoorRecipe);
 
 		Recipe pressurePlateRecipe = (Recipe) ModElementType.RECIPE.getModElementGUI(mcreator,
 						new ModElement(workspace, name + "PressurePlateRecipe", ModElementType.RECIPE), false)
@@ -441,7 +599,7 @@ public class WoodPackMakerTool {
 		pressurePlateRecipe.recipeReturnStack = new MItemBlock(workspace, "CUSTOM:" + name + "PressurePlate");
 		pressurePlateRecipe.recipeRetstackSize = 1;
 		pressurePlateRecipe.unlockingItems.add(new MItemBlock(workspace, planksEntry));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, pressurePlateRecipe);
+		addGeneratableElementToWorkspace(workspace, folder, pressurePlateRecipe);
 
 		Recipe buttonRecipe = (Recipe) ModElementType.RECIPE.getModElementGUI(mcreator,
 				new ModElement(workspace, name + "ButtonRecipe", ModElementType.RECIPE), false).getElementFromGUI();
@@ -452,18 +610,21 @@ public class WoodPackMakerTool {
 		buttonRecipe.recipeReturnStack = new MItemBlock(workspace, "CUSTOM:" + name + "Button");
 		buttonRecipe.recipeRetstackSize = 1;
 		buttonRecipe.unlockingItems.add(new MItemBlock(workspace, planksEntry));
-		PackMakerToolUtils.addGeneratableElementToWorkspace(workspace, folder, buttonRecipe);
+		addGeneratableElementToWorkspace(workspace, folder, buttonRecipe);
+	}
+
+	public static boolean isSupported(GeneratorConfiguration gc) {
+		return gc.getGeneratorStats().getModElementTypeCoverageInfo().get(ModElementType.RECIPE)
+				!= GeneratorStats.CoverageStatus.NONE
+				&& gc.getGeneratorStats().getModElementTypeCoverageInfo().get(ModElementType.BLOCK)
+				!= GeneratorStats.CoverageStatus.NONE;
 	}
 
 	public static BasicAction getAction(ActionRegistry actionRegistry) {
 		return new BasicAction(actionRegistry, L10N.t("action.pack_tools.wood"),
-				e -> open(actionRegistry.getMCreator())) {
+				e -> new WoodPackMakerTool(actionRegistry.getMCreator())) {
 			@Override public boolean isEnabled() {
-				GeneratorConfiguration gc = actionRegistry.getMCreator().getGeneratorConfiguration();
-				return gc.getGeneratorStats().getModElementTypeCoverageInfo().get(ModElementType.RECIPE)
-						!= GeneratorStats.CoverageStatus.NONE
-						&& gc.getGeneratorStats().getModElementTypeCoverageInfo().get(ModElementType.BLOCK)
-						!= GeneratorStats.CoverageStatus.NONE;
+				return isSupported(actionRegistry.getMCreator().getGeneratorConfiguration());
 			}
 		}.setIcon(UIRES.get("16px.woodpack"));
 	}

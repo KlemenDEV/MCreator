@@ -188,7 +188,7 @@ Blockly.Extensions.registerMutator('ore_feature_mutator', simpleRepeatingInputMi
         function (thisBlock, inputName, index) {
             thisBlock.appendValueInput(inputName + index).setCheck('OreTarget').setAlign(Blockly.ALIGN_RIGHT)
                 .appendField(javabridge.t(
-                    index == 0 ? 'blockly.block.ore_mutator.try' : 'blockly.block.ore_mutator.else_try'));
+                    index === 0 ? 'blockly.block.ore_mutator.try' : 'blockly.block.ore_mutator.else_try'));
         }),
     undefined, ['ore_mutator_input']);
 
@@ -256,7 +256,7 @@ Blockly.Extensions.registerMutator('disk_feature_mutator', simpleRepeatingInputM
         function (thisBlock, inputName, index) {
             thisBlock.appendValueInput(inputName + index).setCheck('DiskRule').setAlign(Blockly.ALIGN_RIGHT)
                 .appendField(javabridge.t(
-                    index == 0 ? 'blockly.block.feature_disk_mutator.try' : 'blockly.block.feature_disk_mutator.else_try'));
+                    index === 0 ? 'blockly.block.feature_disk_mutator.try' : 'blockly.block.feature_disk_mutator.else_try'));
         }),
     undefined, ['feature_disk_mutator_input']);
 
@@ -267,7 +267,7 @@ Blockly.Extensions.registerMutator('random_feature_selector_mutator', simpleRepe
             thisBlock.appendValueInput(inputName + index).setCheck(['Feature', 'PlacedFeature'])
                 .setAlign(Blockly.ALIGN_RIGHT)
                 .appendField(javabridge.t(
-                    index == 0 ? 'blockly.block.feature_random_selector.with_chance' : 'blockly.block.feature_random_selector.else_with_chance'
+                    index === 0 ? 'blockly.block.feature_random_selector.with_chance' : 'blockly.block.feature_random_selector.else_with_chance'
                 ))
                 .appendField(new Blockly.FieldNumber(0.5, 0, 1), 'chance' + index)
                 .appendField(javabridge.t('blockly.block.feature_random_selector.select_feature'))
@@ -287,3 +287,29 @@ Blockly.Extensions.registerMutator('fixed_placement_mutator', simpleRepeatingInp
                 .appendField(new Blockly.FieldNumber(0, null, null, 1), 'z' + index)
         }, false, ['x', 'y', 'z']),
     undefined, ['fixed_placement_mutator_input']);
+
+// Mutators for advancement triggers
+Blockly.Extensions.registerMutator('player_effect_changed_mutator', simpleRepeatingInputMixin(
+        'player_effect_changed_mutator_container', 'player_effect_changed_mutator_input', 'effect',
+        function (thisBlock, inputName, index) {
+            thisBlock.appendValueInput(inputName + index).setCheck('Effect').setAlign(Blockly.Input.Align.RIGHT)
+                .appendField(javabridge.t('blockly.block.' + thisBlock.type + '.input'));
+        }),
+    undefined, ['player_effect_changed_mutator_input']);
+
+Blockly.Extensions.registerMutator('item_enchanted_mutator', simpleRepeatingInputMixin(
+        'item_enchanted_mutator_container', 'item_enchanted_mutator_input', 'enchantment',
+        function (thisBlock, inputName, index) {
+            thisBlock.appendValueInput(inputName + index).setCheck('Enchantment').setAlign(Blockly.Input.Align.RIGHT)
+                .appendField(javabridge.t('blockly.block.' + thisBlock.type + '.input'));
+        }),
+    undefined, ['item_enchanted_mutator_input']);
+
+Blockly.Extensions.registerMutator('any_item_mutator', simpleRepeatingInputMixin(
+        'any_item_mutator_container', 'any_item_mutator_input', 'item',
+        function (thisBlock, inputName, index) {
+            thisBlock.appendDummyInput(inputName + index).setAlign(Blockly.Input.Align.RIGHT)
+                .appendField(javabridge.t('blockly.block.' + thisBlock.type + '.input'))
+                .appendField(new FieldMCItemSelector(), 'item' + index);
+        }, false, ['item']),
+    undefined, ['any_item_mutator_input']);

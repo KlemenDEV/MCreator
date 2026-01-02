@@ -32,7 +32,6 @@ import net.mcreator.ui.minecraft.TextureSelectionButton;
 import net.mcreator.ui.procedure.AbstractProcedureSelector;
 import net.mcreator.ui.procedure.NumberProcedureSelector;
 import net.mcreator.ui.procedure.ProcedureSelector;
-import net.mcreator.ui.validation.validators.TextureSelectionButtonValidator;
 import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.workspace.elements.ModElement;
 import net.mcreator.workspace.elements.VariableTypeLoader;
@@ -50,6 +49,7 @@ public class ParticleGUI extends ModElementGUI<Particle> {
 	private final JSpinner width = new JSpinner(new SpinnerNumberModel(0.2, 0, 4096, 0.1));
 	private final JSpinner height = new JSpinner(new SpinnerNumberModel(0.2, 0, 4096, 0.1));
 	private NumberProcedureSelector scale;
+	private final JCheckBox fixedScale = L10N.checkbox("elementgui.common.enable");
 	private final JSpinner gravity = new JSpinner(new SpinnerNumberModel(0, -100, 100, 0.1));
 	private final JSpinner speedFactor = new JSpinner(new SpinnerNumberModel(1, -100, 100, 0.1));
 	private final JSpinner maxAge = new JSpinner(new SpinnerNumberModel(7, 0, 100000, 1));
@@ -89,18 +89,20 @@ public class ParticleGUI extends ModElementGUI<Particle> {
 
 		canCollide.setSelected(true);
 
+		fixedScale.setOpaque(false);
 		canCollide.setOpaque(false);
 		alwaysShow.setOpaque(false);
 		animate.setOpaque(false);
 
-		texture = new TextureSelectionButton(new TypedTextureSelectorDialog(mcreator, TextureType.PARTICLE));
+		texture = new TextureSelectionButton(
+				new TypedTextureSelectorDialog(mcreator, TextureType.PARTICLE)).requireValue();
 		texture.setOpaque(false);
 
 		JComponent textureComponent = PanelUtils.totalCenterInPanel(ComponentUtils.squareAndBorder(
 				HelpUtils.wrapWithHelpButton(this.withEntry("particle/texture"), texture),
 				L10N.t("elementgui.common.texture")));
 
-		JPanel spo2 = new JPanel(new GridLayout(13, 2, 2, 2));
+		JPanel spo2 = new JPanel(new GridLayout(14, 2, 2, 2));
 		spo2.setOpaque(false);
 
 		spo2.add(HelpUtils.wrapWithHelpButton(this.withEntry("particle/animated_texture"),
@@ -122,6 +124,10 @@ public class ParticleGUI extends ModElementGUI<Particle> {
 		spo2.add(HelpUtils.wrapWithHelpButton(this.withEntry("particle/scale"),
 				L10N.label("elementgui.particle.visual_scale")));
 		spo2.add(scale);
+
+		spo2.add(HelpUtils.wrapWithHelpButton(this.withEntry("particle/fixed_scale"),
+				L10N.label("elementgui.particle.fixed_scale")));
+		spo2.add(fixedScale);
 
 		spo2.add(
 				HelpUtils.wrapWithHelpButton(this.withEntry("particle/width"), L10N.label("elementgui.particle.bbox")));
@@ -160,16 +166,17 @@ public class ParticleGUI extends ModElementGUI<Particle> {
 						PanelUtils.westAndCenterElement(new JEmptyBox(3, 3), additionalExpiryCondition), 5, 2), 15,
 				5)));
 
-		texture.setValidator(new TextureSelectionButtonValidator(texture));
-
 		addPage(L10N.t("elementgui.common.page_properties"), pane3).validate(texture);
 	}
 
 	@Override public void reloadDataLists() {
 		super.reloadDataLists();
 
-		additionalExpiryCondition.refreshListKeepSelected();
-		scale.refreshListKeepSelected();
+		AbstractProcedureSelector.ReloadContext context = AbstractProcedureSelector.ReloadContext.create(
+				mcreator.getWorkspace());
+
+		additionalExpiryCondition.refreshListKeepSelected(context);
+		scale.refreshListKeepSelected(context);
 	}
 
 	@Override public void openInEditingMode(Particle particle) {
@@ -177,6 +184,7 @@ public class ParticleGUI extends ModElementGUI<Particle> {
 		width.setValue(particle.width);
 		height.setValue(particle.height);
 		scale.setSelectedProcedure(particle.scale);
+		fixedScale.setSelected(particle.fixedScale);
 		gravity.setValue(particle.gravity);
 		speedFactor.setValue(particle.speedFactor);
 		frameDuration.setValue(particle.frameDuration);
@@ -198,6 +206,7 @@ public class ParticleGUI extends ModElementGUI<Particle> {
 		particle.width = (double) width.getValue();
 		particle.height = (double) height.getValue();
 		particle.scale = scale.getSelectedProcedure();
+		particle.fixedScale = fixedScale.isSelected();
 		particle.gravity = (double) gravity.getValue();
 		particle.speedFactor = (double) speedFactor.getValue();
 		particle.maxAge = (int) maxAge.getValue();

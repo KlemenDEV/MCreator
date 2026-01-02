@@ -43,6 +43,7 @@ import net.mcreator.ui.component.SearchableComboBox;
 import net.mcreator.ui.component.util.ComboBoxUtil;
 import net.mcreator.ui.component.util.ComponentUtils;
 import net.mcreator.ui.component.util.PanelUtils;
+import net.mcreator.ui.dialogs.TypedTextureSelectorDialog;
 import net.mcreator.ui.help.HelpUtils;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.laf.renderer.ModelComboBoxRenderer;
@@ -57,10 +58,10 @@ import net.mcreator.ui.procedure.NumberProcedureSelector;
 import net.mcreator.ui.procedure.ProcedureSelector;
 import net.mcreator.ui.validation.component.VTextField;
 import net.mcreator.ui.validation.validators.ItemListFieldSingleTagValidator;
-import net.mcreator.ui.validation.validators.TextFieldValidator;
 import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.util.ListUtils;
 import net.mcreator.util.StringUtils;
+import net.mcreator.util.TestUtil;
 import net.mcreator.workspace.elements.ModElement;
 import net.mcreator.workspace.elements.VariableTypeLoader;
 import net.mcreator.workspace.resources.Model;
@@ -103,7 +104,8 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 	private final SoundSelector stepSound = new SoundSelector(mcreator);
 	private final SoundSelector raidCelebrationSound = new SoundSelector(mcreator);
 
-	private final VTextField mobName = new VTextField();
+	private final VTextField mobName = new VTextField().requireValue("elementgui.common.error_entity_needs_name")
+			.enableRealtimeValidation();
 
 	private final JSpinner attackStrength = new JSpinner(new SpinnerNumberModel(3, 0, 10000, 1));
 	private final JSpinner movementSpeed = new JSpinner(new SpinnerNumberModel(0.3, 0, 50, 0.1));
@@ -151,6 +153,10 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 	private final JCheckBox flyingMob = L10N.checkbox("elementgui.living_entity.is_flying_mob");
 
 	private final JCheckBox hasSpawnEgg = new JCheckBox();
+	private final JColor spawnEggBaseColor = new JColor(mcreator, false, false).withColorTextColumns(5);
+	private final JColor spawnEggDotColor = new JColor(mcreator, false, false).withColorTextColumns(5);
+	private TextureSelectionButton spawnEggTexture;
+
 	private final TabListField creativeTabs = new TabListField(mcreator);
 
 	private final JComboBox<String> mobSpawningType = new JComboBox<>(
@@ -169,14 +175,11 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 	private final JSpinner inventoryStackSize = new JSpinner(new SpinnerNumberModel(99, 1, 1024, 1));
 
 	private MCItemHolder rangedAttackItem;
-
 	private final SearchableComboBox<String> rangedItemType = new SearchableComboBox<>();
 
 	private final JTextField mobLabel = new JTextField();
 
 	private final JCheckBox spawnInDungeons = L10N.checkbox("elementgui.living_entity.spawn_dungeons");
-	private final JColor spawnEggBaseColor = new JColor(mcreator, false, false);
-	private final JColor spawnEggDotColor = new JColor(mcreator, false, false);
 
 	private static final Model biped = new Model.BuiltInModel("Biped");
 	private static final Model chicken = new Model.BuiltInModel("Chicken");
@@ -286,7 +289,7 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 				</block></next></block></next></block></next></block></next></block></xml>""");
 	}
 
-	private synchronized void regenerateAITasks() {
+	@Override public synchronized List<BlocklyCompileNote> regenerateBlockAssemblies(boolean jsEventTriggeredChange) {
 		BlocklyBlockCodeGenerator blocklyBlockCodeGenerator = new BlocklyBlockCodeGenerator(externalBlocks,
 				mcreator.getGeneratorStats().getBlocklyBlocks(BlocklyEditorType.AI_TASK));
 
@@ -295,19 +298,22 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 			blocklyToJava = new BlocklyToJava(mcreator.getWorkspace(), this.modElement, BlocklyEditorType.AI_TASK,
 					blocklyPanel.getXML(), null, new ProceduralBlockCodeGenerator(blocklyBlockCodeGenerator));
 		} catch (TemplateGeneratorException e) {
-			return;
+			TestUtil.failIfTestingEnvironment();
+			return List.of(); // should not be possible to happen here
 		}
 
 		List<BlocklyCompileNote> compileNotesArrayList = blocklyToJava.getCompileNotes();
 
-		if (unmodifiableAIBases != null && unmodifiableAIBases.contains(aiBase.getSelectedItem()))
-			compileNotesArrayList = List.of(aiUnmodifiableCompileNote);
+		if (unmodifiableAIBases != null && unmodifiableAIBases.contains(aiBase.getSelectedItem())) {
+			compileNotesArrayList.clear();
+			compileNotesArrayList.add(aiUnmodifiableCompileNote);
+		}
 
-		List<BlocklyCompileNote> finalCompileNotesArrayList = compileNotesArrayList;
-		SwingUtilities.invokeLater(() -> {
-			compileNotesPanel.updateCompileNotes(finalCompileNotesArrayList);
-			blocklyChangedListeners.forEach(l -> l.blocklyChanged(blocklyPanel));
-		});
+		SwingUtilities.invokeLater(() -> compileNotesPanel.updateCompileNotes(compileNotesArrayList));
+
+		blocklyChangedListeners.forEach(l -> l.blocklyChanged(blocklyPanel, jsEventTriggeredChange));
+
+		return compileNotesArrayList;
 	}
 
 	@Override protected void initGUI() {
@@ -375,14 +381,15 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 				L10N.t("elementgui.living_entity.bounding_box_scale"), AbstractProcedureSelector.Side.BOTH,
 				new JSpinner(new SpinnerNumberModel(1, 0.01, 1024, 0.01)), 210,
 				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity"));
-		vibrationSensitivityRadius = new NumberProcedureSelector(this.withEntry("entity/vibration_sensitivity_radius"), mcreator,
-				L10N.t("elementgui.living_entity.vibration_sensitivity_radius"), AbstractProcedureSelector.Side.SERVER,
-				new JSpinner(new SpinnerNumberModel(7, 0, Integer.MAX_VALUE, 1)), 130, Dependency.fromString(
-				"x:number/y:number/z:number/world:world/entity:entity"));
-		canReceiveVibrationCondition = new ProcedureSelector(this.withEntry("entity/receive_vibration_condition"), mcreator,
-				L10N.t("elementgui.living_entity.receive_vibration_condition"), AbstractProcedureSelector.Side.SERVER, true,
-				VariableTypeLoader.BuiltInTypes.LOGIC, Dependency.fromString(
-				"x:number/y:number/z:number/world:world/entity:entity/sourceentity:entity/vibrationX:number/vibrationY:number/vibrationZ:number")).setDefaultName(
+		vibrationSensitivityRadius = new NumberProcedureSelector(this.withEntry("entity/vibration_sensitivity_radius"),
+				mcreator, L10N.t("elementgui.living_entity.vibration_sensitivity_radius"),
+				AbstractProcedureSelector.Side.SERVER, new JSpinner(new SpinnerNumberModel(7, 0, Integer.MAX_VALUE, 1)),
+				130, Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity"));
+		canReceiveVibrationCondition = new ProcedureSelector(this.withEntry("entity/receive_vibration_condition"),
+				mcreator, L10N.t("elementgui.living_entity.receive_vibration_condition"),
+				AbstractProcedureSelector.Side.SERVER, true, VariableTypeLoader.BuiltInTypes.LOGIC,
+				Dependency.fromString(
+						"x:number/y:number/z:number/world:world/entity:entity/sourceentity:entity/vibrationX:number/vibrationY:number/vibrationZ:number")).setDefaultName(
 				L10N.t("condition.common.true")).makeInline();
 		onReceivedVibration = new ProcedureSelector(this.withEntry("entity/on_received_vibration"), mcreator,
 				L10N.t("elementgui.living_entity.on_received_vibration"), AbstractProcedureSelector.Side.SERVER, true,
@@ -396,6 +403,9 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 		entityDataList = new JEntityDataList(mcreator, this);
 		guiBoundTo = new SingleModElementSelector(mcreator, ModElementType.GUI);
 		guiBoundTo.setDefaultText(L10N.t("elementgui.common.no_gui"));
+
+		spawnEggTexture = new TextureSelectionButton(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM), 32);
+		spawnEggTexture.setOpaque(false);
 
 		mobModelTexture = new TextureComboBox(mcreator, TextureType.ENTITY).requireValue(
 				"elementgui.living_entity.error_entity_model_needs_texture");
@@ -688,9 +698,12 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 
 		spo2.add(HelpUtils.wrapWithHelpButton(this.withEntry("entity/spawn_egg_options"),
 				L10N.label("elementgui.living_entity.spawn_egg_options")));
-		spo2.add(PanelUtils.westAndCenterElement(
-				PanelUtils.join(FlowLayout.LEFT, 0, 0, hasSpawnEgg, new JEmptyBox(2, 2), spawnEggBaseColor,
-						new JEmptyBox(2, 2), spawnEggDotColor), creativeTabs, 5, 0));
+		spo2.add(PanelUtils.westAndCenterElement(PanelUtils.totalCenterInPanel(
+						PanelUtils.join(FlowLayout.LEFT, 0, 0, hasSpawnEgg, new JEmptyBox(5, 2), spawnEggTexture,
+								new JEmptyBox(5, 2), spawnEggBaseColor, new JEmptyBox(2, 2), spawnEggDotColor)), creativeTabs,
+				5, 0));
+
+		hasSpawnEgg.addActionListener(e -> refreshEggProperties());
 
 		spo2.add(HelpUtils.wrapWithHelpButton(this.withEntry("entity/boss_entity"),
 				L10N.label("elementgui.living_entity.mob_boss")));
@@ -759,7 +772,7 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 		aiBase.setPreferredSize(new Dimension(250, 32));
 		aiBase.addActionListener(e -> {
 			if (editorReady)
-				regenerateAITasks();
+				regenerateBlockAssemblies(false);
 		});
 
 		JPanel aitopoveral = new JPanel(new BorderLayout(5, 0));
@@ -791,8 +804,9 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 		blocklyPanel.addTaskToRunAfterLoaded(() -> {
 			BlocklyLoader.INSTANCE.getBlockLoader(BlocklyEditorType.AI_TASK)
 					.loadBlocksAndCategoriesInPanel(blocklyPanel, ToolboxType.AI_BUILDER);
-			blocklyPanel.addChangeListener(
-					changeEvent -> new Thread(LivingEntityGUI.this::regenerateAITasks, "AITasksRegenerate").start());
+			blocklyPanel.addChangeListener(changeEvent -> new Thread(
+					() -> regenerateBlockAssemblies(changeEvent.getSource() instanceof BlocklyPanel),
+					"AITasksRegenerate").start());
 			if (!isEditingMode()) {
 				setDefaultAISet();
 			}
@@ -808,7 +822,7 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 				getFont(), Theme.current().getForegroundColor()));
 		BlocklyEditorToolbar blocklyEditorToolbar = new BlocklyEditorToolbar(mcreator, BlocklyEditorType.AI_TASK,
 				blocklyPanel);
-		blocklyEditorToolbar.setTemplateLibButtonWidth(157);
+		blocklyEditorToolbar.setTemplateLibButtonWidth(155);
 		bpb.add(PanelUtils.northAndCenterElement(blocklyEditorToolbar, blocklyPanel));
 		aipan.add("Center", bpb);
 		aipan.add("South", compileNotesPanel);
@@ -863,6 +877,8 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 				L10N.label("elementgui.living_entity.enable_mob_spawning")));
 		selp.add(spawnThisMob);
 
+		spawnThisMob.addActionListener(e -> refreshSpawnProperties());
+
 		selp.add(HelpUtils.wrapWithHelpButton(this.withEntry("entity/despawn_idle"),
 				L10N.label("elementgui.living_entity.despawn_idle")));
 		selp.add(doesDespawnWhenIdle);
@@ -910,6 +926,9 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 				L10N.label("elementgui.living_entity.bind_to_gui")));
 		props.add(guiBoundTo);
 
+		guiBoundTo.addEntrySelectedListener(e -> refreshGUIProperties());
+		refreshGUIProperties();
+
 		props.add(HelpUtils.wrapWithHelpButton(this.withEntry("entity/inventory_size"),
 				L10N.label("elementgui.living_entity.inventory_size")));
 		props.add(inventorySize);
@@ -953,10 +972,6 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 		vibrationPane.add("Center", PanelUtils.totalCenterInPanel(vibrationMerger));
 		vibrationPane.setOpaque(false);
 
-		mobName.setValidator(
-				new TextFieldValidator(mobName, L10N.t("elementgui.living_entity.error_entity_needs_name")));
-		mobName.enableRealtimeValidation();
-
 		pane1.setOpaque(false);
 
 		addPage(L10N.t("elementgui.living_entity.page_visual"), pane2).validate(mobModelTexture).validate(mobName);
@@ -970,7 +985,7 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 		addPage(L10N.t("elementgui.living_entity.page_vibration"), vibrationPane);
 		addPage(L10N.t("elementgui.common.page_triggers"), pane4);
 		addPage(L10N.t("elementgui.living_entity.page_ai_and_goals"), pane3).lazyValidate(
-				() -> new BlocklyAggregatedValidationResult(compileNotesPanel.getCompileNotes(),
+				BlocklyAggregatedValidationResult.blocklyValidator(this,
 						compileNote -> "Living entity AI builder: " + compileNote));
 		addPage(L10N.t("elementgui.living_entity.page_spawning"), pane5).validate(restrictionBiomes);
 
@@ -986,28 +1001,58 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 		editorReady = true;
 	}
 
+	private void refreshGUIProperties() {
+		boolean isGuiBoundToEmpty = !guiBoundTo.isEmpty();
+
+		inventorySize.setEnabled(isGuiBoundToEmpty);
+		inventoryStackSize.setEnabled(isGuiBoundToEmpty);
+	}
+
+	private void refreshSpawnProperties() {
+		boolean canSpawn = spawnThisMob.isSelected();
+
+		numberOfMobsPerGroup.setEnabled(canSpawn);
+		mobSpawningType.setEnabled(canSpawn);
+		restrictionBiomes.setEnabled(canSpawn);
+		spawningCondition.setEnabled(canSpawn);
+		spawningProbability.setEnabled(canSpawn);
+	}
+
+	private void refreshEggProperties() {
+		boolean isSelected = hasSpawnEgg.isSelected();
+
+		spawnEggBaseColor.setEnabled(isSelected);
+		spawnEggDotColor.setEnabled(isSelected);
+		spawnEggTexture.setEnabled(isSelected);
+		creativeTabs.setEnabled(isSelected);
+	}
+
 	@Override public void reloadDataLists() {
 		disableMobModelCheckBoxListener = true;
 
 		super.reloadDataLists();
-		onStruckByLightning.refreshListKeepSelected();
-		whenMobFalls.refreshListKeepSelected();
-		whenMobDies.refreshListKeepSelected();
-		whenMobIsHurt.refreshListKeepSelected();
-		onRightClickedOn.refreshListKeepSelected();
-		whenThisMobKillsAnother.refreshListKeepSelected();
-		onMobTickUpdate.refreshListKeepSelected();
-		onPlayerCollidesWith.refreshListKeepSelected();
-		onInitialSpawn.refreshListKeepSelected();
 
-		spawningCondition.refreshListKeepSelected();
-		transparentModelCondition.refreshListKeepSelected();
-		isShakingCondition.refreshListKeepSelected();
-		solidBoundingBox.refreshListKeepSelected();
-		breatheUnderwater.refreshListKeepSelected();
-		pushedByFluids.refreshListKeepSelected();
-		visualScale.refreshListKeepSelected();
-		boundingBoxScale.refreshListKeepSelected();
+		AbstractProcedureSelector.ReloadContext context = AbstractProcedureSelector.ReloadContext.create(
+				mcreator.getWorkspace());
+
+		onStruckByLightning.refreshListKeepSelected(context);
+		whenMobFalls.refreshListKeepSelected(context);
+		whenMobDies.refreshListKeepSelected(context);
+		whenMobIsHurt.refreshListKeepSelected(context);
+		onRightClickedOn.refreshListKeepSelected(context);
+		whenThisMobKillsAnother.refreshListKeepSelected(context);
+		onMobTickUpdate.refreshListKeepSelected(context);
+		onPlayerCollidesWith.refreshListKeepSelected(context);
+		onInitialSpawn.refreshListKeepSelected(context);
+
+		spawningCondition.refreshListKeepSelected(context);
+		transparentModelCondition.refreshListKeepSelected(context);
+		isShakingCondition.refreshListKeepSelected(context);
+		solidBoundingBox.refreshListKeepSelected(context);
+		breatheUnderwater.refreshListKeepSelected(context);
+		pushedByFluids.refreshListKeepSelected(context);
+		visualScale.refreshListKeepSelected(context);
+		boundingBoxScale.refreshListKeepSelected(context);
 
 		modelLayers.reloadDataLists();
 
@@ -1015,9 +1060,9 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 
 		mobModelTexture.reload();
 
-		vibrationSensitivityRadius.refreshListKeepSelected();
-		canReceiveVibrationCondition.refreshListKeepSelected();
-		onReceivedVibration.refreshListKeepSelected();
+		vibrationSensitivityRadius.refreshListKeepSelected(context);
+		canReceiveVibrationCondition.refreshListKeepSelected(context);
+		onReceivedVibration.refreshListKeepSelected(context);
 
 		ComboBoxUtil.updateComboBoxContents(mobModel, ListUtils.merge(Arrays.asList(builtinmobmodels),
 				Model.getModels(mcreator.getWorkspace()).stream()
@@ -1057,15 +1102,23 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 			tameable.setEnabled(false);
 		}
 
-		bossBarColor.setEnabled(isBoss.isSelected());
-		bossBarType.setEnabled(isBoss.isSelected());
+		boolean isBossSelected = isBoss.isSelected();
+
+		bossBarColor.setEnabled(isBossSelected);
+		bossBarType.setEnabled(isBossSelected);
 
 		rangedAttackItem.setEnabled("Default item".equals(rangedItemType.getSelectedItem()));
 
-		vibrationSensitivityRadius.setEnabled(sensitiveToVibration.isSelected());
-		vibrationalEvents.setEnabled(sensitiveToVibration.isSelected());
-		canReceiveVibrationCondition.setEnabled(sensitiveToVibration.isSelected());
-		onReceivedVibration.setEnabled(sensitiveToVibration.isSelected());
+		boolean isSensitiveToVibration = sensitiveToVibration.isSelected();
+
+		vibrationSensitivityRadius.setEnabled(isSensitiveToVibration);
+		vibrationalEvents.setEnabled(isSensitiveToVibration);
+		canReceiveVibrationCondition.setEnabled(isSensitiveToVibration);
+		onReceivedVibration.setEnabled(isSensitiveToVibration);
+
+		refreshEggProperties();
+		refreshSpawnProperties();
+		refreshGUIProperties();
 	}
 
 	@Override public void openInEditingMode(LivingEntity livingEntity) {
@@ -1081,8 +1134,10 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 		boundingBoxScale.setSelectedProcedure(livingEntity.boundingBoxScale);
 		mobSpawningType.setSelectedItem(livingEntity.mobSpawningType);
 		rangedItemType.setSelectedItem(livingEntity.rangedItemType);
+		hasSpawnEgg.setSelected(livingEntity.hasSpawnEgg);
 		spawnEggBaseColor.setColor(livingEntity.spawnEggBaseColor);
 		spawnEggDotColor.setColor(livingEntity.spawnEggDotColor);
+		spawnEggTexture.setTexture(livingEntity.spawnEggTexture);
 		mobLabel.setText(livingEntity.mobLabel);
 		onStruckByLightning.setSelectedProcedure(livingEntity.onStruckByLightning);
 		whenMobFalls.setSelectedProcedure(livingEntity.whenMobFalls);
@@ -1130,7 +1185,6 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 		raidCelebrationSound.setSound(livingEntity.raidCelebrationSound);
 		hasAI.setSelected(livingEntity.hasAI);
 		isBoss.setSelected(livingEntity.isBoss);
-		hasSpawnEgg.setSelected(livingEntity.hasSpawnEgg);
 		disableCollisions.setSelected(livingEntity.disableCollisions);
 		aiBase.setSelectedItem(livingEntity.aiBase);
 		spawningProbability.setValue(livingEntity.spawningProbability);
@@ -1197,14 +1251,15 @@ public class LivingEntityGUI extends ModElementGUI<LivingEntity> implements IBlo
 		livingEntity.mobName = mobName.getText();
 		livingEntity.mobLabel = mobLabel.getText();
 		livingEntity.mobModelTexture = mobModelTexture.getTextureName();
-		livingEntity.spawnEggBaseColor = spawnEggBaseColor.getColor();
 		livingEntity.transparentModelCondition = transparentModelCondition.getSelectedProcedure();
 		livingEntity.isShakingCondition = isShakingCondition.getSelectedProcedure();
 		livingEntity.solidBoundingBox = solidBoundingBox.getSelectedProcedure();
 		livingEntity.visualScale = visualScale.getSelectedProcedure();
 		livingEntity.boundingBoxScale = boundingBoxScale.getSelectedProcedure();
-		livingEntity.spawnEggDotColor = spawnEggDotColor.getColor();
 		livingEntity.hasSpawnEgg = hasSpawnEgg.isSelected();
+		livingEntity.spawnEggBaseColor = spawnEggBaseColor.getColor();
+		livingEntity.spawnEggDotColor = spawnEggDotColor.getColor();
+		livingEntity.spawnEggTexture = spawnEggTexture.getTextureHolder();
 		livingEntity.disableCollisions = disableCollisions.isSelected();
 		livingEntity.isBoss = isBoss.isSelected();
 		livingEntity.bossBarColor = (String) bossBarColor.getSelectedItem();

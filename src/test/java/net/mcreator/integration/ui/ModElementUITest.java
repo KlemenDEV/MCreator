@@ -91,9 +91,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 	private void testModElementLoading(Random random) throws Exception {
 		for (ModElementType<?> modElementType : TestWorkspaceDataProvider.getOrderedModElementTypesForTests(
-				mcreator.getGeneratorConfiguration())) {
+				mcreator.getGeneratorConfiguration(), true)) {
 			if (modElementType == ModElementType.CODE)
-				continue; // does not have regular handling so skip it
+				continue; // does not have regular handling, so skip it
 
 			List<GeneratableElement> generatableElements = TestWorkspaceDataProvider.getModElementExamplesFor(
 					mcreator.getWorkspace(), modElementType, true, random);
@@ -104,14 +104,12 @@ import static org.junit.jupiter.api.Assertions.*;
 			for (GeneratableElement generatableElementOrig : generatableElements) {
 				ModElement modElement = generatableElementOrig.getModElement();
 
-				GeneratableElement generatableElement;
-
 				// convert mod element to json
 				String exportedJSON = mcreator.getWorkspace().getModElementManager()
 						.generatableElementToJSON(generatableElementOrig);
 
 				// back to GeneratableElement
-				generatableElement = mcreator.getWorkspace().getModElementManager()
+				GeneratableElement generatableElement = mcreator.getWorkspace().getModElementManager()
 						.fromJSONtoGeneratableElement(exportedJSON, modElement);// from JSON to GeneratableElement
 
 				// Check if all workspace fields are not null after re-import

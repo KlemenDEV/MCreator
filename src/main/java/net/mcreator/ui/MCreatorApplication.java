@@ -62,6 +62,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
@@ -76,7 +77,7 @@ public final class MCreatorApplication {
 
 	private static boolean applicationStarted = false;
 
-	private final List<MCreator> openMCreators = new ArrayList<>();
+	private final List<MCreator> openMCreators = new CopyOnWriteArrayList<>();
 
 	private WorkspaceSelector workspaceSelector;
 	private DeviceInfo deviceInfo;
@@ -208,7 +209,7 @@ public final class MCreatorApplication {
 				workspaceSelector = new WorkspaceSelector(this, this::openWorkspaceInMCreator);
 
 				// Make sure splash screen is closed on the swing thread before we continue
-				splashScreen.setVisible(false);
+				splashScreen.dispose();
 			});
 
 			SwingUtilities.invokeLater(() -> {
@@ -376,7 +377,7 @@ public final class MCreatorApplication {
 
 		discordClient.close(); // close discord client
 
-		// we close all windows and exit fx platform
+		// we dispose all windows and exit fx platform
 		try {
 			LOG.debug("Stopping AWT and FX threads");
 			Arrays.stream(Window.getWindows()).forEach(Window::dispose);

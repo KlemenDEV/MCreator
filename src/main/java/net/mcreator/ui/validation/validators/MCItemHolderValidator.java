@@ -20,6 +20,7 @@ package net.mcreator.ui.validation.validators;
 
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.minecraft.MCItemHolder;
+import net.mcreator.ui.validation.ValidationResult;
 import net.mcreator.ui.validation.Validator;
 
 import javax.swing.*;
@@ -28,6 +29,7 @@ public class MCItemHolderValidator implements Validator {
 
 	private JToggleButton requirement;
 	private final MCItemHolder holder;
+	private String emptyMessage = L10N.t("validators.select_element");
 
 	private boolean acceptAir = true;
 
@@ -45,12 +47,16 @@ public class MCItemHolderValidator implements Validator {
 		return this;
 	}
 
+	public MCItemHolderValidator setEmptyMessage(String message) {
+		this.emptyMessage = message;
+		return this;
+	}
+
 	@Override public ValidationResult validate() {
 		if ((acceptAir ? holder.containsItemOrAir() : holder.containsItem()) || (requirement != null
 				&& !requirement.isSelected()))
-			return Validator.ValidationResult.PASSED;
+			return ValidationResult.PASSED;
 		else
-			return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
-					L10N.t("validators.select_element"));
+			return new ValidationResult(ValidationResult.Type.ERROR, emptyMessage);
 	}
 }

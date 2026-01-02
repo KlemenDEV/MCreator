@@ -96,7 +96,7 @@ import com.google.common.base.Suppliers;
 							Climate.Parameter.span(${biome.genHumidity.min}f, ${biome.genHumidity.max}f),
 							Climate.Parameter.span(${biome.genContinentalness.min}f, ${biome.genContinentalness.max}f),
 							Climate.Parameter.span(${biome.genErosion.min}f, ${biome.genErosion.max}f),
-							Climate.Parameter.span(0.2f, 0.9f),
+							Climate.Parameter.span(${biome.genDepth.min}f, ${biome.genDepth.max}f),
 							Climate.Parameter.span(${biome.genWeirdness.min}f, ${biome.genWeirdness.max}f),
 							0 <#-- offset -->
 						),
@@ -257,17 +257,21 @@ import com.google.common.base.Suppliers;
 	<#if spawn_nether?has_content || spawn_overworld_caves?has_content>
 	private static SurfaceRules.RuleSource anySurfaceRule(ResourceKey<Biome> biomeKey, BlockState groundBlock, BlockState undergroundBlock, BlockState underwaterBlock) {
 		return SurfaceRules.ifTrue(SurfaceRules.isBiome(biomeKey),
-			SurfaceRules.sequence(
-				SurfaceRules.ifTrue(SurfaceRules.stoneDepthCheck(0, false, 0, CaveSurface.FLOOR),
+			SurfaceRules.ifTrue(SurfaceRules.yBlockCheck(VerticalAnchor.aboveBottom(5), 0),
+				SurfaceRules.ifTrue(SurfaceRules.not(SurfaceRules.yBlockCheck(VerticalAnchor.belowTop(5), 0)),
 					SurfaceRules.sequence(
-						SurfaceRules.ifTrue(SurfaceRules.waterBlockCheck(-1, 0),
-							SurfaceRules.state(groundBlock)
+						SurfaceRules.ifTrue(SurfaceRules.stoneDepthCheck(0, false, 0, CaveSurface.FLOOR),
+							SurfaceRules.sequence(
+								SurfaceRules.ifTrue(SurfaceRules.waterBlockCheck(-1, 0),
+									SurfaceRules.state(groundBlock)
+								),
+								SurfaceRules.state(underwaterBlock)
+							)
 						),
-						SurfaceRules.state(underwaterBlock)
+						SurfaceRules.ifTrue(SurfaceRules.stoneDepthCheck(0, true, 0, CaveSurface.FLOOR),
+							SurfaceRules.state(undergroundBlock)
+						)
 					)
-				),
-				SurfaceRules.ifTrue(SurfaceRules.stoneDepthCheck(0, true, 0, CaveSurface.FLOOR),
-					SurfaceRules.state(undergroundBlock)
 				)
 			)
 		);

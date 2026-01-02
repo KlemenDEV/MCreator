@@ -25,17 +25,21 @@ import com.google.gson.JsonObject;
 import net.mcreator.blockly.data.RepeatingField;
 import net.mcreator.blockly.data.ToolboxBlock;
 import net.mcreator.element.ModElementType;
+import net.mcreator.element.types.Dimension;
 import net.mcreator.minecraft.DataListEntry;
 import net.mcreator.minecraft.DataListLoader;
 import net.mcreator.minecraft.ElementUtil;
 import net.mcreator.util.ListUtils;
+import net.mcreator.util.TestUtil;
 import net.mcreator.workspace.Workspace;
 import net.mcreator.workspace.elements.ModElement;
 import net.mcreator.workspace.elements.VariableTypeLoader;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -102,6 +106,7 @@ public class BlocklyTestUtil {
 
 			if (!templatesDefined) {
 				LOG.warn("Skipping Blockly block with incomplete template: {}", toolboxBlock.getMachineName());
+				TestUtil.failIfTestingEnvironment();
 				return false;
 			}
 		}
@@ -115,16 +120,27 @@ public class BlocklyTestUtil {
 			int processed = 0;
 
 			if (toolboxBlock.getBlocklyJSON().has("args0")) {
-				for (String field : toolboxBlock.getFields()) {
+				for (String field : toolboxBlock.getFields()) { // For each field defined in MCreator's block definition
 					JsonArray args0 = toolboxBlock.getBlocklyJSON().get("args0").getAsJsonArray();
+
+					// Go through args0 to find a potential match for definition
 					for (int i = 0; i < args0.size(); i++) {
 						JsonObject arg = args0.get(i).getAsJsonObject();
 						if (arg.has("name") && arg.get("name").getAsString().equals(field)) {
 							processed += appendFieldXML(workspace, random, additionalXML, arg, field);
 							break;
-						} else if (toolboxBlock.getToolboxTestXML().contains("<field name=\"" + field + "\">")) {
-							processed++;
-							break;
+						}
+					}
+
+					// If not found, check if filed may be defined in the toolbox init
+					List<String> toolboxInitEntries = toolboxBlock.getToolboxInitStatements();
+					if (toolboxInitEntries != null) {
+						for (String toolboxEntry : toolboxInitEntries) {
+							if (toolboxEntry.charAt(0) == '~')
+								toolboxEntry = toolboxEntry.substring(1);
+							if (toolboxEntry.startsWith("<field name=\"" + field + "\">")) {
+								processed++;
+							}
 						}
 					}
 				}
@@ -132,6 +148,7 @@ public class BlocklyTestUtil {
 
 			if (processed != toolboxBlock.getFields().size()) {
 				LOG.warn("Skipping Blockly block with special fields: {}", toolboxBlock.getMachineName());
+				TestUtil.failIfTestingEnvironment();
 				return false;
 			}
 		}
@@ -155,6 +172,7 @@ public class BlocklyTestUtil {
 			if (processedFields != totalFields) {
 				LOG.warn("Skipping Blockly block with incorrectly defined repeating field: {}",
 						toolboxBlock.getMachineName());
+				TestUtil.failIfTestingEnvironment();
 				return false;
 			}
 		}
@@ -235,6 +253,10 @@ public class BlocklyTestUtil {
 			additionalXML.append("<field name=\"").append(field).append("\">condition1,condition2</field>");
 			processed++;
 		}
+		case "field_color_selector" -> {
+			additionalXML.append("<field name=\"").append(field).append("\">#ffffff</field>");
+			processed++;
+		}
 		}
 		return processed;
 	}
@@ -253,9 +275,14 @@ public class BlocklyTestUtil {
 			return ElementUtil.loadDirections();
 		case "biome":
 			return ElementUtil.loadAllBiomes(workspace).stream().map(DataListEntry::getName).toArray(String[]::new);
-		case "dimensionCustom":
+		case "dimensionCustom": // For legacy reason
 			return workspace.getModElements().stream().filter(m -> m.getType() == ModElementType.DIMENSION)
 					.map(m -> "CUSTOM:" + m.getName()).toArray(String[]::new);
+		case "dimensionCustomWithPortal":
+			return workspace.getModElements().stream().filter(m -> m.getType() == ModElementType.DIMENSION)
+					.map(ModElement::getGeneratableElement).filter(ge -> ge instanceof Dimension)
+					.map(ge -> (Dimension) ge).filter(dimension -> dimension.enablePortal)
+					.map(m -> "CUSTOM:" + m.getModElement().getName()).toArray(String[]::new);
 		case "fluid":
 			return ElementUtil.loadAllFluids(workspace).stream().map(DataListEntry::getName).toArray(String[]::new);
 		case "gamerulesboolean":
@@ -288,7 +315,7 @@ public class BlocklyTestUtil {
 		default: {
 			if (datalist.startsWith("procedure_retval_")) {
 				var variableType = VariableTypeLoader.INSTANCE.fromName(
-						StringUtils.removeStart(datalist, "procedure_retval_"));
+						Strings.CS.removeStart(datalist, "procedure_retval_"));
 				return ElementUtil.getProceduresOfType(workspace, variableType);
 			} else if (!DataListLoader.loadDataList(datalist).isEmpty()) {
 				return ElementUtil.loadDataListAndElements(workspace, datalist, typeFilter,

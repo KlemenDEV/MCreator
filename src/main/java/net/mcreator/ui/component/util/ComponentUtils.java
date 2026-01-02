@@ -70,7 +70,7 @@ public class ComponentUtils {
 		JPanel p = new JPanel();
 		p.add(gor);
 		p.setOpaque(false);
-		p.setPreferredSize(new Dimension(100, 100));
+		p.setPreferredSize(new Dimension(94, 94));
 		p.setBorder(
 				BorderFactory.createTitledBorder(BorderFactory.createLineBorder(color, 1), text, TitledBorder.LEADING,
 						TitledBorder.BOTTOM, gor.getFont(), color));
@@ -79,6 +79,13 @@ public class ComponentUtils {
 
 	public static JPanel squareAndBorder(Component gor, String text) {
 		return squareAndBorder(gor, Theme.current().getForegroundColor(), text);
+	}
+
+	public static void updateBorderTitle(JComponent toUpdate, String text) {
+		if (toUpdate.getBorder() instanceof TitledBorder titledBorder) {
+			titledBorder.setTitle(text);
+			toUpdate.repaint();
+		}
 	}
 
 }

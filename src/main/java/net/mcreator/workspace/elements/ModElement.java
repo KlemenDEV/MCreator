@@ -50,7 +50,7 @@ public class ModElement implements Serializable, IWorkspaceProvider, IGeneratorP
 
 	@Nullable private String registry_name;
 
-	@Nullable private Map<String, Object> metadata = null;
+	@Nullable private LinkedHashMap<String, Object> metadata = null;
 
 	@Nullable private String path;
 
@@ -86,7 +86,7 @@ public class ModElement implements Serializable, IWorkspaceProvider, IGeneratorP
 		this.registry_name = RegistryNameFixer.fromCamelCase(name);
 
 		if (mu.metadata != null) {
-			this.metadata = new HashMap<>(mu.metadata);
+			this.metadata = new LinkedHashMap<>(mu.metadata);
 
 			// remove files cache from metadata as otherwise on the first re-generation,
 			// files from original mod element (mu) will be deleted
@@ -152,7 +152,7 @@ public class ModElement implements Serializable, IWorkspaceProvider, IGeneratorP
 
 	public void putMetadata(String key, @Nullable Object data) {
 		if (metadata == null)
-			metadata = new HashMap<>();
+			metadata = new LinkedHashMap<>();
 		metadata.put(key, data);
 	}
 
@@ -160,6 +160,20 @@ public class ModElement implements Serializable, IWorkspaceProvider, IGeneratorP
 		if (metadata == null)
 			return null;
 		return metadata.get(key);
+	}
+
+	public List<File> getAssociatedFiles() {
+		if (this.getMetadata("files") instanceof List<?> fileList)
+			// filter by files in workspace (e.g. so one can not create .mcreator file that would delete files on computer when opened)
+			return fileList.stream().map(e -> new File(getWorkspaceFolder(), e.toString().replace("/", File.separator)))
+					.filter(workspace.getFolderManager()::isFileInWorkspace).toList();
+		return List.of();
+	}
+
+	public void setAssociatedFiles(List<File> files) {
+		this.putMetadata("files",
+				files.stream().map(e -> getFolderManager().getPathInWorkspace(e).replace(File.separator, "/"))
+						.toList());
 	}
 
 	@Override public String toString() {
@@ -301,24 +315,29 @@ public class ModElement implements Serializable, IWorkspaceProvider, IGeneratorP
 		}
 	}
 
-	public static Comparator<ModElement> getComparator(Workspace workspace, List<ModElement> originalOrder) {
+	public static Comparator<ModElement> getComparator(Workspace workspace, List<?> originalOrder) {
+		WorkspaceUserSettings settings = workspace.getWorkspaceUserSettings();
+
+		final Map<Object, Integer> indexMap = new HashMap<>();
+		for (int i = 0; i < originalOrder.size(); i++)
+			indexMap.put(originalOrder.get(i), i);
+
 		return (a, b) -> {
-			if (workspace.getWorkspaceUserSettings().workspacePanelSortType == WorkspaceUserSettings.SortType.NAME) {
-				if (workspace.getWorkspaceUserSettings().workspacePanelSortAscending)
+			if (settings.workspacePanelSortType == WorkspaceUserSettings.SortType.NAME) {
+				if (settings.workspacePanelSortAscending)
 					return a.getName().compareToIgnoreCase(b.getName());
 				else
 					return b.getName().compareToIgnoreCase(a.getName());
-			} else if (workspace.getWorkspaceUserSettings().workspacePanelSortType
-					== WorkspaceUserSettings.SortType.TYPE) {
-				if (workspace.getWorkspaceUserSettings().workspacePanelSortAscending)
+			} else if (settings.workspacePanelSortType == WorkspaceUserSettings.SortType.TYPE) {
+				if (settings.workspacePanelSortAscending)
 					return a.getType().getReadableName().compareTo(b.getType().getReadableName());
 				else
 					return b.getType().getReadableName().compareTo(a.getType().getReadableName());
 			} else {
-				if (workspace.getWorkspaceUserSettings().workspacePanelSortAscending)
-					return originalOrder.indexOf(a) - originalOrder.indexOf(b);
+				if (settings.workspacePanelSortAscending)
+					return indexMap.get(a) - indexMap.get(b);
 				else
-					return originalOrder.indexOf(b) - originalOrder.indexOf(a);
+					return indexMap.get(b) - indexMap.get(a);
 			}
 		};
 	}

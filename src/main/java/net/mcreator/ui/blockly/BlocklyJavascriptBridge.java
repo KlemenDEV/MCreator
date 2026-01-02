@@ -24,10 +24,12 @@ import net.mcreator.blockly.data.Dependency;
 import net.mcreator.blockly.data.ExternalTrigger;
 import net.mcreator.blockly.java.BlocklyVariables;
 import net.mcreator.element.ModElementType;
+import net.mcreator.element.types.Dimension;
 import net.mcreator.element.types.Procedure;
 import net.mcreator.generator.mapping.NameMapper;
 import net.mcreator.minecraft.*;
 import net.mcreator.ui.MCreator;
+import net.mcreator.ui.component.JColor;
 import net.mcreator.ui.dialogs.AIConditionEditor;
 import net.mcreator.ui.dialogs.DataListSelectorDialog;
 import net.mcreator.ui.dialogs.MCItemSelectorDialog;
@@ -41,6 +43,7 @@ import net.mcreator.workspace.elements.VariableType;
 import net.mcreator.workspace.elements.VariableTypeLoader;
 import netscape.javascript.JSObject;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -48,8 +51,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.util.*;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -94,6 +100,19 @@ public final class BlocklyJavascriptBridge {
 			LOG.error(ioe.getMessage(), ioe);
 			return "";
 		}
+	}
+
+	@SuppressWarnings("unused") public void openColorSelector(String color, JSObject callback) {
+		SwingUtilities.invokeLater(() -> {
+			Color newColor = JColor.openDialog(mcreator,
+					L10N.t("dialog.image_maker.tools.component.colorselector_select_foreground"), Color.decode(color));
+			AtomicReference<String> colorString = new AtomicReference<>(newColor == null ? null :
+					String.format("#%02x%02x%02x", newColor.getRed(), newColor.getGreen(), newColor.getBlue()));
+			Platform.runLater(() -> Platform.exitNestedEventLoop(NESTED_LOOP_KEY, colorString.get()));
+		});
+
+		String retval = (String) Platform.enterNestedEventLoop(NESTED_LOOP_KEY);
+		callback.call("callback", retval);
 	}
 
 	@SuppressWarnings("unused") public void openMCItemSelector(String type, JSObject callback) {
@@ -193,9 +212,15 @@ public final class BlocklyJavascriptBridge {
 			case "biome" -> openDataListEntrySelector(
 					w -> ElementUtil.loadAllBiomes(w).stream().filter(e -> e.isSupportedInWorkspace(w)).toList(),
 					"biome");
-			case "dimensionCustom" -> openStringEntrySelector(
+			case "dimensionCustom" -> openStringEntrySelector( // For legacy reason
 					w -> w.getModElements().stream().filter(m -> m.getType() == ModElementType.DIMENSION)
-							.map(m -> NameMapper.MCREATOR_PREFIX + m.getName()).toArray(String[]::new), "dimension");
+							.map(m -> NameMapper.MCREATOR_PREFIX + m.getName()).toArray(String[]::new), "dimensions");
+			case "dimensionCustomWithPortal" -> openStringEntrySelector(
+					w -> w.getModElements().stream().filter(m -> m.getType() == ModElementType.DIMENSION)
+							.map(ModElement::getGeneratableElement).filter(ge -> ge instanceof Dimension)
+							.map(ge -> (Dimension) ge).filter(dimension -> dimension.enablePortal)
+							.map(m -> NameMapper.MCREATOR_PREFIX + m.getModElement().getName()).toArray(String[]::new),
+					"dimensions");
 			case "fluid" -> openDataListEntrySelector(
 					w -> ElementUtil.loadAllFluids(w).stream().filter(e -> e.isSupportedInWorkspace(w)).toList(),
 					"fluids");
@@ -205,12 +230,14 @@ public final class BlocklyJavascriptBridge {
 			case "gamerulesnumber" -> openDataListEntrySelector(
 					w -> ElementUtil.getAllNumberGameRules(w).stream().filter(e -> e.isSupportedInWorkspace(w))
 							.toList(), "gamerules");
-			case "eventparametersnumber" -> openDataListEntrySelector(w-> DataListLoader.loadDataList("eventparameters").stream()
-					.filter(ElementUtil.typeMatches(VariableTypeLoader.BuiltInTypes.NUMBER.getName()))
-					.filter(e->e.isSupportedInWorkspace(w)).toList(),"eventparameters");
-			case "eventparametersboolean" -> openDataListEntrySelector(w-> DataListLoader.loadDataList("eventparameters").stream()
-					.filter(ElementUtil.typeMatches(VariableTypeLoader.BuiltInTypes.LOGIC.getName()))
-					.filter(e->e.isSupportedInWorkspace(w)).toList(),"eventparameters");
+			case "eventparametersnumber" -> openDataListEntrySelector(
+					w -> DataListLoader.loadDataList("eventparameters").stream()
+							.filter(ElementUtil.typeMatches(VariableTypeLoader.BuiltInTypes.NUMBER.getName()))
+							.filter(e -> e.isSupportedInWorkspace(w)).toList(), "eventparameters");
+			case "eventparametersboolean" -> openDataListEntrySelector(
+					w -> DataListLoader.loadDataList("eventparameters").stream()
+							.filter(ElementUtil.typeMatches(VariableTypeLoader.BuiltInTypes.LOGIC.getName()))
+							.filter(e -> e.isSupportedInWorkspace(w)).toList(), "eventparameters");
 			case "sound" -> openStringEntrySelector(ElementUtil::getAllSounds, "sound");
 			case "structure" ->
 					openStringEntrySelector(w -> w.getFolderManager().getStructureList().toArray(String[]::new),
@@ -238,7 +265,7 @@ public final class BlocklyJavascriptBridge {
 			default -> {
 				if (type.startsWith("procedure_retval_")) {
 					var variableType = VariableTypeLoader.INSTANCE.fromName(
-							StringUtils.removeStart(type, "procedure_retval_"));
+							Strings.CS.removeStart(type, "procedure_retval_"));
 					yield openStringEntrySelector(w -> ElementUtil.getProceduresOfType(w, variableType), "procedure");
 				}
 
@@ -346,7 +373,7 @@ public final class BlocklyJavascriptBridge {
 							VariableTypeLoader.INSTANCE.fromName((String) mod.getMetadata("return_type")) :
 							null;
 					return returnTypeCurrent == VariableTypeLoader.INSTANCE.fromName(
-							StringUtils.removeStart(type, "procedure_retval_"));
+							Strings.CS.removeStart(type, "procedure_retval_"));
 				}
 				return false;
 			}).map(ModElement::getName).collect(Collectors.toList());

@@ -18,14 +18,38 @@
 
 package net.mcreator.blockly;
 
-public record BlocklyCompileNote(Type type, String message) {
+import net.mcreator.ui.validation.ValidationResult;
+
+public record BlocklyCompileNote(Type type, String message) implements Comparable<BlocklyCompileNote> {
 
 	@Override public String toString() {
 		return type.name() + ": " + message;
 	}
 
+	@Override public int compareTo(BlocklyCompileNote o) {
+		if (this.type() == o.type()) {
+			return 0;
+		} else {
+			return this.type().priority > o.type().priority ? -1 : 1;
+		}
+	}
+
+	public ValidationResult.Type getValidationResultType() {
+		return type.validationResultType;
+	}
+
 	public enum Type {
-		INFO, WARNING, ERROR
+		INFO(0, ValidationResult.Type.PASSED),
+		WARNING(1, ValidationResult.Type.WARNING),
+		ERROR(2, ValidationResult.Type.ERROR);
+
+		private final int priority;
+		private final ValidationResult.Type validationResultType;
+
+		Type(int priority, ValidationResult.Type validationResultType) {
+			this.priority = priority;
+			this.validationResultType = validationResultType;
+		}
 	}
 
 }

@@ -33,7 +33,7 @@
 
 package ${package}.client.particle;
 
-<#compress>
+<@javacompress>
 @OnlyIn(Dist.CLIENT) public class ${name}Particle extends TextureSheetParticle {
 
 	public static ${name}ParticleProvider provider(SpriteSet spriteSet) {
@@ -65,8 +65,8 @@ package ${package}.client.particle;
 
 		this.setSize(${data.width}f, ${data.height}f);
 
-		<#if data.scale.getFixedValue() != 1 && !hasProcedure(data.scale)>
-		this.quadSize *= ${data.scale.getFixedValue()}f;
+		<#if (data.scale.getFixedValue() != 1 || data.fixedScale)  && !hasProcedure(data.scale)>
+		this.quadSize <#if data.fixedScale>= 0.15f *<#else>*=</#if> ${data.scale.getFixedValue()}f;
 		</#if>
 
 		<#if (data.maxAgeDiff > 0)>
@@ -107,7 +107,7 @@ package ${package}.client.particle;
 	<#if hasProcedure(data.scale)>
 	@Override public float getQuadSize(float scale) {
 		Level world = this.level;
-		return super.getQuadSize(scale) * (float) <@procedureOBJToConditionCode data.scale/>;
+		return <#if data.fixedScale>0.15f<#else>super.getQuadSize(scale)</#if> * (float) <@procedureOBJToConditionCode data.scale/>;
 	}
 	</#if>
 
@@ -135,5 +135,5 @@ package ${package}.client.particle;
 	}
 
 }
-</#compress>
+</@javacompress>
 <#-- @formatter:on -->

@@ -22,16 +22,13 @@ package net.mcreator.integration.ui;
 import net.mcreator.element.GeneratableElement;
 import net.mcreator.ui.MCreator;
 import net.mcreator.ui.blockly.BlocklyPanel;
-import net.mcreator.ui.blockly.BlocklyValidationResult;
 import net.mcreator.ui.modgui.IBlocklyPanelHolder;
 import net.mcreator.ui.modgui.ModElementGUI;
 import net.mcreator.ui.validation.AggregatedValidationResult;
-import net.mcreator.ui.validation.Validator;
+import net.mcreator.ui.validation.ValidationResult;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -47,33 +44,32 @@ public class UITestUtil {
 
 	public static ModElementGUI<?> openModElementGUIFor(MCreator mcreator, GeneratableElement generatableElement)
 			throws Exception {
+		// Store GeneratableElement to workspace so ModElementGUI can load GE from ME correctly
+		mcreator.getWorkspace().getModElementManager().storeModElement(generatableElement);
+
 		ModElementGUI<?> modElementGUI = generatableElement.getModElement().getType()
-				.getModElementGUI(mcreator, generatableElement.getModElement(), false);
-		modElementGUI.reloadDataLists();
+				.getModElementGUI(mcreator, generatableElement.getModElement(), true);
 
-		Field field = modElementGUI.getClass().getSuperclass().getDeclaredField("editingMode");
-		field.setAccessible(true);
-		field.set(modElementGUI, true);
-
-		CountDownLatch latch = new CountDownLatch(1);
+		// Verify that BlocklyPanels are fully loaded
 		if (modElementGUI instanceof IBlocklyPanelHolder panelHolder) {
+			CountDownLatch latch = new CountDownLatch(1);
+
+			// Prepare a listener to detect if BlocklyPanel(s) are responding
 			Set<BlocklyPanel> blocklyPanels = new HashSet<>();
-			panelHolder.addBlocklyChangedListener(blocklyPanel -> {
-				blocklyPanels.add(blocklyPanel);
-				if (blocklyPanels.equals(panelHolder.getBlocklyPanels()))
-					latch.countDown();
+			panelHolder.addBlocklyChangedListener((blocklyPanel, jsEventTriggeredChange) -> {
+				if (jsEventTriggeredChange) {
+					blocklyPanels.add(blocklyPanel);
+					if (blocklyPanels.equals(panelHolder.getBlocklyPanels()))
+						latch.countDown();
+				}
 			});
-		}
 
-		// Open GeneratableElement in editing mode
-		Method method = modElementGUI.getClass().getDeclaredMethod("openInEditingMode", GeneratableElement.class);
-		method.setAccessible(true);
-		method.invoke(modElementGUI, generatableElement);
-
-		// If ModElementGUI<?> contains BlocklyPanel, give it time to fully load by waiting for all panels to report change
-		if (modElementGUI instanceof IBlocklyPanelHolder) {
+			// Give it time for panel to load and propagate the event
 			assertTrue(latch.await(5, TimeUnit.SECONDS));
 		}
+
+		// Reload data lists to test this functionality
+		modElementGUI.reloadDataLists();
 
 		return modElementGUI;
 	}
@@ -83,10 +79,10 @@ public class UITestUtil {
 		AggregatedValidationResult validationResult = modElementGUI.validateAllPages();
 
 		boolean hasErrors = false;
-		for (Validator.ValidationResult result : validationResult.getGroupedValidationResults()) {
-			if (result.getValidationResultType() == Validator.ValidationResultType.ERROR) {
+		for (ValidationResult result : validationResult.getGroupedValidationResults()) {
+			if (result.type() == ValidationResult.Type.ERROR) {
 				if (modElementGUI instanceof IBlocklyPanelHolder panelHolder) {
-					if (result instanceof BlocklyValidationResult) {
+					if (result.isBlocklyResult()) {
 						// skip Blockly validation in case it is marked that initial XML in the editor is not valid
 						// and skipInitialXMLValidationIfAllowed flag is set to true
 						if (skipInitialXMLValidationIfAllowed && !panelHolder.isInitialXMLValid())

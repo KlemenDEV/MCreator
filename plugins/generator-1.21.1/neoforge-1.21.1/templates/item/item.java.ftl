@@ -37,9 +37,9 @@ package ${package}.item;
 
 <#assign hasCustomJAVAModels = data.hasCustomJAVAModel() || data.getModels()?filter(e -> e.hasCustomJAVAModel())?has_content>
 
-<#compress>
+<@javacompress>
 <#if hasCustomJAVAModels>
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber
 </#if>
 public class ${name}Item extends <#if data.hasBannerPatterns()>BannerPattern</#if>Item {
 	<#if data.hasBannerPatterns()>
@@ -92,19 +92,35 @@ public class ${name}Item extends <#if data.hasBannerPatterns()>BannerPattern</#i
 					rendererInstance = new ${name}ItemRenderer(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels());
 				return rendererInstance;
 			}
-		}, ${JavaModName}Items.${data.getModElement().getRegistryNameUpper()}.get());
+		}, ${JavaModName}Items.${REGISTRYNAME}.get());
 	}
 	</#if>
 
 	<#if data.hasBannerPatterns()> <#-- Workaround to allow both music disc and patterns info in description -->
-	public MutableComponent getDisplayName() {
+	@Override public MutableComponent getDisplayName() {
 		return Component.translatable(this.getDescriptionId() + ".patterns");
+	}
+	</#if>
+
+	<#if data.isPiglinCurrency>
+	@Override public boolean isPiglinCurrency(ItemStack stack) {
+		return true;
 	}
 	</#if>
 
 	<#if data.hasNonDefaultAnimation()>
 	@Override public UseAnim getUseAnimation(ItemStack itemstack) {
 		return UseAnim.${data.animation?upper_case};
+	}
+	</#if>
+
+	<#if !data.isFood && data.animation == "eat">
+	@Override public SoundEvent getEatingSound() {
+		return SoundEvents.EMPTY;
+	}
+	<#elseif !data.isFood && data.animation == "drink">
+	@Override public SoundEvent getDrinkingSound() {
+		return SoundEvents.EMPTY;
 	}
 	</#if>
 
@@ -172,7 +188,8 @@ public class ${name}Item extends <#if data.hasBannerPatterns()>BannerPattern</#i
 	<@addSpecialInformation data.specialInformation, "item." + modid + "." + registryname/>
 
 	<#assign shouldExplicitlyCallStartUsing = !data.isFood && (data.useDuration > 0)> <#-- ranged items handled in if below so no need to check for that here too -->
-	<#if hasProcedure(data.onRightClickedInAir) || data.hasInventory() || data.enableRanged || shouldExplicitlyCallStartUsing>
+	<#assign rightClickingOpensGUI = data.openGUIOnRightClick?? && (hasProcedure(data.openGUIOnRightClick) || data.openGUIOnRightClick.getFixedValue())>
+	<#if hasProcedure(data.onRightClickedInAir) || data.enableRanged || shouldExplicitlyCallStartUsing || (data.hasInventory() && rightClickingOpensGUI)>
 	@Override public InteractionResultHolder<ItemStack> use(Level world, Player entity, InteractionHand hand) {
 		<#if data.enableRanged>
 		InteractionResultHolder<ItemStack> ar = InteractionResultHolder.fail(entity.getItemInHand(hand));
@@ -199,8 +216,18 @@ public class ${name}Item extends <#if data.hasBannerPatterns()>BannerPattern</#i
 			entity.startUsingItem(hand);
 		</#if>
 
-		<#if data.hasInventory()>
+		<#if data.hasInventory() && rightClickingOpensGUI>
 		if (entity instanceof ServerPlayer serverPlayer) {
+			<#if hasProcedure(data.openGUIOnRightClick)>
+			if (<@procedureCode data.openGUIOnRightClick, {
+				"x": "serverPlayer.getX()",
+				"y": "serverPlayer.getY()",
+				"z": "serverPlayer.getZ()",
+				"world": "serverPlayer.level()",
+				"entity": "serverPlayer",
+				"itemstack": "ar.getObject()"
+			}, false/>) {
+			</#if>
 			serverPlayer.openMenu(new MenuProvider() {
 				@Override public Component getDisplayName() {
 					return Component.literal("${data.name}");
@@ -216,6 +243,7 @@ public class ${name}Item extends <#if data.hasBannerPatterns()>BannerPattern</#i
 				buf.writeBlockPos(entity.blockPosition());
 				buf.writeByte(hand == InteractionHand.MAIN_HAND ? 0 : 1);
 			});
+			<#if hasProcedure(data.openGUIOnRightClick)>}</#if>
 		}
 		</#if>
 
@@ -276,6 +304,8 @@ public class ${name}Item extends <#if data.hasBannerPatterns()>BannerPattern</#i
 
 	<@onDroppedByPlayer data.onDroppedByPlayer/>
 
+	<@onItemEntityDestroyed data.onItemEntityDestroyed/>
+
 	<#if hasProcedure(data.onStoppedUsing) || (data.enableRanged && !data.shootConstantly)>
 		@Override public void releaseUsing(ItemStack itemstack, Level world, LivingEntity entity, int time) {
 			<#if hasProcedure(data.onStoppedUsing)>
@@ -302,12 +332,25 @@ public class ${name}Item extends <#if data.hasBannerPatterns()>BannerPattern</#i
 		}
 	</#if>
 
-	<#if data.enableRanged && data.shootConstantly>
-		@Override public void onUseTick(Level world, LivingEntity entity, ItemStack itemstack, int count) {
-			if (!world.isClientSide() && entity instanceof ServerPlayer player) {
-				<@arrowShootCode/>
-				entity.releaseUsingItem();
-			}
+	<#if hasProcedure(data.everyTickWhileUsing) || (data.enableRanged && data.shootConstantly)>
+		@Override public void onUseTick(Level world, LivingEntity entity, ItemStack itemstack, int time) {
+			<#if hasProcedure(data.everyTickWhileUsing)>
+				<@procedureCode data.everyTickWhileUsing, {
+            		"x": "entity.getX()",
+            		"y": "entity.getY()",
+            		"z": "entity.getZ()",
+            		"world": "world",
+            		"entity": "entity",
+            		"itemstack": "itemstack",
+            		"time": "time"
+            	}/>
+            </#if>
+			<#if data.enableRanged && data.shootConstantly>
+				if (!world.isClientSide() && entity instanceof ServerPlayer player) {
+					<@arrowShootCode/>
+					entity.releaseUsingItem();
+				}
+			</#if>
 		}
 	</#if>
 
@@ -379,5 +422,5 @@ public class ${name}Item extends <#if data.hasBannerPatterns()>BannerPattern</#i
 		</#if>
 	}
 </#macro>
-</#compress>
+</@javacompress>
 <#-- @formatter:on -->

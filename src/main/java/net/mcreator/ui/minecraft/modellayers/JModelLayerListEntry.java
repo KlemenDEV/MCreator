@@ -31,6 +31,7 @@ import net.mcreator.ui.laf.renderer.ModelComboBoxRenderer;
 import net.mcreator.ui.minecraft.TextureComboBox;
 import net.mcreator.ui.procedure.ProcedureSelector;
 import net.mcreator.ui.validation.IValidable;
+import net.mcreator.ui.validation.ValidationResult;
 import net.mcreator.ui.validation.Validator;
 import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.util.ListUtils;
@@ -90,7 +91,7 @@ public class JModelLayerListEntry extends JSimpleListEntry<LivingEntity.ModelLay
 	}
 
 	@Override public void reloadDataLists() {
-		condition.refreshListKeepSelected();
+		condition.refreshListKeepSelected(null);
 
 		ComboBoxUtil.updateComboBoxContents(model, ListUtils.merge(Collections.singletonList(default_model),
 				Model.getModels(mcreator.getWorkspace()).stream()
@@ -129,7 +130,7 @@ public class JModelLayerListEntry extends JSimpleListEntry<LivingEntity.ModelLay
 		condition.setSelectedProcedure(e.condition);
 	}
 
-	@Override public Validator.ValidationResult getValidationStatus() {
+	@Override public ValidationResult getValidationStatus() {
 		return texture.getValidationStatus();
 	}
 

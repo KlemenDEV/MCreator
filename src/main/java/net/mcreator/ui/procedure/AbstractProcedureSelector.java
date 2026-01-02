@@ -30,7 +30,9 @@ import net.mcreator.ui.component.SearchableComboBox;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.init.UIRES;
 import net.mcreator.ui.validation.IValidable;
+import net.mcreator.ui.validation.ValidationResult;
 import net.mcreator.ui.validation.Validator;
+import net.mcreator.workspace.Workspace;
 import net.mcreator.workspace.elements.ModElement;
 import net.mcreator.workspace.elements.VariableType;
 import net.mcreator.workspace.elements.VariableTypeLoader;
@@ -83,51 +85,38 @@ public abstract class AbstractProcedureSelector extends JPanel implements IValid
 		edit.setEnabled(enabled && getSelectedProcedure() != null);
 	}
 
-	public final void refreshList() {
+	public final void refreshList(@Nullable ReloadContext context) {
+		if (context == null)
+			context = ReloadContext.create(mcreator.getWorkspace());
+
 		depsMap.clear();
 		procedures.removeAllItems();
 
 		procedures.addItem(new ProcedureEntry(defaultName, null));
 
-		//noinspection FuseStreamOperations
-		List<ModElement> procedureElements = mcreator.getWorkspace().getModElements().stream()
-				.filter(mod -> mod.getType() == ModElementType.PROCEDURE).collect(Collectors.toList());
-		procedureElements.sort(ModElement.getComparator(mcreator.getWorkspace(), procedureElements));
-		procedureElements.forEach(mod -> {
-			List<?> dependenciesList = (List<?>) mod.getMetadata("dependencies");
-			if (dependenciesList != null) {
-				List<Dependency> realdepsList = new ArrayList<>();
+		Set<Dependency> providedSet = new HashSet<>(Arrays.asList(providedDependencies));
 
-				boolean missing = false;
-				for (Object depobj : dependenciesList) {
-					Dependency dependency = gson.fromJson(gson.toJsonTree(depobj).getAsJsonObject(), Dependency.class);
-					realdepsList.add(dependency);
-					if (!Arrays.asList(providedDependencies).contains(dependency))
-						missing = true;
-				}
+		for (Map.Entry<ModElement, ReloadContext.ContexData> entry : context.data.entrySet()) {
+			ModElement mod = entry.getKey();
+			ReloadContext.ContexData data = entry.getValue();
 
-				VariableType returnTypeCurrent = mod.getMetadata("return_type") != null ?
-						VariableTypeLoader.INSTANCE.fromName((String) mod.getMetadata("return_type")) :
-						null;
+			boolean missing = data.dependencies().stream().anyMatch(d -> !providedSet.contains(d));
 
-				boolean correctReturnType = true;
-				if (returnType != null) {
-					if (returnTypeCurrent != returnType)
-						correctReturnType = false;
-				}
+			VariableType returnTypeCurrent = data.returnType();
 
-				if (!missing)
-					depsMap.put(mod.getName(), realdepsList);
+			boolean correctReturnType = returnType == null || returnTypeCurrent == returnType;
 
-				if (correctReturnType || (returnTypeCurrent == null && returnTypeOptional))
-					procedures.addItem(new ProcedureEntry(mod.getName(), returnTypeCurrent, !missing));
-			}
-		});
+			if (!missing)
+				depsMap.put(mod.getName(), data.dependencies());
+
+			if (correctReturnType || (returnTypeCurrent == null && returnTypeOptional))
+				procedures.addItem(new ProcedureEntry(mod.getName(), returnTypeCurrent, !missing));
+		}
 	}
 
-	public void refreshListKeepSelected() {
+	public void refreshListKeepSelected(@Nullable ReloadContext context) {
 		Procedure selected = getSelectedProcedure();
-		refreshList();
+		refreshList(context);
 		setSelectedProcedure(selected);
 		updateDepsList(false);
 	}
@@ -207,13 +196,13 @@ public abstract class AbstractProcedureSelector extends JPanel implements IValid
 		super.paint(g);
 
 		if (validator != null && currentValidationResult != null) {
-			if (currentValidationResult.getValidationResultType() == Validator.ValidationResultType.WARNING) {
-				g.setColor(currentValidationResult.getValidationResultType().getColor());
+			if (currentValidationResult.type() == ValidationResult.Type.WARNING) {
+				g.setColor(currentValidationResult.type().getColor());
 				g.drawRect(0, 0, getWidth(), getHeight());
 
 				g.drawImage(UIRES.get("18px.warning").getImage(), getWidth() - 11, getHeight() - 11, 11, 11, null);
-			} else if (currentValidationResult.getValidationResultType() == Validator.ValidationResultType.ERROR) {
-				g.setColor(currentValidationResult.getValidationResultType().getColor());
+			} else if (currentValidationResult.type() == ValidationResult.Type.ERROR) {
+				g.setColor(currentValidationResult.type().getColor());
 				g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
 
 				g.drawImage(UIRES.get("18px.remove").getImage(), 0, 0, 11, 11, null);
@@ -223,10 +212,10 @@ public abstract class AbstractProcedureSelector extends JPanel implements IValid
 
 	//validation code
 	private Validator validator = null;
-	private Validator.ValidationResult currentValidationResult = null;
+	private ValidationResult currentValidationResult = null;
 
-	@Override public Validator.ValidationResult getValidationStatus() {
-		Validator.ValidationResult validationResult = validator == null ? null : validator.validateIfEnabled(this);
+	@Override public ValidationResult getValidationStatus() {
+		ValidationResult validationResult = validator == null ? null : validator.validateIfEnabled(this);
 
 		this.currentValidationResult = validationResult;
 
@@ -246,6 +235,42 @@ public abstract class AbstractProcedureSelector extends JPanel implements IValid
 
 	public enum Side {
 		BOTH, CLIENT, SERVER
+	}
+
+	public static class ReloadContext {
+
+		// LinkedHashMap to keep the order of ModElement.getComparator
+		private final Map<ModElement, ContexData> data = new LinkedHashMap<>();
+
+		public static ReloadContext create(Workspace workspace) {
+			ReloadContext context = new ReloadContext();
+
+			//noinspection FuseStreamOperations
+			List<ModElement> procedureElements = workspace.getModElements().stream()
+					.filter(mod -> mod.getType() == ModElementType.PROCEDURE).collect(Collectors.toList());
+			procedureElements.sort(ModElement.getComparator(workspace, procedureElements));
+			for (ModElement mod : procedureElements) {
+				List<?> dependenciesList = (List<?>) mod.getMetadata("dependencies");
+				if (dependenciesList != null) {
+					List<Dependency> realdepsList = new ArrayList<>();
+					for (Object depobj : dependenciesList) {
+						Dependency dependency = gson.fromJson(gson.toJsonTree(depobj).getAsJsonObject(),
+								Dependency.class);
+						realdepsList.add(dependency);
+					}
+
+					VariableType returnTypeCurrent = mod.getMetadata("return_type") != null ?
+							VariableTypeLoader.INSTANCE.fromName((String) mod.getMetadata("return_type")) :
+							null;
+
+					context.data.put(mod, new ContexData(realdepsList, returnTypeCurrent));
+				}
+			}
+			return context;
+		}
+
+		record ContexData(List<Dependency> dependencies, @Nullable VariableType returnType) {}
+
 	}
 
 }

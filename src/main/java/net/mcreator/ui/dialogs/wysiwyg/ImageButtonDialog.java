@@ -26,8 +26,9 @@ import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.help.IHelpContext;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.minecraft.TextureComboBox;
+import net.mcreator.ui.procedure.AbstractProcedureSelector;
 import net.mcreator.ui.procedure.ProcedureSelector;
-import net.mcreator.ui.validation.Validator;
+import net.mcreator.ui.validation.ValidationResult;
 import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.ui.wysiwyg.WYSIWYGEditor;
 import net.mcreator.util.image.ImageUtils;
@@ -55,21 +56,19 @@ public class ImageButtonDialog extends AbstractWYSIWYGDialog<ImageButton> {
 		hoveredTextureSelector.setValidator(() -> {
 			// The first image can never be null as this is the reference
 			if (!textureSelector.hasTexture())
-				return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
-						L10N.t("validator.image_size.empty"));
+				return new ValidationResult(ValidationResult.Type.ERROR, L10N.t("validator.image_size.empty"));
 
 			if (!hoveredTextureSelector.hasTexture())
-				return Validator.ValidationResult.PASSED;
+				return ValidationResult.PASSED;
 
 			// Finally, we can check if both images have the same height and width
 			ImageIcon image1 = textureSelector.getTexture().getTextureIcon(editor.mcreator.getWorkspace());
 			ImageIcon image2 = hoveredTextureSelector.getTexture().getTextureIcon(editor.mcreator.getWorkspace());
 
 			if (ImageUtils.checkIfSameSize(image1.getImage(), image2.getImage()))
-				return Validator.ValidationResult.PASSED;
+				return ValidationResult.PASSED;
 			else
-				return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
-						L10N.t("validator.image_size"));
+				return new ValidationResult(ValidationResult.Type.ERROR, L10N.t("validator.image_size"));
 		});
 		hoveredTextureSelector.getComboBox().enableRealtimeValidation();
 
@@ -80,17 +79,20 @@ public class ImageButtonDialog extends AbstractWYSIWYGDialog<ImageButton> {
 				PanelUtils.westAndCenterElement(L10N.label("dialog.gui.hovered_image_texture"), hoveredTextureSelector),
 				2, 2));
 
+		AbstractProcedureSelector.ReloadContext context = AbstractProcedureSelector.ReloadContext.create(
+				editor.mcreator.getWorkspace());
+
 		ProcedureSelector onClick = new ProcedureSelector(IHelpContext.NONE.withEntry("gui/on_button_clicked"),
 				editor.mcreator, L10N.t("dialog.gui.button_event_on_clicked"), ProcedureSelector.Side.BOTH, false,
 				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity"));
-		onClick.refreshList();
+		onClick.refreshList(context);
 
 		ProcedureSelector displayCondition = new ProcedureSelector(
 				IHelpContext.NONE.withEntry("gui/button_display_condition"), editor.mcreator,
 				L10N.t("dialog.gui.button_display_condition"), ProcedureSelector.Side.CLIENT, false,
 				VariableTypeLoader.BuiltInTypes.LOGIC,
 				Dependency.fromString("x:number/y:number/z:number/world:world/entity:entity"));
-		displayCondition.refreshList();
+		displayCondition.refreshList(context);
 
 		options.add(new JEmptyBox(20, 20));
 
@@ -112,11 +114,11 @@ public class ImageButtonDialog extends AbstractWYSIWYGDialog<ImageButton> {
 			displayCondition.setSelectedProcedure(button.displayCondition);
 		}
 
-		cancel.addActionListener(arg01 -> setVisible(false));
+		cancel.addActionListener(arg01 -> dispose());
 		ok.addActionListener(arg01 -> {
-			if (hoveredTextureSelector.getValidationStatus().getValidationResultType()
-					!= Validator.ValidationResultType.ERROR) {
-				setVisible(false);
+			if (hoveredTextureSelector.getValidationStatus().type()
+					!= ValidationResult.Type.ERROR) {
+				dispose();
 				if (textureSelector.hasTexture()) {
 					if (button == null) {
 						String name = textToMachineName(editor.getComponentList(), "imagebutton_",

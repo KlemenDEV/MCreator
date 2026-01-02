@@ -55,6 +55,8 @@ import java.util.*;
 	@ModElementReference public Map<String, Procedure> customProperties;
 	@TextureReference(TextureType.ITEM) @ResourceReference("model") public List<StateEntry> states;
 
+	@ModElementReference @ResourceReference("animation") public List<AnimationEntry> animations;
+
 	public String name;
 	public String rarity;
 	@ModElementReference public List<TabEntry> creativeTabs;
@@ -66,6 +68,7 @@ import java.util.*;
 	public MItemBlock recipeRemainder;
 	public boolean destroyAnyBlock;
 	public boolean immuneToFire;
+	public boolean isPiglinCurrency;
 
 	public boolean stayInGridWhenCrafting;
 	public boolean damageOnCrafting;
@@ -77,6 +80,7 @@ import java.util.*;
 	public LogicProcedure glowCondition;
 
 	@Nullable @ModElementReference public String guiBoundTo;
+	public LogicProcedure openGUIOnRightClick;
 	public int inventorySize;
 	public int inventoryStackSize;
 
@@ -90,6 +94,8 @@ import java.util.*;
 	public Procedure onEntitySwing;
 	public Procedure onDroppedByPlayer;
 	public Procedure onFinishUsingItem;
+	public Procedure everyTickWhileUsing;
+	public Procedure onItemEntityDestroyed;
 
 	// Ranged properties
 	public boolean enableRanged;
@@ -137,6 +143,8 @@ import java.util.*;
 		this.animation = "eat";
 
 		this.providedBannerPatterns = new ArrayList<>();
+
+		this.animations = new ArrayList<>();
 	}
 
 	@Override public BufferedImage generateModElementPicture() {
@@ -219,6 +227,11 @@ import java.util.*;
 
 	public boolean hasEatResultItem() {
 		return isFood && eatResultItem != null && !eatResultItem.isEmpty();
+	}
+
+	public boolean hasCustomEatResultItem() {
+		return isFood && eatResultItem != null && !eatResultItem.isEmpty() && eatResultItem.getUnmappedValue()
+				.startsWith("CUSTOM:");
 	}
 
 	public boolean hasBannerPatterns() {
@@ -322,6 +335,15 @@ import java.util.*;
 		public boolean hasCustomJAVAModel() {
 			return decodeModelType(renderType) == Model.Type.JAVA;
 		}
+	}
+
+	public static class AnimationEntry {
+
+		public Animation animation;
+		public double speed;
+
+		public Procedure condition;
+
 	}
 
 	public static int encodeModelType(Model.Type modelType) {

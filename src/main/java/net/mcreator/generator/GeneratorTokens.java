@@ -18,6 +18,8 @@
 
 package net.mcreator.generator;
 
+import net.mcreator.generator.template.TemplateExpressionParser;
+import net.mcreator.util.TestUtil;
 import net.mcreator.workspace.Workspace;
 import net.mcreator.workspace.settings.WorkspaceSettings;
 import org.apache.logging.log4j.LogManager;
@@ -81,21 +83,18 @@ public class GeneratorTokens {
 			if (match.startsWith("item.")) { // a value from list item is requested
 				if (listItem != null) { // get it if available
 					try {
-						String ref = match.substring("item.".length());
-						value = match.contains("()") ?
-								listItem.getClass().getMethod(ref.replace("()", "").trim()).invoke(listItem) :
-								listItem.getClass().getField(ref.trim()).get(listItem);
-					} catch (Exception e) {
+						value = TemplateExpressionParser.getValueFrom(match.substring("item.".length()), listItem);
+					} catch (Throwable e) {
 						LOG.warn("Failed to load token value {}", match, e);
+						TestUtil.failIfTestingEnvironment();
 					}
 				}
 			} else if (element != null) { // get a value from the mod element
 				try {
-					value = match.contains("()") ?
-							element.getClass().getMethod(match.replace("()", "").trim()).invoke(element) :
-							element.getClass().getField(match.trim()).get(element);
-				} catch (Exception e) {
+					value = TemplateExpressionParser.getValueFrom(match, element);
+				} catch (Throwable e) {
 					LOG.warn("Failed to load token value {}", match, e);
+					TestUtil.failIfTestingEnvironment();
 				}
 			}
 			rawname = rawname.replace("@[" + match + "]", String.valueOf(value));

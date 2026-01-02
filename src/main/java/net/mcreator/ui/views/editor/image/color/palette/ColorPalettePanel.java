@@ -27,11 +27,9 @@ import net.mcreator.ui.views.editor.image.tool.ToolPanel;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ColorPalettePanel extends ListEditPanel<Color> {
 	private final ToolPanel toolPanel;
-	private JDialog dialog = null;
 	private ColorPalette palette;
 
 	public ColorPalettePanel(MCreator mcreator, ToolPanel toolPanel) {
@@ -58,30 +56,16 @@ public class ColorPalettePanel extends ListEditPanel<Color> {
 	}
 
 	@Override public Color createNew(Color selected) {
-		JColor.colorChooser.setColor(toolPanel.getColorSelector().getForegroundColor());
-		AtomicReference<Color> newColor = new AtomicReference<>();
-		dialog = JColorChooser.createDialog(mcreator, L10N.t("dialog.image_maker.palette.dialog.new_color.title"), true,
-				JColor.colorChooser, event -> {
-					Color c = JColor.colorChooser.getColor();
-					if (c != null)
-						newColor.set(c);
-					dialog.setVisible(false);
-				}, event -> dialog.setVisible(false));
-		dialog.setVisible(true);
-		return newColor.get();
+		return JColor.openDialog(mcreator, L10N.t("dialog.image_maker.palette.dialog.new_color.title"),
+				toolPanel.getColorSelector().getForegroundColor());
 	}
 
 	@Override protected void promptEdit(Color selected) {
 		int colorID = selectedIndex();
-		JColor.colorChooser.setColor(palette.getColors().get(colorID));
-		dialog = JColorChooser.createDialog(mcreator, L10N.t("dialog.image_maker.palette.dialog.edit_color.title"),
-				true, JColor.colorChooser, event -> {
-					Color c = JColor.colorChooser.getColor();
-					if (c != null)
-						palette.getColors().set(colorID, c);
-					dialog.setVisible(false);
-				}, event -> dialog.setVisible(false));
-		dialog.setVisible(true);
+		Color newColor = JColor.openDialog(mcreator, L10N.t("dialog.image_maker.palette.dialog.edit_color.title"),
+				palette.getColors().get(colorID));
+		if (newColor != null)
+			palette.getColors().set(colorID, newColor);
 	}
 
 	@Override protected String getItemName(Color selected) {

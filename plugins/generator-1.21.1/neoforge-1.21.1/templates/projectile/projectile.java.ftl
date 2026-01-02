@@ -34,7 +34,7 @@
 
 package ${package}.entity;
 
-<#compress>
+<@javacompress>
 @OnlyIn(value = Dist.CLIENT, _interface = ItemSupplier.class)
 public class ${name}Entity extends AbstractArrow implements ItemSupplier {
 
@@ -205,8 +205,10 @@ public class ${name}Entity extends AbstractArrow implements ItemSupplier {
 			}/>
 		</#if>
 
+		<#if !data.disableDiscarding>
 		if (this.inGround)
 			this.discard();
+		</#if>
 	}
 
 	public static ${name}Entity shoot(Level world, LivingEntity entity, RandomSource source) {
@@ -262,6 +264,6 @@ public class ${name}Entity extends AbstractArrow implements ItemSupplier {
 	}
 
 }
-</#compress>
+</@javacompress>
 
 <#-- @formatter:on -->

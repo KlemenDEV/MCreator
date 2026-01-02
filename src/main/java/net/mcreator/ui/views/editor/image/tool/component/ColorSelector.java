@@ -34,8 +34,6 @@ public class ColorSelector extends JPanel {
 	private final JButton foregroundColor = new JButton(generateTransparentPreview(foreground));
 	private final JButton backgroundColor = new JButton(generateTransparentPreview(background));
 
-	private static JDialog dialog = null;
-
 	public ColorSelector(MCreator f) {
 		super(null);
 
@@ -64,33 +62,21 @@ public class ColorSelector extends JPanel {
 		swap.setBorder(BorderFactory.createEmptyBorder());
 
 		foregroundColor.addActionListener(e -> {
-			JColor.colorChooser.setColor(foreground);
-			dialog = JColorChooser.createDialog(f,
-					L10N.t("dialog.image_maker.tools.component.colorselector_select_foreground"), true,
-					JColor.colorChooser, event -> {
-						Color c = JColor.colorChooser.getColor();
-						if (c != null) {
-							foreground = c;
-							updateColors();
-						}
-						dialog.setVisible(false);
-					}, event -> dialog.setVisible(false));
-			dialog.setVisible(true);
+			Color newColor = JColor.openDialog(f,
+					L10N.t("dialog.image_maker.tools.component.colorselector_select_foreground"), foreground);
+			if (newColor != null) {
+				foreground = newColor;
+				updateColors();
+			}
 		});
 
 		backgroundColor.addActionListener(e -> {
-			JColor.colorChooser.setColor(background);
-			dialog = JColorChooser.createDialog(f,
-					L10N.t("dialog.image_maker.tools.component.colorselector_select_background"), true,
-					JColor.colorChooser, event -> {
-						Color c = JColor.colorChooser.getColor();
-						if (c != null) {
-							background = c;
-							updateColors();
-						}
-						dialog.setVisible(false);
-					}, event -> dialog.setVisible(false));
-			dialog.setVisible(true);
+			Color newColor = JColor.openDialog(f,
+					L10N.t("dialog.image_maker.tools.component.colorselector_select_background"), background);
+			if (newColor != null) {
+				background = newColor;
+				updateColors();
+			}
 		});
 
 		reset.addActionListener(e -> {

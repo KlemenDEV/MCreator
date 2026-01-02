@@ -83,9 +83,9 @@ public class TextureMappingDialog {
 					pane.setSelectedIndex(1);
 					String mapping = VOptionPane.showInputDialog(mcreator,
 							L10N.t("dialog.textures_mapping.enter_name_message"),
-							L10N.t("dialog.textures_mapping.enter_name_title"), null, new OptionPaneValidator() {
-								@Override public Validator.ValidationResult validate(JComponent component) {
-									return new JavaMemberNameValidator((VTextField) component, false).validate();
+							L10N.t("dialog.textures_mapping.enter_name_title"), null, new OptionPaneValidator.Cached() {
+								@Override public Validator createValidator(JComponent component) {
+									return new JavaMemberNameValidator((VTextField) component, false);
 								}
 							});
 					if (mapping != null) {
@@ -129,16 +129,16 @@ public class TextureMappingDialog {
 
 		d.add("South", PanelUtils.join(FlowLayout.CENTER, ok, cancel));
 
-		ok.addActionListener(e -> d.setVisible(false));
+		ok.addActionListener(e -> d.dispose());
 		cancel.addActionListener(e -> {
 			currentState = null;
-			d.setVisible(false);
+			d.dispose();
 		});
 		d.addWindowListener(new WindowAdapter() {
 			@Override public void windowClosed(WindowEvent e) {
 				super.windowClosed(e);
 				currentState = null;
-				d.setVisible(false);
+				d.dispose();
 			}
 		});
 

@@ -27,9 +27,11 @@ import net.mcreator.ui.MCreator;
 import net.mcreator.ui.component.util.ComponentUtils;
 import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.init.BlockItemIcons;
+import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.init.UIRES;
 import net.mcreator.ui.laf.themes.Theme;
 import net.mcreator.ui.validation.IValidable;
+import net.mcreator.ui.validation.ValidationResult;
 import net.mcreator.ui.validation.Validator;
 import net.mcreator.util.StringUtils;
 import net.mcreator.util.image.IconUtils;
@@ -52,7 +54,7 @@ public abstract class JSingleEntrySelector<T> extends JPanel implements IValidab
 	private final List<ActionListener> listeners = new ArrayList<>();
 
 	private Validator validator = null;
-	private Validator.ValidationResult currentValidationResult = null;
+	private ValidationResult currentValidationResult = null;
 
 	protected final MCreator mcreator;
 	protected T currentEntry;
@@ -67,6 +69,9 @@ public abstract class JSingleEntrySelector<T> extends JPanel implements IValidab
 
 		edit.putClientProperty(FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_BORDERLESS);
 		remove.putClientProperty(FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_BORDERLESS);
+
+		edit.setToolTipText(L10N.t("single_entry_selector.edit"));
+		remove.setToolTipText(L10N.t("single_entry_selector.remove"));
 
 		edit.addActionListener(event -> {
 			T newEntry = openEntrySelector();
@@ -116,26 +121,27 @@ public abstract class JSingleEntrySelector<T> extends JPanel implements IValidab
 		remove.setEnabled(enabled);
 	}
 
-	@Override public String getToolTipText() {
-		return readableText.getText();
-	}
-
 	public boolean isEmpty() {
 		return currentEntry == null;
 	}
 
 	public void updateReadableText() {
+		boolean isSupported = true;
 		readableText.setIcon(null);
 		if (currentEntry == null) {
 			readableText.setText(defaultText);
 			readableText.setForeground(Theme.current().getAltForegroundColor());
+			readableText.setToolTipText(readableText.getText());
 			return;
 		} else if (currentEntry instanceof MappableElement mappableElement) {
 			Optional<DataListEntry> dataListEntryOpt = mappableElement.getDataListEntry();
 			if (dataListEntryOpt.isPresent()) {
 				DataListEntry dataListEntry = dataListEntryOpt.get();
 				readableText.setText(dataListEntry.getReadableName());
-				if (dataListEntry.getTexture() != null) {
+				if (!dataListEntry.isSupportedInWorkspace(mcreator.getWorkspace())) {
+					readableText.setIcon(UIRES.get("18px.warning"));
+					isSupported = false;
+				} else if (dataListEntry.getTexture() != null) {
 					readableText.setIcon(
 							IconUtils.resize(BlockItemIcons.getIconForItem(dataListEntry.getTexture()), 18));
 				}
@@ -159,6 +165,8 @@ public abstract class JSingleEntrySelector<T> extends JPanel implements IValidab
 						MCItem.getBlockIconBasedOnName(mcreator.getWorkspace(), currentEntry.toString()), 18));
 		}
 		readableText.setForeground(Theme.current().getForegroundColor());
+		readableText.setToolTipText(
+				isSupported ? readableText.getText() : L10N.t("single_entry_selector.unsupported_entry"));
 	}
 
 	protected abstract T openEntrySelector();
@@ -185,22 +193,21 @@ public abstract class JSingleEntrySelector<T> extends JPanel implements IValidab
 		super.paint(g);
 
 		if (currentValidationResult != null) {
-			g.setColor(currentValidationResult.getValidationResultType().getColor());
-			switch (currentValidationResult.getValidationResultType()) {
+			g.setColor(currentValidationResult.type().getColor());
+			switch (currentValidationResult.type()) {
 			case WARNING -> WARNING_ICON.paintIcon(this, g, 0, 0);
 			case ERROR -> ERROR_ICON.paintIcon(this, g, 0, 0);
 			case PASSED -> OK_ICON.paintIcon(this, g, 0, 0);
 			}
 
-			if (currentValidationResult.getValidationResultType() == Validator.ValidationResultType.ERROR
-					|| currentValidationResult.getValidationResultType() == Validator.ValidationResultType.WARNING) {
+			if (currentValidationResult.type() != ValidationResult.Type.PASSED) {
 				g.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
 			}
 		}
 	}
 
-	@Override public Validator.ValidationResult getValidationStatus() {
-		Validator.ValidationResult validationResult = validator == null ? null : validator.validateIfEnabled(this);
+	@Override public ValidationResult getValidationStatus() {
+		ValidationResult validationResult = validator == null ? null : validator.validateIfEnabled(this);
 		this.currentValidationResult = validationResult;
 
 		//repaint as new validation status might have to be rendered

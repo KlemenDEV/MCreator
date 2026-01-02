@@ -40,7 +40,7 @@ package ${package}.init;
 <#assign entitiesWithInventory = w.getGElementsOfType("livingentity")?filter(e -> e.guiBoundTo?has_content)>
 
 <#if hasLivingEntities || entitiesWithInventory?size != 0>
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber
 </#if>
 public class ${JavaModName}Entities {
 
@@ -78,14 +78,14 @@ public class ${JavaModName}Entities {
 	}
 
 	<#if entitiesWithInventory?size != 0>
-	<#compress>
+	<@javacompress>
 	<#-- #4780: entities have equipment inventory capability registered before custom ones without priority set -->
 	@SubscribeEvent(priority = EventPriority.HIGHEST) public static void registerCapabilities(RegisterCapabilitiesEvent event) {
 		<#list entitiesWithInventory as entity>
 			event.registerEntity(Capabilities.ItemHandler.ENTITY, ${entity.getModElement().getRegistryNameUpper()}.get(), (living, context) -> living.getCombinedInventory());
 		</#list>
 	}
-	</#compress>
+	</@javacompress>
 	</#if>
 
 	<#if hasLivingEntities>

@@ -19,6 +19,7 @@
 package net.mcreator.ui.dialogs;
 
 import net.mcreator.ui.MCreator;
+import net.mcreator.ui.component.SquareLoaderIcon;
 import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.dialogs.imageeditor.NewImageDialog;
 import net.mcreator.ui.init.L10N;
@@ -37,7 +38,11 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 
 public class TypedTextureSelectorDialog extends MCreatorDialog {
@@ -69,7 +74,7 @@ public class TypedTextureSelectorDialog extends MCreatorDialog {
 
 		setModal(true);
 		setTitle(L10N.t("dialog.textures_selector.title", type));
-		setSize(842, 480);
+		setSize(844, 480);
 		setLocationRelativeTo(mcreator);
 
 		JPanel pn = new JPanel(new BorderLayout());
@@ -90,13 +95,15 @@ public class TypedTextureSelectorDialog extends MCreatorDialog {
 
 		JLabel aa = L10N.label("dialog.textures_selector.no_texture");
 
+		center.add(PanelUtils.totalCenterInPanel(
+				new JLabel(new SquareLoaderIcon(8, 1, Theme.current().getAltForegroundColor()))), "load");
 		center.add(PanelUtils.centerInPanel(aa), "help");
 		center.add(new JScrollPane(list), "list");
 
 		JPanel buttons = new JPanel();
 
 		JButton cancelButton = new JButton(UIManager.getString("OptionPane.cancelButtonText"));
-		cancelButton.addActionListener(event -> setVisible(false));
+		cancelButton.addActionListener(event -> dispose());
 
 		buttons.add(select);
 		buttons.add(cancelButton);
@@ -134,7 +141,7 @@ public class TypedTextureSelectorDialog extends MCreatorDialog {
 		createTx2.addActionListener(event -> {
 			NewImageDialog newImageDialog = new NewImageDialog(mcreator);
 			newImageDialog.setVisible(true);
-			setVisible(false);
+			dispose();
 		});
 		pno.add(createTx2);
 
@@ -149,6 +156,13 @@ public class TypedTextureSelectorDialog extends MCreatorDialog {
 		pn.add("North", PanelUtils.westAndEastElement(pno, PanelUtils.totalCenterInPanel(pno2)));
 		pn.add("South", buttons);
 
+		addWindowListener(new WindowAdapter() {
+			@Override public void windowActivated(WindowEvent e) {
+				super.windowActivated(e);
+				reloadList();
+			}
+		});
+
 		add(pn);
 	}
 
@@ -161,33 +175,39 @@ public class TypedTextureSelectorDialog extends MCreatorDialog {
 		return type;
 	}
 
-	@Override public void setVisible(boolean visible) {
-		if (visible) {
-			reloadList();
-		}
-
-		super.setVisible(visible);
-	}
-
 	private void reloadList() {
-		model.removeAllElements();
+		layout.show(center, "load");
 
-		// Load custom textures
-		CustomTexture.getTexturesOfType(mcreator.getWorkspace(), type).forEach(model::addElement);
+		SwingWorker<List<Texture>, Void> worker = new SwingWorker<>() {
+			@Override protected List<Texture> doInBackground() {
+				List<Texture> result = new ArrayList<>(CustomTexture.getTexturesOfType(mcreator.getWorkspace(), type));
+				if (loadExternalTextures) {
+					result.addAll(ExternalTexture.getTexturesOfType(mcreator.getWorkspace(), type));
+				}
+				return result;
+			}
 
-		if (loadExternalTextures) {
-			ExternalTexture.getTexturesOfType(mcreator.getWorkspace(), type).forEach(model::addElement);
-		}
+			@Override protected void done() {
+				try {
+					List<Texture> data = get();
 
-		list.setSelectedIndex(0);
+					model.items.clear();
+					model.items.addAll(data);
+					model.refilter();
 
-		if (model.getSize() == 0) {
-			layout.show(center, "help");
-		} else {
-			layout.show(center, "list");
-		}
+					list.setSelectedIndex(0);
+					if (model.getSize() == 0) {
+						layout.show(center, "help");
+					} else {
+						layout.show(center, "list");
+					}
+					list.requestFocus();
+				} catch (Exception ignored) {
+				}
+			}
+		};
 
-		list.requestFocus();
+		worker.execute();
 	}
 
 	public JButton getConfirmButton() {
@@ -251,6 +271,11 @@ public class TypedTextureSelectorDialog extends MCreatorDialog {
 			refilter();
 		}
 
+		@Override public void addAll(Collection<? extends Texture> collection) {
+			items.addAll(collection);
+			refilter();
+		}
+
 		@Override public void removeAllElements() {
 			super.removeAllElements();
 			items.clear();
@@ -265,7 +290,7 @@ public class TypedTextureSelectorDialog extends MCreatorDialog {
 			return super.removeElement(a);
 		}
 
-		private void refilter() {
+		private synchronized void refilter() {
 			filterItems.clear();
 			String term = filterField.getText();
 			filterItems.addAll(items.stream().filter(item -> {

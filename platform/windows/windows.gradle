@@ -95,7 +95,7 @@ tasks.register('buildInstallerWin64', Exec.class) {
 }
 
 tasks.register('exportWindows') {
-    group 'export'
+    group = 'export'
 
     dependsOn exportWindowsZip
 
@@ -111,7 +111,7 @@ tasks.register('exportWindows') {
 
 void signFile(File fileToSign) {
     if (System.getenv('WIN_CERT_KEYSTORE') != null) {
-        exec {
+        execCtx.execOps.exec {
             commandLine 'java', '-jar', file('platform/windows/lib/jsign-7.1.jar'),
                     '--storetype', 'GOOGLECLOUD',
                     '--storepass', System.getenv('WIN_CERT_STOREPASS'),
@@ -119,7 +119,7 @@ void signFile(File fileToSign) {
                     '--alias', System.getenv('WIN_CERT_KEYNAME'),
                     '--certfile', 'codesign-chain.pem',
                     '--tsmode', 'RFC3161',
-                    '--tsaurl', 'http://timestamp.globalsign.com/tsa/r6advanced1',
+                    '--tsaurl', 'http://timestamp.globalsign.com/tsa/r45standard',
                     '--name', 'MCreator',
                     '--url', 'https://mcreator.net/',
                     fileToSign

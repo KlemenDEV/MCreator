@@ -28,10 +28,9 @@ import net.mcreator.ui.help.HelpUtils;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.minecraft.SpawnableEntityListField;
 import net.mcreator.ui.validation.ValidationGroup;
-import net.mcreator.ui.validation.Validator;
+import net.mcreator.ui.validation.ValidationResult;
 import net.mcreator.ui.validation.component.VTextField;
 import net.mcreator.ui.validation.validators.ConditionalItemListFieldValidator;
-import net.mcreator.ui.validation.validators.TextFieldValidator;
 import net.mcreator.util.StringUtils;
 import net.mcreator.workspace.elements.ModElement;
 
@@ -43,7 +42,8 @@ import java.net.URISyntaxException;
 
 public class AttributeGUI extends ModElementGUI<Attribute> {
 
-	private final VTextField name = new VTextField(38);
+	private final VTextField name = new VTextField(38).requireValue("elementgui.attribute.needs_name")
+			.enableRealtimeValidation();
 	private final JSpinner defaultValue = new JSpinner(
 			new SpinnerNumberModel(0.0, -Double.MAX_VALUE, Double.MAX_VALUE, 1.0));
 	private final JMinMaxSpinner minMaxValue = new JMinMaxSpinner(0, 1, -Double.MAX_VALUE, Double.MAX_VALUE, 1.0);
@@ -95,17 +95,14 @@ public class AttributeGUI extends ModElementGUI<Attribute> {
 			entities.setEnabled(!addToAllEntities.isSelected());
 		});
 
-		name.setValidator(new TextFieldValidator(name, L10N.t("elementgui.attribute.needs_name")));
-		name.enableRealtimeValidation();
-
 		minMaxValue.setValidator(() -> {
 			if (minMaxValue.getMinValue() > (double) defaultValue.getValue())
-				return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
+				return new ValidationResult(ValidationResult.Type.ERROR,
 						L10N.t("elementgui.attribute.default_lower_than_min"));
 			else if (minMaxValue.getMaxValue() < (double) defaultValue.getValue())
-				return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
+				return new ValidationResult(ValidationResult.Type.ERROR,
 						L10N.t("elementgui.attribute.default_higher_than_max"));
-			return Validator.ValidationResult.PASSED;
+			return ValidationResult.PASSED;
 		});
 
 		page1group.addValidationElement(minMaxValue);

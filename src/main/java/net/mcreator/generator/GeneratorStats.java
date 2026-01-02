@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 
 public class GeneratorStats {
 
-	private static final Pattern ftlFile = Pattern.compile(".*\\.ftl");
+	private static final Pattern ftlFile = Pattern.compile(".*\\.ftl$");
 
 	private final Map<ModElementType<?>, CoverageStatus> modElementTypeCoverageInfo = new TreeMap<>(
 			Comparator.comparing(ModElementType::getRegistryName));
@@ -107,9 +107,8 @@ public class GeneratorStats {
 			baseCoverageInfo.put("variables", CoverageStatus.NONE);
 		} else {
 			baseCoverageInfo.put("variables",
-					generatorConfiguration.getVariableTypes().getSupportedVariableTypes().size()
-							== VariableTypeLoader.INSTANCE.getAllVariableTypes().stream()
-							.filter(e -> !e.isIgnoredByCoverage()).count() ?
+					VariableTypeLoader.INSTANCE.getAllVariableTypes().stream().filter(e -> !e.isIgnoredByCoverage())
+							.allMatch(generatorConfiguration.getVariableTypes().getSupportedVariableTypes()::contains) ?
 							CoverageStatus.FULL :
 							CoverageStatus.PARTIAL);
 		}

@@ -97,6 +97,8 @@ import java.util.stream.Collectors;
 	public boolean useLootTableForDrops;
 	public MItemBlock customDrop;
 	public int dropAmount;
+	public int xpAmountMin;
+	public int xpAmountMax;
 	public boolean forceTicking;
 	public boolean emissiveRendering;
 
@@ -107,6 +109,7 @@ import java.util.stream.Collectors;
 	public MItemBlock creativePickItem;
 	public String offsetType;
 	public String aiPathNodeType;
+	public MItemBlock strippingResult;
 
 	public boolean ignitedByLava;
 	public int flammability;
@@ -141,6 +144,7 @@ import java.util.stream.Collectors;
 	public Procedure onRightClicked;
 	public Procedure onEntityWalksOn;
 	public Procedure onHitByProjectile;
+	public Procedure onEntityFallsOn;
 
 	private Plant() {
 		this(null);
@@ -189,6 +193,10 @@ import java.util.stream.Collectors;
 		return dropAmount > 0 && (hasBlockItem || !customDrop.isEmpty());
 	}
 
+	public boolean shouldDisableOffset() {
+		return disableOffset || offsetType.equals("NONE");
+	}
+
 	public boolean isWaterloggable() {
 		// Disable waterlogging for sapling with mega trees due to ghost water blocks when the tree fails to grow
 		if ("sapling".equals(plantType) && (megaTrees[0] != null || megaTrees[1] != null)) {
@@ -214,6 +222,9 @@ import java.util.stream.Collectors;
 	}
 
 	@Override public BufferedImage generateModElementPicture() {
+		if (hasBlockItem && itemTexture != null && !itemTexture.isEmpty()) {
+			return ImageUtils.resizeAndCrop(itemTexture.getImage(TextureType.ITEM), 32);
+		}
 		return ImageUtils.resizeAndCrop(texture.getImage(TextureType.BLOCK), 32);
 	}
 

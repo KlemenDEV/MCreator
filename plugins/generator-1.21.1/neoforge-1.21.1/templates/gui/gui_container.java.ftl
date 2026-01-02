@@ -38,8 +38,8 @@ package ${package}.world.inventory;
 
 import ${package}.${JavaModName};
 
-<#compress>
-<#if hasProcedure(data.onTick)>
+<@javacompress>
+<#if hasProcedure(data.onTick) || hasProcedure(data.onOpen)>
 @EventBusSubscriber
 </#if>
 public class ${name}Menu extends AbstractContainerMenu implements ${JavaModName}Menus.MenuAccessor {
@@ -139,7 +139,7 @@ public class ${name}Menu extends AbstractContainerMenu implements ${JavaModName}
 						<#if hasProcedure(component.onTakenFromSlot)>
 						@Override public void onTake(Player entity, ItemStack stack) {
 							super.onTake(entity, stack);
-							slotChanged(${component.id}, 1, 0);
+							slotChanged(${component.id}, 1, stack.getCount());
 						}
 						</#if>
 
@@ -184,10 +184,6 @@ public class ${name}Menu extends AbstractContainerMenu implements ${JavaModName}
 			for (int si = 0; si < 9; ++si)
 				this.addSlot(new Slot(inv, si, ${coffx} + 8 + si * 18, ${coffy} + 142));
 		</#if>
-
-		<#if hasProcedure(data.onOpen)>
-			<@procedureOBJToCode data.onOpen/>
-		</#if>
 	}
 
 	@Override public boolean stillValid(Player player) {
@@ -226,13 +222,15 @@ public class ${name}Menu extends AbstractContainerMenu implements ${JavaModName}
 					return ItemStack.EMPTY;
 				}
 
-				if (itemstack1.getCount() == 0)
-					slot.set(ItemStack.EMPTY);
-				else
+				if (itemstack1.isEmpty()) {
+					slot.setByPlayer(ItemStack.EMPTY);
+				} else {
 					slot.setChanged();
+				}
 
-				if (itemstack1.getCount() == itemstack.getCount())
+				if (itemstack1.getCount() == itemstack.getCount()) {
 					return ItemStack.EMPTY;
+				}
 
 				slot.onTake(playerIn, itemstack1);
 			}
@@ -307,18 +305,31 @@ public class ${name}Menu extends AbstractContainerMenu implements ${JavaModName}
 	}
 
 	<#if hasProcedure(data.onTick)>
-		@SubscribeEvent public static void onPlayerTick(PlayerTickEvent.Post event) {
-			Player entity = event.getEntity();
-			if(entity.containerMenu instanceof ${name}Menu) {
-				Level world = entity.level();
-				double x = entity.getX();
-				double y = entity.getY();
-				double z = entity.getZ();
-				<@procedureOBJToCode data.onTick/>
-			}
+	@SubscribeEvent public static void onPlayerTick(PlayerTickEvent.Post event) {
+		Player entity = event.getEntity();
+		if(entity.containerMenu instanceof ${name}Menu menu) {
+			Level world = menu.world;
+			double x = menu.x;
+			double y = menu.y;
+			double z = menu.z;
+			<@procedureOBJToCode data.onTick/>
 		}
+	}
+	</#if>
+
+	<#if hasProcedure(data.onOpen)>
+	@SubscribeEvent public static void onContainerOpen(PlayerContainerEvent.Open event) {
+		Player entity = event.getEntity();
+		if(event.getContainer() instanceof ${name}Menu menu) {
+			Level world = menu.world;
+			double x = menu.x;
+			double y = menu.y;
+			double z = menu.z;
+			<@procedureOBJToCode data.onOpen/>
+		}
+	}
 	</#if>
 
 }
-</#compress>
+</@javacompress>
 <#-- @formatter:on -->

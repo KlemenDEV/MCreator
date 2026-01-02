@@ -55,9 +55,7 @@ import javax.swing.event.ChangeListener;
 import java.io.Closeable;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
+import java.util.concurrent.*;
 
 public class BlocklyPanel extends JFXPanel implements Closeable {
 
@@ -67,7 +65,7 @@ public class BlocklyPanel extends JFXPanel implements Closeable {
 
 	private final BlocklyJavascriptBridge bridge;
 
-	private final List<Runnable> runAfterLoaded = new ArrayList<>();
+	private final BlockingQueue<Runnable> runAfterLoaded = new LinkedBlockingQueue<>();
 
 	private boolean loaded = false;
 
@@ -75,6 +73,8 @@ public class BlocklyPanel extends JFXPanel implements Closeable {
 	private final BlocklyEditorType type;
 
 	private final List<ChangeListener> changeListeners = new CopyOnWriteArrayList<>();
+
+	private javafx.beans.value.ChangeListener<? super Worker.State> listener = null;
 
 	public BlocklyPanel(MCreator mcreator, @Nonnull BlocklyEditorType type) {
 		this.mcreator = mcreator;
@@ -101,7 +101,7 @@ public class BlocklyPanel extends JFXPanel implements Closeable {
 			webEngine.setUserAgent("MCreator");
 
 			webEngine.load(BlocklyPanel.this.getClass().getResource("/blockly/blockly.html").toExternalForm());
-			webEngine.getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
+			webEngine.getLoadWorker().stateProperty().addListener(listener = (ov, oldState, newState) -> {
 				if (!loaded && newState == Worker.State.SUCCEEDED && webEngine.getDocument() != null) {
 					// load CSS from file to select proper style for OS
 					Element styleNode = webEngine.getDocument().createElement("style");
@@ -148,8 +148,10 @@ public class BlocklyPanel extends JFXPanel implements Closeable {
 							+ "'renderer' : '" + PreferencesManager.PREFERENCES.blockly.blockRenderer.get().toLowerCase(Locale.ENGLISH) + "',"
 							+ "'collapse' : " + PreferencesManager.PREFERENCES.blockly.enableCollapse.get() + ","
 							+ "'trashcan' : " + PreferencesManager.PREFERENCES.blockly.enableTrashcan.get() + ","
+							+ "'maxTrashContents' : " + PreferencesManager.PREFERENCES.blockly.maxTrashContents.get() + ","
 							+ "'maxScale' : " + PreferencesManager.PREFERENCES.blockly.maxScale.get() / 100.0 + ","
 							+ "'minScale' : " + PreferencesManager.PREFERENCES.blockly.minScale.get() / 100.0 + ","
+							+ "'startScale' : " + PreferencesManager.PREFERENCES.blockly.startScale.get() / 100.0 + ","
 							+ "'scaleSpeed' : " + PreferencesManager.PREFERENCES.blockly.scaleSpeed.get() / 100.0 + ","
 							+ "'saturation' :" + PreferencesManager.PREFERENCES.blockly.colorSaturation.get() / 100.0 + ","
 							+ "'value' :" + PreferencesManager.PREFERENCES.blockly.colorValue.get() / 100.0
@@ -206,8 +208,37 @@ public class BlocklyPanel extends JFXPanel implements Closeable {
 		changeListeners.add(listener);
 	}
 
-	public String getXML() {
-		return loaded ? (String) executeJavaScriptSynchronously("workspaceToXML();") : "";
+	private static boolean isValidBlocklyXML(@Nullable String xml) {
+		if (xml == null || xml.isBlank())
+			return false;
+		return xml.trim().startsWith("<xml xmlns=\"https://developers.google.com/blockly/xml\">");
+	}
+
+	@Nullable private String lastValidXML = null;
+
+	public synchronized String getXML() {
+		if (loaded) {
+			@Nullable String newXml = (String) executeJavaScriptSynchronously("workspaceToXML();");
+
+			// XML can become invalid if e.g., WebKit runs out of memory and executeJavaScriptSynchronously times out
+			boolean valid = isValidBlocklyXML(newXml);
+
+			if (valid) {
+				lastValidXML = newXml;
+				return newXml;
+			} else if (lastValidXML != null) { // If the XML is not valid, return the last valid XML
+				if (webEngine != null) { // Log the error only if the BlocklyPanel was not closed yet
+					LOG.warn("Invalid Blockly XML detected, returning last valid XML");
+					TestUtil.failIfTestingEnvironment();
+				}
+				return lastValidXML;
+			} else {
+				LOG.error("Invalid Blockly XML detected and no last valid XML available");
+				TestUtil.failIfTestingEnvironment();
+			}
+		}
+
+		return "";
 	}
 
 	public void setXML(String xml) {
@@ -218,7 +249,7 @@ public class BlocklyPanel extends JFXPanel implements Closeable {
 				""".formatted(escapeXML(xml)));
 
 		ThreadUtil.runOnSwingThread(
-				() -> changeListeners.forEach(listener -> listener.stateChanged(new ChangeEvent(BlocklyPanel.this))));
+				() -> changeListeners.forEach(listener -> listener.stateChanged(new ChangeEvent(xml))));
 	}
 
 	public void addBlocksFromXML(String xml) {
@@ -271,7 +302,7 @@ public class BlocklyPanel extends JFXPanel implements Closeable {
 		return retval;
 	}
 
-	public Object executeJavaScriptSynchronously(String javaScript) {
+	@Nullable public Object executeJavaScriptSynchronously(String javaScript) {
 		try {
 			FutureTask<Object> query = new FutureTask<>(() -> {
 				if (webEngine != null)
@@ -281,8 +312,9 @@ public class BlocklyPanel extends JFXPanel implements Closeable {
 			ThreadUtil.runOnFxThread(query);
 			return query.get();
 		} catch (InterruptedException | ExecutionException e) {
+			LOG.error("Synchronous JS execution failed", e);
+			LOG.error(javaScript);
 			TestUtil.failIfTestingEnvironment();
-			LOG.error("Failed to execute: " + javaScript, e);
 		}
 		return null;
 	}
@@ -314,9 +346,21 @@ public class BlocklyPanel extends JFXPanel implements Closeable {
 		if (webEngine != null) {
 			// Ensure that the web engine is not closed during the initialization
 			addTaskToRunAfterLoaded(() -> ThreadUtil.runOnFxThread(() -> {
-				// Free resources of the web engine (kill JS, load empty page and finally free the reference)
+				// Remove any potential stale references in listeners and event handlers
+				runAfterLoaded.clear();
+				changeListeners.clear();
+
+				// Remove the listener to prevent memory leaks
+				if (listener != null) {
+					webEngine.getLoadWorker().stateProperty().removeListener(listener);
+					listener = null;
+				}
+
+				// Free resources of the web engine (kill JS, load empty page)
 				webEngine.setJavaScriptEnabled(false);
-				webEngine.load("");
+				webEngine.load("about:blank");
+
+				// Clear the web engine reference
 				webEngine = null;
 			}));
 		}

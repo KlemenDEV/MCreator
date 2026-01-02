@@ -18,11 +18,16 @@
 
 package net.mcreator.ui.dialogs.workspace;
 
+import net.mcreator.generator.Generator;
+import net.mcreator.generator.GeneratorConfiguration;
+import net.mcreator.generator.GeneratorFlavor;
+import net.mcreator.ui.component.JEmptyBox;
+import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.dialogs.file.FileDialogs;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.validation.AggregatedValidationResult;
 import net.mcreator.ui.validation.ValidationGroup;
-import net.mcreator.ui.validation.Validator;
+import net.mcreator.ui.validation.ValidationResult;
 import net.mcreator.ui.validation.component.VTextField;
 import net.mcreator.workspace.WorkspaceFolderManager;
 import net.mcreator.workspace.settings.WorkspaceSettings;
@@ -38,7 +43,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Objects;
 
-public abstract class AbstractWorkspacePanel extends JPanel {
+public abstract class AbstractWorkspacePanel {
 
 	final WorkspaceDialogs.WorkspaceDialogPanel workspaceDialogPanel;
 	final ValidationGroup validationGroup = new ValidationGroup();
@@ -48,8 +53,21 @@ public abstract class AbstractWorkspacePanel extends JPanel {
 
 	protected final JButton selectWorkspaceFolder = new JButton("<html>&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;");
 
-	public AbstractWorkspacePanel(Window parent) {
-		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+	private final GeneratorFlavor generatorFlavor;
+
+	private final JPanel panel = new JPanel();
+	private final JPanel topPanel = new JPanel();
+	private final JPanel notices = new JPanel();
+
+	public AbstractWorkspacePanel(Window parent, GeneratorFlavor generatorFlavor) {
+		panel.setLayout(new BorderLayout(0, 120));
+		panel.add(topPanel, BorderLayout.NORTH);
+		panel.add(notices, BorderLayout.SOUTH);
+
+		topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
+		notices.setLayout(new BoxLayout(notices, BoxLayout.Y_AXIS));
+
+		this.generatorFlavor = generatorFlavor;
 
 		workspaceDialogPanel = new WorkspaceDialogs.WorkspaceDialogPanel(parent, null);
 
@@ -112,21 +130,20 @@ public abstract class AbstractWorkspacePanel extends JPanel {
 
 			if (selectedFile.getAbsolutePath()
 					.equals(WorkspaceFolderManager.getSuggestedWorkspaceFoldersRoot().getAbsolutePath())) {
-				return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
+				return new ValidationResult(ValidationResult.Type.ERROR,
 						L10N.t("dialog.file.error_save_inside_workspace_root_message"));
 			} else if (selectedFile.isDirectory() && selectedFile.list() != null
 					&& Objects.requireNonNull(selectedFile.list()).length > 0) {
-				return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
+				return new ValidationResult(ValidationResult.Type.ERROR,
 						L10N.t("dialog.file.error_save_inside_folder_not_empty_message"));
 			} else if (!workspaceFolder.getText().matches("[a-zA-Z0-9_/+\\-\\\\:()\\[\\].,@$=`' ]+")) {
-				return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
-						L10N.t("dialog.new_workspace.letters_valid"));
+				return new ValidationResult(ValidationResult.Type.ERROR, L10N.t("dialog.new_workspace.letters_valid"));
 			} else if (selectedFile.getName().contains(" ") || selectedFile.getName().contains(":")
 					|| selectedFile.getName().contains("\\") || selectedFile.getName().contains("/")
 					|| selectedFile.getName().contains("|") || selectedFile.getName().contains("\"")
 					|| selectedFile.getName().contains("?") || selectedFile.getName().contains("*")
 					|| selectedFile.getName().contains(">")) {
-				return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
+				return new ValidationResult(ValidationResult.Type.ERROR,
 						L10N.t("dialog.new_workspace.valid_characters"));
 			} else if (!selectedFile.getParentFile().isDirectory()) {
 				try {
@@ -135,17 +152,39 @@ public abstract class AbstractWorkspacePanel extends JPanel {
 						throw new IOException();
 					}
 				} catch (IOException e) {
-					return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
+					return new ValidationResult(ValidationResult.Type.ERROR,
 							L10N.t("dialog.file.error_directory_doesnt_exist"));
 				}
 			} else if (!Files.isWritable(selectedFile.getParentFile().toPath()) || !Files.isReadable(
 					selectedFile.getParentFile().toPath())) {
-				return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
+				return new ValidationResult(ValidationResult.Type.ERROR,
 						L10N.t("dialog.new_workspace.file_permission_problem"));
 			}
 
-			return Validator.ValidationResult.PASSED;
+			return ValidationResult.PASSED;
 		});
+
+		workspaceDialogPanel.setFlavorFilter(generatorFlavor);
+
+		workspaceDialogPanel.generator.removeAllItems();
+		Generator.GENERATOR_CACHE.values().stream().filter(gc -> gc.getGeneratorFlavor() == generatorFlavor)
+				.forEach(workspaceDialogPanel.generator::addItem);
+
+		GeneratorConfiguration generatorConfiguration = GeneratorConfiguration.getRecommendedGeneratorForFlavor(
+				Generator.GENERATOR_CACHE.values(), generatorFlavor);
+		workspaceDialogPanel.generator.setSelectedItem(generatorConfiguration);
+	}
+
+	public void addFormElement(Component component) {
+		topPanel.add(component);
+	}
+
+	public void addNotice(ImageIcon icon, String textKey) {
+		notices.add(PanelUtils.join(FlowLayout.LEFT, new JLabel(icon), new JEmptyBox(0, 0), L10N.label(textKey)));
+	}
+
+	public JPanel getContainer() {
+		return panel;
 	}
 
 	public String getWorkspaceFolder() {
@@ -167,6 +206,10 @@ public abstract class AbstractWorkspacePanel extends JPanel {
 
 	public void focusMainField() {
 		workspaceDialogPanel.modName.requestFocusInWindow();
+	}
+
+	public GeneratorFlavor getGeneratorFlavor() {
+		return generatorFlavor;
 	}
 
 }

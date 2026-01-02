@@ -20,6 +20,7 @@ package net.mcreator.ui.component;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import net.mcreator.ui.component.util.PanelUtils;
+import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.init.UIRES;
 import net.mcreator.ui.laf.themes.Theme;
 
@@ -32,10 +33,11 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class JColor extends JPanel {
 
-	public static final JColorChooser colorChooser = new JColorChooser();
+	private static final JColorChooser colorChooser = new JColorChooser();
 
 	private Color currentColor = Color.white;
 
@@ -44,8 +46,6 @@ public class JColor extends JPanel {
 
 	private final TechnicalButton edit = new TechnicalButton(UIRES.get("18px.edit"));
 	private final TechnicalButton remove = new TechnicalButton(UIRES.get("18px.remove"));
-
-	private JDialog dialog = null;
 
 	private final boolean allowNullColor;
 	private final boolean allowTransparency;
@@ -74,14 +74,9 @@ public class JColor extends JPanel {
 		remove.putClientProperty(FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_BORDERLESS);
 
 		edit.addActionListener(e -> {
-			colorChooser.setColor(getColor());
-			dialog = JColorChooser.createDialog(window, "Select color: ", true, colorChooser, e2 -> {
-				Color color = colorChooser.getColor();
-				if (color != null)
-					setColor(color);
-				dialog.setVisible(false);
-			}, e2 -> dialog.setVisible(false));
-			dialog.setVisible(true);
+			Color newColor = openDialog(window, L10N.t("elementgui.common.select_color"), getColor());
+			if (newColor != null)
+				this.setColor(newColor);
 		});
 		remove.addActionListener(e -> setColor(null));
 
@@ -104,6 +99,28 @@ public class JColor extends JPanel {
 		}
 	}
 
+	public static Color openDialog(Window window, String dialogTitle, Color initColor) {
+		AtomicReference<Color> retval = new AtomicReference<>();
+		colorChooser.setColor(initColor);
+		JDialog dialog = JColorChooser.createDialog(window, dialogTitle, true, colorChooser, e -> {
+			Color color = colorChooser.getColor();
+			if (color != null)
+				retval.set(color);
+			disposeDialog();
+		}, e2 -> disposeDialog());
+		dialog.setVisible(true);
+		return retval.get();
+	}
+
+	private static void disposeDialog() {
+		((JDialog) colorChooser.getRootPane().getParent()).dispose();
+	}
+
+	public JColor withColorTextColumns(int width) {
+		colorText.setColumns(width);
+		return this;
+	}
+
 	@Override public void setEnabled(boolean enabled) {
 		super.setEnabled(enabled);
 		colorText.setEnabled(enabled);
@@ -123,7 +140,7 @@ public class JColor extends JPanel {
 
 		if (currentColor == null) {
 			colorText.setOpaque(false);
-			colorText.setText("DEFAULT");
+			colorText.setText(L10N.t("elementgui.common.default_color"));
 			colorText.setForeground(Theme.current().getForegroundColor());
 		} else {
 			colorText.setText(String.format("#%06X", 0xFFFFFF & color.getRGB()));

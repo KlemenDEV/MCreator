@@ -68,7 +68,7 @@ public class AddCommonTagsDialog {
 
 		JButton ok = L10N.button("dialog.tools.inject_tags.confirm");
 		JButton cancel = new JButton(UIManager.getString("OptionPane.cancelButtonText"));
-		cancel.addActionListener(e -> dialog.setVisible(false));
+		cancel.addActionListener(e -> dialog.dispose());
 		dialog.add("South", PanelUtils.join(ok, cancel));
 
 		List<Consumer<Boolean>> callables = new ArrayList<>();
@@ -80,7 +80,6 @@ public class AddCommonTagsDialog {
 		callables.add(addTag(mcreator, blockTags, "fences", "minecraft", TagType.BLOCKS, false));
 		callables.add(addTag(mcreator, blockTags, "wooden_fences", "minecraft", TagType.BLOCKS, false));
 		callables.add(addTag(mcreator, blockTags, "walls", "minecraft", TagType.BLOCKS, false));
-		callables.add(addTag(mcreator, blockTags, "small_flowers", "minecraft", TagType.BLOCKS, false));
 		callables.add(addTag(mcreator, blockTags, "bee_growables", "minecraft", TagType.BLOCKS, false));
 		callables.add(addTag(mcreator, blockTags, "valid_spawn", "minecraft", TagType.BLOCKS, false));
 		callables.add(addTag(mcreator, blockTags, "impermeable", "minecraft", TagType.BLOCKS, false));
@@ -160,7 +159,7 @@ public class AddCommonTagsDialog {
 			callables.forEach(c -> c.accept(false));
 			mcreator.reloadWorkspaceTabContents();
 			dialog.setCursor(Cursor.getDefaultCursor());
-			dialog.setVisible(false);
+			dialog.dispose();
 		});
 
 		dialog.getRootPane().setDefaultButton(ok);

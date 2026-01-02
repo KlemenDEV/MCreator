@@ -30,7 +30,7 @@ import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.minecraft.states.PropertyData;
 import net.mcreator.ui.minecraft.states.PropertyDataWithValue;
 import net.mcreator.ui.minecraft.states.block.BlockStatePropertyUtils;
-import net.mcreator.ui.validation.Validator;
+import net.mcreator.ui.validation.ValidationResult;
 import net.mcreator.ui.validation.component.VTextField;
 import net.mcreator.ui.validation.validators.RegistryNameValidator;
 import net.mcreator.ui.validation.validators.UniqueNameValidator;
@@ -80,22 +80,22 @@ public class AddBlockPropertyDialog {
 
 		AtomicReference<PropertyDataWithValue<?>> result = new AtomicReference<>(null);
 		ok.addActionListener(e -> {
-			if (name.getValidationStatus().getValidationResultType() != Validator.ValidationResultType.ERROR) {
+			if (name.getValidationStatus().type() != ValidationResult.Type.ERROR) {
 				String propertyName = "CUSTOM:" + name.getText();
 				if ("Logic".equals(type.getSelectedItem())) {
 					result.set(new PropertyDataWithValue<>(new PropertyData.LogicType(propertyName), null));
-					dialog.setVisible(false);
+					dialog.dispose();
 				} else if ("Integer".equals(type.getSelectedItem())) {
 					result.set(new PropertyDataWithValue<>(
 							new PropertyData.IntegerType(propertyName, integerBounds.getIntMinValue(),
 									integerBounds.getIntMaxValue()), null));
-					dialog.setVisible(false);
+					dialog.dispose();
 				} else if ("Enum".equals(type.getSelectedItem())) {
 					List<String> textList = stringBounds.getTextList();
 					if (textList.size() > 1) {
 						result.set(new PropertyDataWithValue<>(
 								new PropertyData.StringType(propertyName, textList.toArray(String[]::new)), null));
-						dialog.setVisible(false);
+						dialog.dispose();
 					} else {
 						JOptionPane.showMessageDialog(dialog,
 								L10N.t("elementgui.block.custom_properties.add.error_invalid_values"),
@@ -105,7 +105,7 @@ public class AddBlockPropertyDialog {
 				}
 			}
 		});
-		cancel.addActionListener(e -> dialog.setVisible(false));
+		cancel.addActionListener(e -> dialog.dispose());
 
 		JPanel main = new JPanel(new GridLayout(0, 1, 0, 2));
 		main.setBorder(BorderFactory.createEmptyBorder(10, 10, 5, 10));

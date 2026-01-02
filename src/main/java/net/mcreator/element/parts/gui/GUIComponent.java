@@ -24,6 +24,7 @@ import net.mcreator.element.parts.procedure.RetvalProcedure;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.wysiwyg.WYSIWYG;
 import net.mcreator.ui.wysiwyg.WYSIWYGEditor;
+import net.mcreator.util.StringUtils;
 import net.mcreator.workspace.Workspace;
 
 import javax.annotation.Nonnull;
@@ -49,11 +50,12 @@ import java.util.stream.Collectors;
 		put("entitymodel", EntityModel.class); //weight -10
 		put("textfield", TextField.class); // weight 0
 		put("label", Label.class); // weight 10
+		put("slider", Slider.class); // weight 15
 		put("checkbox", Checkbox.class); //weight 20
 		put("imagebutton", ImageButton.class); //weight 25
-		put("button", Button.class);// weight 30
-		put("image", Image.class);// weight 40
-		put("sprite", Sprite.class);// weight 45
+		put("button", Button.class); // weight 30
+		put("image", Image.class); // weight 40
+		put("sprite", Sprite.class); // weight 45
 		put("inputslot", InputSlot.class); // weight 50
 		put("outputslot", OutputSlot.class); // weight 50
 	}};
@@ -65,7 +67,7 @@ import java.util.stream.Collectors;
 		uuid = UUID.randomUUID();
 	}
 
-	GUIComponent(int x, int y) {
+	public GUIComponent(int x, int y) {
 		this();
 		this.x = x;
 		this.y = y;
@@ -133,6 +135,12 @@ import java.util.stream.Collectors;
 
 	@Override public String toString() {
 		return getName();
+	}
+
+	public static void registerCustomComponent(Class<? extends GUIComponent> type) {
+		String id = StringUtils.camelToSnake(type.getSimpleName()).toLowerCase();
+		typeMappings.put(id, type);
+		typeMappingsReverse.put(type, id);
 	}
 
 	public static class GSONAdapter implements JsonSerializer<GUIComponent>, JsonDeserializer<GUIComponent> {

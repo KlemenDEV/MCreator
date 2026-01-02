@@ -20,6 +20,7 @@ package net.mcreator.ui.validation.validators;
 
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.minecraft.TextureSelectionButton;
+import net.mcreator.ui.validation.ValidationResult;
 import net.mcreator.ui.validation.Validator;
 
 import javax.swing.*;
@@ -29,6 +30,7 @@ public class TextureSelectionButtonValidator implements Validator {
 
 	private Supplier<Boolean> requirement;
 	private final TextureSelectionButton holder;
+	private String emptyMessage = L10N.t("validator.texture_needed");
 
 	public TextureSelectionButtonValidator(TextureSelectionButton holder) {
 		this.holder = holder;
@@ -44,12 +46,16 @@ public class TextureSelectionButtonValidator implements Validator {
 		this.requirement = requirement;
 	}
 
+	public TextureSelectionButtonValidator setEmptyMessage(String emptyMessage) {
+		this.emptyMessage = emptyMessage;
+		return this;
+	}
+
 	@Override public ValidationResult validate() {
 		if (holder.hasTexture() || (requirement != null && !requirement.get()))
-			return Validator.ValidationResult.PASSED;
+			return ValidationResult.PASSED;
 		else
-			return new Validator.ValidationResult(Validator.ValidationResultType.ERROR,
-					L10N.t("validator.texture_needed"));
+			return new ValidationResult(ValidationResult.Type.ERROR, emptyMessage);
 	}
 
 }

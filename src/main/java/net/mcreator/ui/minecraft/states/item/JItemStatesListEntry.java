@@ -35,8 +35,8 @@ import net.mcreator.ui.minecraft.TextureSelectionButton;
 import net.mcreator.ui.minecraft.states.JStateLabel;
 import net.mcreator.ui.modgui.ItemGUI;
 import net.mcreator.ui.validation.IValidable;
+import net.mcreator.ui.validation.ValidationResult;
 import net.mcreator.ui.validation.Validator;
-import net.mcreator.ui.validation.validators.TextureSelectionButtonValidator;
 import net.mcreator.ui.workspace.resources.TextureType;
 import net.mcreator.util.ListUtils;
 import net.mcreator.workspace.resources.Model;
@@ -67,8 +67,8 @@ public class JItemStatesListEntry extends JPanel implements IValidable {
 
 		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		texture = new TextureSelectionButton(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM), 42);
-		texture.setValidator(new TextureSelectionButtonValidator(texture));
+		texture = new TextureSelectionButton(new TypedTextureSelectorDialog(mcreator, TextureType.ITEM),
+				42).requireValue("elementgui.item.error_item_state_needs_texture");
 
 		ComponentUtils.deriveFont(model, 16);
 		model.setPreferredSize(new Dimension(350, 42));
@@ -111,9 +111,10 @@ public class JItemStatesListEntry extends JPanel implements IValidable {
 	}
 
 	public void reloadDataLists() {
-		ComboBoxUtil.updateComboBoxContents(model, ListUtils.merge(Arrays.asList(ItemGUI.builtinitemmodels), Model.getModelsWithTextureMaps(mcreator.getWorkspace()).stream()
-				.filter(el -> el.getType() == Model.Type.JSON || el.getType() == Model.Type.OBJ)
-				.collect(Collectors.toList()), Model.getJavaModels(mcreator.getWorkspace())));
+		ComboBoxUtil.updateComboBoxContents(model, ListUtils.merge(Arrays.asList(ItemGUI.builtinitemmodels),
+				Model.getModelsWithTextureMaps(mcreator.getWorkspace()).stream()
+						.filter(el -> el.getType() == Model.Type.JSON || el.getType() == Model.Type.OBJ)
+						.collect(Collectors.toList()), Model.getJavaModels(mcreator.getWorkspace())));
 	}
 
 	JStateLabel getStateLabel() {
@@ -138,7 +139,7 @@ public class JItemStatesListEntry extends JPanel implements IValidable {
 				Item.decodeModelType(value.renderType)));
 	}
 
-	@Override public Validator.ValidationResult getValidationStatus() {
+	@Override public ValidationResult getValidationStatus() {
 		return texture.getValidationStatus();
 	}
 

@@ -33,7 +33,7 @@
 
 package ${package}.block.entity;
 
-<#compress>
+<@javacompress>
 public class ${name}BlockEntity extends RandomizableContainerBlockEntity implements WorldlyContainer
  		<#if data.sensitiveToVibration>, GameEventListener.Provider<VibrationSystem.Listener>, VibrationSystem</#if> {
 
@@ -274,7 +274,7 @@ public class ${name}BlockEntity extends RandomizableContainerBlockEntity impleme
 
 		<#if data.vibrationalEvents?has_content>
 		@Override public TagKey<GameEvent> getListenableEvents() {
-			return TagKey.create(Registries.GAME_EVENT, ResourceLocation.withDefaultNamespace("${data.getModElement().getRegistryName()}_can_listen"));
+			return TagKey.create(Registries.GAME_EVENT, ResourceLocation.withDefaultNamespace("${registryname}_can_listen"));
 		}
 		</#if>
 
@@ -333,5 +333,5 @@ public class ${name}BlockEntity extends RandomizableContainerBlockEntity impleme
 	}
     </#if>
 }
-</#compress>
+</@javacompress>
 <#-- @formatter:on -->

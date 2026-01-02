@@ -35,9 +35,9 @@
 
 package ${package}.item;
 
-<#compress>
+<@javacompress>
 <#if (data.usageCount == 0) && (data.toolType == "Pickaxe" || data.toolType == "Axe" || data.toolType == "Sword" || data.toolType == "Spade" || data.toolType == "Hoe" || data.toolType == "MultiTool")>
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber
 </#if>
 <#if data.toolType == "Pickaxe" || data.toolType == "Axe" || data.toolType == "Sword" || data.toolType == "Spade"
 		|| data.toolType == "Hoe" || data.toolType == "Shears" || data.toolType == "Shield" || data.toolType == "MultiTool">
@@ -127,7 +127,7 @@ public class ${name}Item extends ${data.toolType?replace("Spade", "Shovel")?repl
 	}
 	</#if>
 
-	<#if data.toolType == "Shield" && data.repairItems?has_content>
+	<#if (data.toolType == "Shield" || data.toolType == "Shears") && data.repairItems?has_content>
 	@Override public boolean isValidRepairItem(ItemStack itemstack, ItemStack repairitem) {
 		return ${mappedMCItemsToIngredient(data.repairItems)}.test(repairitem);
 	}
@@ -223,6 +223,12 @@ public class ${name}Item extends Item {
 		return ${data.enchantability};
 	}
 
+	<#if data.repairItems?has_content>
+		@Override public boolean isValidRepairItem(ItemStack itemstack, ItemStack repairitem) {
+			return ${mappedMCItemsToIngredient(data.repairItems)}.test(repairitem);
+		}
+	</#if>
+
 	<@commonMethods/>
 }
 <#elseif data.toolType=="Fishing rod">
@@ -273,7 +279,7 @@ public class ${name}Item extends FishingRodItem {
 	<@commonMethods/>
 }
 </#if>
-</#compress>
+</@javacompress>
 
 <#macro commonMethods>
 	<#if data.stayInGridWhenCrafting>
