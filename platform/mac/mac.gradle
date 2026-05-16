@@ -52,6 +52,9 @@ tasks.register('exportMacX64', Copy.class) {
 
         def dmgFile = 'build/export/MCreator ' + (String) project.mcreatorconf.getProperty('mcreator') + ' Mac 64bit.dmg'
         makeDMG(file('build/export/mac_x64'), file(dmgFile), 'MCreator ' + (String) project.mcreatorconf.getProperty('mcreator'))
+
+        def pkgFile = 'build/export/MCreator ' + (String) project.mcreatorconf.getProperty('mcreator') + ' Mac 64bit.pkg'
+        makePKG(file(exportPathX64), file(pkgFile))
     }
 }
 
@@ -103,6 +106,9 @@ tasks.register('exportMacAarch64', Copy.class) {
 
         def dmgFile = 'build/export/MCreator ' + (String) project.mcreatorconf.getProperty('mcreator') + ' Mac aarch64.dmg'
         makeDMG(file('build/export/mac_aarch64'), file(dmgFile), 'MCreator ' + (String) project.mcreatorconf.getProperty('mcreator'))
+
+        def pkgFile = 'build/export/MCreator ' + (String) project.mcreatorconf.getProperty('mcreator') + ' Mac aarch64.pkg'
+        makePKG(file(exportPathAarch64), file(pkgFile))
     }
 }
 
@@ -266,5 +272,57 @@ void makeDMG(File directory, File outputDMGFile, String volumeName) {
             arg(value: '-v')
             arg(value: directory)
         }
+    }
+}
+
+void makePKG(File appFile, File outputPKGFile) {
+    if (Os.isFamily(Os.FAMILY_MAC)) {
+        def buildExportDir = appFile.parentFile
+        def tempComponentPkg = new File(buildExportDir, "mcreator.pkg")
+        def distributionXml = file('platform/mac/distribution.xml')
+
+        def pkgResourcesDir = new File(buildExportDir, "pkg_resources")
+        pkgResourcesDir.mkdirs()
+
+        project.copy {
+            from file('LICENSE.txt')
+            into pkgResourcesDir
+        }
+
+        execCtx.execOps.exec {
+            commandLine 'pkgbuild', '--component', appFile, '--install-location', '/Applications', tempComponentPkg
+        }
+
+        if (System.getenv('MACOS_INSTALLER_CERT_NAME') != null) {
+            execCtx.execOps.exec {
+                commandLine 'productbuild',
+                        '--distribution', distributionXml,
+                        '--package-path', buildExportDir,
+                        '--resources', pkgResourcesDir,
+                        '--sign', System.getenv('MACOS_INSTALLER_CERT_NAME'),
+                        outputPKGFile
+            }
+
+            execCtx.execOps.exec {
+                commandLine 'xcrun', 'notarytool', 'submit', outputPKGFile, '--keychain-profile', 'notarytool-profile', '--wait'
+            }
+
+            execCtx.execOps.exec {
+                commandLine 'xcrun', 'stapler', 'staple', outputPKGFile
+            }
+        } else {
+            execCtx.execOps.exec {
+                commandLine 'productbuild',
+                        '--distribution', distributionXml,
+                        '--package-path', buildExportDir,
+                        '--resources', pkgResourcesDir,
+                        outputPKGFile
+            }
+        }
+
+        tempComponentPkg.delete()
+        pkgResourcesDir.deleteDir()
+    } else {
+        println("Skipped PKG creation as it can only be done on macOS")
     }
 }

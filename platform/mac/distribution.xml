@@ -1,0 +1,23 @@
+<installer-gui-script minSpecVersion="1">
+
+    <title>MCreator</title>
+    <options customize="never" require-scripts="false" hostArchitectures="x86_64,arm64"/>
+    <volume-check>
+        <allowed-os-versions>
+            <os-version min="11.0"/>
+        </allowed-os-versions>
+    </volume-check>
+
+    <license file="LICENSE.txt" />
+
+    <choices-outline>
+        <line choice="net.mcreator.mcreator.pkg"/>
+    </choices-outline>
+
+    <choice id="net.mcreator.mcreator.pkg" visible="false" title="MCreator" start_selected="true">
+        <pkg-ref id="net.mcreator.mcreator.pkg"/>
+    </choice>
+
+    <pkg-ref id="net.mcreator.mcreator.pkg" version="1.0" onConclusion="None">#mcreator.pkg</pkg-ref>
+
+</installer-gui-script>
