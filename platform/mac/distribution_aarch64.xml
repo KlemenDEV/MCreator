@@ -1,7 +1,7 @@
 <installer-gui-script minSpecVersion="1">
 
     <title>MCreator</title>
-    <options customize="never" require-scripts="false" hostArchitectures="x86_64,arm64"/>
+    <options customize="never" require-scripts="false" hostArchitectures="arm64"/>
     <volume-check>
         <allowed-os-versions>
             <os-version min="11.0"/>
