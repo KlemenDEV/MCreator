@@ -279,36 +279,45 @@ void makePKG(File appFile, File outputPKGFile) {
     if (Os.isFamily(Os.FAMILY_MAC)) {
         def buildExportDir = appFile.parentFile
         def tempComponentPkg = new File(buildExportDir, "mcreator.pkg")
-        def distributionXml = file('platform/mac/distribution.xml')
 
+        // TODO: need two different depending on the architecture
+        def distributionXml = file('platform/mac/distribution.xml')
         def pkgResourcesDir = new File(buildExportDir, "pkg_resources")
         pkgResourcesDir.mkdirs()
-
         project.copy {
             from file('LICENSE.txt')
             into pkgResourcesDir
         }
 
-        execCtx.execOps.exec {
-            commandLine 'pkgbuild', '--component', appFile, '--install-location', '/Applications', tempComponentPkg
+        // TODO: add embedded.provisionprofile file to the app bundle
+
+        // TODO: we need to app bundle here again with store certificate (not developer)
+
+        if (System.getenv('MACOS_STORE_INSTALLER_CERT_NAME') != null) {
+            execCtx.execOps.exec {
+                commandLine 'pkgbuild',
+                        '--component', appFile,
+                        '--install-location', '/Applications',
+                        '--sign', System.getenv('MACOS_STORE_INSTALLER_CERT_NAME'),
+                        tempComponentPkg
+            }
+        } else {
+            execCtx.execOps.exec {
+                commandLine 'pkgbuild',
+                        '--component', appFile,
+                        '--install-location', '/Applications',
+                        tempComponentPkg
+            }
         }
 
-        if (System.getenv('MACOS_INSTALLER_CERT_NAME') != null) {
+        if (System.getenv('MACOS_STORE_INSTALLER_CERT_NAME') != null) {
             execCtx.execOps.exec {
                 commandLine 'productbuild',
                         '--distribution', distributionXml,
                         '--package-path', buildExportDir,
                         '--resources', pkgResourcesDir,
-                        '--sign', System.getenv('MACOS_INSTALLER_CERT_NAME'),
+                        '--sign', System.getenv('MACOS_STORE_INSTALLER_CERT_NAME'),
                         outputPKGFile
-            }
-
-            execCtx.execOps.exec {
-                commandLine 'xcrun', 'notarytool', 'submit', outputPKGFile, '--keychain-profile', 'notarytool-profile', '--wait'
-            }
-
-            execCtx.execOps.exec {
-                commandLine 'xcrun', 'stapler', 'staple', outputPKGFile
             }
         } else {
             execCtx.execOps.exec {
