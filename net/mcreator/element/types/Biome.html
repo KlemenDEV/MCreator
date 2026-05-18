@@ -90,6 +90,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#genErosion" tabindex="0">genErosion</a></li>
 <li><a href="#genWeirdness" tabindex="0">genWeirdness</a></li>
 <li><a href="#genDepth" tabindex="0">genDepth</a></li>
+<li><a href="#genDepthMin" tabindex="0">genDepthMin</a></li>
+<li><a href="#genDepthMax" tabindex="0">genDepthMax</a></li>
 <li><a href="#treesPerChunk" tabindex="0">treesPerChunk</a></li>
 <li><a href="#vanillaTreeType" tabindex="0">vanillaTreeType</a></li>
 <li><a href="#treeType" tabindex="0">treeType</a></li>
@@ -210,6 +212,12 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code><a href="Biome.ClimatePoint.html" title="class in net.mcreator.element.types">Biome.ClimatePoint</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#genDepth" class="member-name-link">genDepth</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>double</code></div>
+<div class="col-second even-row-color"><code><a href="#genDepthMax" class="member-name-link">genDepthMax</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>double</code></div>
+<div class="col-second odd-row-color"><code><a href="#genDepthMin" class="member-name-link">genDepthMin</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code><a href="Biome.ClimatePoint.html" title="class in net.mcreator.element.types">Biome.ClimatePoint</a></code></div>
 <div class="col-second even-row-color"><code><a href="#genErosion" class="member-name-link">genErosion</a></code></div>
@@ -420,7 +428,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-net.mcreator.element.GeneratableElement">Methods inherited from class&nbsp;<a href="../GeneratableElement.html#method-summary" title="class in net.mcreator.element">GeneratableElement</a></h3>
-<code><a href="../GeneratableElement.html#finalizeModElementGeneration()" title="finalizeModElementGeneration()">finalizeModElementGeneration</a>, <a href="../GeneratableElement.html#getAdditionalTemplateData()" title="getAdditionalTemplateData()">getAdditionalTemplateData</a>, <a href="../GeneratableElement.html#getModElement()" title="getModElement()">getModElement</a>, <a href="../GeneratableElement.html#isUnknown()" title="isUnknown()">isUnknown</a>, <a href="../GeneratableElement.html#performQuickValidation()" title="performQuickValidation()">performQuickValidation</a>, <a href="../GeneratableElement.html#setModElement(net.mcreator.workspace.elements.ModElement)" title="setModElement(ModElement)">setModElement</a>, <a href="../GeneratableElement.html#wasConversionApplied()" title="wasConversionApplied()">wasConversionApplied</a></code></div>
+<code><a href="../GeneratableElement.html#finalizeModElementGeneration()" title="finalizeModElementGeneration()">finalizeModElementGeneration</a>, <a href="../GeneratableElement.html#getAdditionalTemplateData()" title="getAdditionalTemplateData()">getAdditionalTemplateData</a>, <a href="../GeneratableElement.html#getModElement()" title="getModElement()">getModElement</a>, <a href="../GeneratableElement.html#isDataModelObject(java.lang.Object)" title="isDataModelObject(Object)">isDataModelObject</a>, <a href="../GeneratableElement.html#isUnknown()" title="isUnknown()">isUnknown</a>, <a href="../GeneratableElement.html#setModElement(net.mcreator.workspace.elements.ModElement)" title="setModElement(ModElement)">setModElement</a>, <a href="../GeneratableElement.html#wasConversionApplied()" title="wasConversionApplied()">wasConversionApplied</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-java.lang.Object">Methods inherited from class&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#method-summary" title="class or interface in java.lang" class="external-link">Object</a></h3>
 <code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#clone()" title="class or interface in java.lang" class="external-link">clone</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#equals(java.lang.Object)" title="class or interface in java.lang" class="external-link">equals</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#finalize()" title="class or interface in java.lang" class="external-link">finalize</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#getClass()" title="class or interface in java.lang" class="external-link">getClass</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#hashCode()" title="class or interface in java.lang" class="external-link">hashCode</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notify()" title="class or interface in java.lang" class="external-link">notify</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#notifyAll()" title="class or interface in java.lang" class="external-link">notifyAll</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#toString()" title="class or interface in java.lang" class="external-link">toString</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait()" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long)" title="class or interface in java.lang" class="external-link">wait</a>, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html#wait(long,int)" title="class or interface in java.lang" class="external-link">wait</a></code></div>
@@ -487,7 +495,8 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="airColor">
 <h3>airColor</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></span>&nbsp;<span class="element-name">airColor</span></div>
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></span>&nbsp;<span class="element-name">airColor</span></div>
 </div>
 </section>
 </li>
@@ -495,7 +504,8 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="fogColor">
 <h3>fogColor</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></span>&nbsp;<span class="element-name">fogColor</span></div>
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></span>&nbsp;<span class="element-name">fogColor</span></div>
 </div>
 </section>
 </li>
@@ -503,7 +513,8 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="grassColor">
 <h3>grassColor</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></span>&nbsp;<span class="element-name">grassColor</span></div>
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></span>&nbsp;<span class="element-name">grassColor</span></div>
 </div>
 </section>
 </li>
@@ -511,7 +522,8 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="foliageColor">
 <h3>foliageColor</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></span>&nbsp;<span class="element-name">foliageColor</span></div>
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></span>&nbsp;<span class="element-name">foliageColor</span></div>
 </div>
 </section>
 </li>
@@ -519,7 +531,8 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="waterColor">
 <h3>waterColor</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></span>&nbsp;<span class="element-name">waterColor</span></div>
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></span>&nbsp;<span class="element-name">waterColor</span></div>
 </div>
 </section>
 </li>
@@ -527,7 +540,8 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="waterFogColor">
 <h3>waterFogColor</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></span>&nbsp;<span class="element-name">waterFogColor</span></div>
+<div class="member-signature"><span class="annotations">@Nullable
+</span><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Color.html" title="class or interface in java.awt" class="external-link">Color</a></span>&nbsp;<span class="element-name">waterFogColor</span></div>
 </div>
 </section>
 </li>
@@ -680,6 +694,22 @@ loadScripts(document, 'script');</script>
 <h3>genDepth</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="Biome.ClimatePoint.html" title="class in net.mcreator.element.types">Biome.ClimatePoint</a></span>&nbsp;<span class="element-name">genDepth</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="genDepthMin">
+<h3>genDepthMin</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public transient</span>&nbsp;<span class="return-type">double</span>&nbsp;<span class="element-name">genDepthMin</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="genDepthMax">
+<h3>genDepthMax</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public transient</span>&nbsp;<span class="return-type">double</span>&nbsp;<span class="element-name">genDepthMax</span></div>
 </div>
 </section>
 </li>
