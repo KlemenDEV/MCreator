@@ -59,7 +59,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(net.mcreator.ui.MCreator,java.util.List)" tabindex="0">DataListComboBox(MCreator, List)</a></li>
+<li><a href="#%3Cinit%3E(net.mcreator.ui.MCreator,java.util.Collection)" tabindex="0">DataListComboBox(MCreator, Collection)</a></li>
+<li><a href="#%3Cinit%3E(net.mcreator.ui.MCreator,java.util.Collection,boolean)" tabindex="0">DataListComboBox(MCreator, Collection, boolean)</a></li>
 <li><a href="#%3Cinit%3E(net.mcreator.ui.MCreator)" tabindex="0">DataListComboBox(MCreator)</a></li>
 </ol>
 </li>
@@ -169,9 +170,13 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-last">Description</div>
 <div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(net.mcreator.ui.MCreator)" class="member-name-link">DataListComboBox</a><wbr>(<a href="../MCreator.html" title="class in net.mcreator.ui">MCreator</a>&nbsp;mcreator)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(net.mcreator.ui.MCreator,java.util.List)" class="member-name-link">DataListComboBox</a><wbr>(<a href="../MCreator.html" title="class in net.mcreator.ui">MCreator</a>&nbsp;mcreator,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../minecraft/DataListEntry.html" title="class in net.mcreator.minecraft">DataListEntry</a>&gt;&nbsp;list)</code></div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(net.mcreator.ui.MCreator,java.util.Collection)" class="member-name-link">DataListComboBox</a><wbr>(<a href="../MCreator.html" title="class in net.mcreator.ui">MCreator</a>&nbsp;mcreator,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../../minecraft/DataListEntry.html" title="class in net.mcreator.minecraft">DataListEntry</a>&gt;&nbsp;list)</code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(net.mcreator.ui.MCreator,java.util.Collection,boolean)" class="member-name-link">DataListComboBox</a><wbr>(<a href="../MCreator.html" title="class in net.mcreator.ui">MCreator</a>&nbsp;mcreator,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../../minecraft/DataListEntry.html" title="class in net.mcreator.minecraft">DataListEntry</a>&gt;&nbsp;list,
+ boolean&nbsp;rawNames)</code></div>
+<div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -203,7 +208,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-net.mcreator.ui.component.SearchableComboBox">Methods inherited from class&nbsp;<a href="../component/SearchableComboBox.html#method-summary" title="class in net.mcreator.ui.component">SearchableComboBox</a></h3>
-<code><a href="../component/SearchableComboBox.html#addItem(T)" title="addItem(DataListEntry)">addItem</a>, <a href="../component/SearchableComboBox.html#focusGained(java.awt.event.FocusEvent)" title="focusGained(FocusEvent)">focusGained</a>, <a href="../component/SearchableComboBox.html#focusLost(java.awt.event.FocusEvent)" title="focusLost(FocusEvent)">focusLost</a>, <a href="../component/SearchableComboBox.html#keyPressed(java.awt.event.KeyEvent)" title="keyPressed(KeyEvent)">keyPressed</a>, <a href="../component/SearchableComboBox.html#keyReleased(java.awt.event.KeyEvent)" title="keyReleased(KeyEvent)">keyReleased</a>, <a href="../component/SearchableComboBox.html#keyTyped(java.awt.event.KeyEvent)" title="keyTyped(KeyEvent)">keyTyped</a>, <a href="../component/SearchableComboBox.html#paint(java.awt.Graphics)" title="paint(Graphics)">paint</a>, <a href="../component/SearchableComboBox.html#removeAllItems()" title="removeAllItems()">removeAllItems</a></code></div>
+<code><a href="../component/SearchableComboBox.html#addItem(T)" title="addItem(DataListEntry)">addItem</a>, <a href="../component/SearchableComboBox.html#focusGained(java.awt.event.FocusEvent)" title="focusGained(FocusEvent)">focusGained</a>, <a href="../component/SearchableComboBox.html#focusLost(java.awt.event.FocusEvent)" title="focusLost(FocusEvent)">focusLost</a>, <a href="../component/SearchableComboBox.html#keyPressed(java.awt.event.KeyEvent)" title="keyPressed(KeyEvent)">keyPressed</a>, <a href="../component/SearchableComboBox.html#keyReleased(java.awt.event.KeyEvent)" title="keyReleased(KeyEvent)">keyReleased</a>, <a href="../component/SearchableComboBox.html#keyTyped(java.awt.event.KeyEvent)" title="keyTyped(KeyEvent)">keyTyped</a>, <a href="../component/SearchableComboBox.html#paint(java.awt.Graphics)" title="paint(Graphics)">paint</a>, <a href="../component/SearchableComboBox.html#removeAllItems()" title="removeAllItems()">removeAllItems</a>, <a href="../component/SearchableComboBox.html#setItems(java.util.Collection)" title="setItems(Collection)">setItems</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-net.mcreator.ui.validation.component.VComboBox">Methods inherited from class&nbsp;<a href="../validation/component/VComboBox.html#method-summary" title="class in net.mcreator.ui.validation.component">VComboBox</a></h3>
 <code><a href="../validation/component/VComboBox.html#enableRealtimeValidation()" title="enableRealtimeValidation()">enableRealtimeValidation</a>, <a href="../validation/component/VComboBox.html#getValidationStatus()" title="getValidationStatus()">getValidationStatus</a>, <a href="../validation/component/VComboBox.html#getValidator()" title="getValidator()">getValidator</a>, <a href="../validation/component/VComboBox.html#setValidator(net.mcreator.ui.validation.Validator)" title="setValidator(Validator)">setValidator</a></code></div>
@@ -237,11 +242,21 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(net.mcreator.ui.MCreator,java.util.List)">
+<section class="detail" id="&lt;init&gt;(net.mcreator.ui.MCreator,java.util.Collection)">
 <h3>DataListComboBox</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">DataListComboBox</span><wbr><span class="parameters">(<a href="../MCreator.html" title="class in net.mcreator.ui">MCreator</a>&nbsp;mcreator,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../minecraft/DataListEntry.html" title="class in net.mcreator.minecraft">DataListEntry</a>&gt;&nbsp;list)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../../minecraft/DataListEntry.html" title="class in net.mcreator.minecraft">DataListEntry</a>&gt;&nbsp;list)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="&lt;init&gt;(net.mcreator.ui.MCreator,java.util.Collection,boolean)">
+<h3>DataListComboBox</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">DataListComboBox</span><wbr><span class="parameters">(<a href="../MCreator.html" title="class in net.mcreator.ui">MCreator</a>&nbsp;mcreator,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="../../minecraft/DataListEntry.html" title="class in net.mcreator.minecraft">DataListEntry</a>&gt;&nbsp;list,
+ boolean&nbsp;rawNames)</span></div>
 </div>
 </section>
 </li>
