@@ -26,6 +26,7 @@ import net.mcreator.generator.template.TemplateGeneratorException;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.util.XMLUtil;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 public class LoopBlock implements IBlockGenerator {
 
@@ -36,13 +37,13 @@ public class LoopBlock implements IBlockGenerator {
 		String blocktype = block.getAttribute("type");
 
 		if (value != null && statement != null) {
-			int index = master.getBlockCount();
-
 			if ("controls_while".equals(blocktype)) {
 				master.append("while(");
 				master.processOutputBlockWithoutParentheses(value);
 				master.append(") {");
 			} else if ("controls_repeat_ext".equals(blocktype)) {
+				int index = getNestingLevel(block);
+
 				master.append("for (int _i").append(index).append(" = 0; _i").append(index).append("<");
 				master.processOutputBlockToInt(value);
 				master.append("; _i").append(index).append("++) {");
@@ -54,6 +55,19 @@ public class LoopBlock implements IBlockGenerator {
 			master.addCompileNote(
 					new BlocklyCompileNote(BlocklyCompileNote.Type.WARNING, L10N.t("blockly.warnings.empty_loop")));
 		}
+	}
+
+	private static int getNestingLevel(Element block) {
+		int level = 1;
+		Node node = block;
+		while (node.getParentNode() != null) {
+			Node parent = node.getParentNode();
+			if ("statement".equals(node.getNodeName()) && parent instanceof Element parentElement
+					&& "controls_repeat_ext".equals(parentElement.getAttribute("type")))
+				level++;
+			node = parent;
+		}
+		return level;
 	}
 
 	@Override public String[] getSupportedBlocks() {
