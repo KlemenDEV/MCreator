@@ -45,7 +45,7 @@ public class ModelUtils {
 		try {
 			JsonElement json = JsonParser.parseString(jsonModel);
 			json.getAsJsonObject().remove("textures");
-			return JSONWriter.gson.toJson(json);
+			return JSONWriter.toJson(json);
 		} catch (Exception e) {
 			LOG.info("Failed to remove inline textures from JSON model");
 		}

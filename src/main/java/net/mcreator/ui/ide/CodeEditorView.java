@@ -565,8 +565,7 @@ public class CodeEditorView extends ViewBase implements ISearchable {
 				te.setCaretPosition(pos);
 		} else if (SyntaxConstants.SYNTAX_STYLE_JSON.equals(language)) {
 			int pos = te.getCaretPosition();
-			JsonElement json = JsonParser.parseString(te.getText());
-			String ncode = JSONWriter.gson.toJson(json);
+			String ncode = JSONWriter.formatJSON(te.getText());
 			te.setText(ncode);
 			if (pos < ncode.length())
 				te.setCaretPosition(pos);
@@ -589,8 +588,7 @@ public class CodeEditorView extends ViewBase implements ISearchable {
 				te.setCaretPosition(pos);
 		} else if (SyntaxConstants.SYNTAX_STYLE_JSON.equals(language)) {
 			int pos = te.getCaretPosition();
-			JsonElement json = JsonParser.parseString(te.getText());
-			String ncode = JSONWriter.gson.toJson(json);
+			String ncode = JSONWriter.formatJSON(te.getText());
 			te.setText(ncode);
 			if (pos < ncode.length())
 				te.setCaretPosition(pos);

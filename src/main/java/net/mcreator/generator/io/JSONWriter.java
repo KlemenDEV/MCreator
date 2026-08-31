@@ -37,22 +37,33 @@
 
 package net.mcreator.generator.io;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
+import com.google.gson.stream.JsonWriter;
 import net.mcreator.workspace.Workspace;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Map;
+import java.util.StringJoiner;
 
 public class JSONWriter {
 
 	private static final Logger LOG = LogManager.getLogger("JSON Writer");
 
-	public static final Gson gson = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
+	/**
+	 * Arrays with at most this many elements, all of them primitives or nulls, are written on a single line
+	 * (e.g. {@code [0, 0, 16]}) instead of one element per line. This matches the style of vanilla resources
+	 * and tools like Blockbench.
+	 */
+	private static final int MAX_INLINE_ARRAY_SIZE = 16;
+
+	private static final FormattingStyle PRETTY_STYLE = FormattingStyle.PRETTY.withIndent("  ");
+
+	public static final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 
 	public static void writeJSONToFile(@Nullable Workspace workspace, String srcjson, File file) {
 		GradleTrackingFileIO.writeFile(workspace, formatJSON(srcjson), file);
@@ -62,12 +73,69 @@ public class JSONWriter {
 		String jsonout;
 		try {
 			JsonElement json = JsonParser.parseString(srcjson);
-			jsonout = gson.toJson(json);
+			jsonout = toJson(json);
 		} catch (Exception e) {
 			LOG.error("JSON Prettify failed, error: {}", e.getMessage(), e);
 			jsonout = srcjson;
 		}
 		return jsonout;
+	}
+
+	/**
+	 * Pretty-prints the given JSON element, keeping key order and writing short arrays of primitives inline.
+	 *
+	 * @param json JSON element to format
+	 * @return formatted JSON string
+	 */
+	public static String toJson(JsonElement json) {
+		try {
+			StringWriter stringWriter = new StringWriter();
+			JsonWriter writer = new JsonWriter(stringWriter);
+			writer.setHtmlSafe(false);
+			writer.setStrictness(Strictness.LENIENT);
+			writer.setFormattingStyle(PRETTY_STYLE);
+			write(json, writer);
+			return stringWriter.toString();
+		} catch (IOException e) {
+			LOG.error("JSON Prettify failed, error: {}", e.getMessage(), e);
+			return gson.toJson(json);
+		}
+	}
+
+	private static void write(JsonElement element, JsonWriter writer) throws IOException {
+		if (element.isJsonObject()) {
+			writer.beginObject();
+			for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+				writer.name(entry.getKey());
+				write(entry.getValue(), writer);
+			}
+			writer.endObject();
+		} else if (element.isJsonArray()) {
+			JsonArray array = element.getAsJsonArray();
+			if (isInlineable(array)) {
+				StringJoiner joiner = new StringJoiner(", ", "[", "]");
+				for (JsonElement child : array)
+					joiner.add(gson.toJson(child));
+				writer.jsonValue(joiner.toString());
+			} else {
+				writer.beginArray();
+				for (JsonElement child : array)
+					write(child, writer);
+				writer.endArray();
+			}
+		} else {
+			gson.toJson(element, writer);
+		}
+	}
+
+	private static boolean isInlineable(JsonArray array) {
+		if (array.size() > MAX_INLINE_ARRAY_SIZE)
+			return false;
+		for (JsonElement child : array) {
+			if (!child.isJsonPrimitive() && !child.isJsonNull())
+				return false;
+		}
+		return true;
 	}
 
 }
