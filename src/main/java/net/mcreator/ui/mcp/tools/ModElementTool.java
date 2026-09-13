@@ -140,6 +140,8 @@ public class ModElementTool extends MCreatorMcpTool<ModElementTool.Args> {
 						jsonValidationNotes::add);
 				JsonElement jsonElement = safeGeneratableElementToJsonElement(mcreator, result.generatableElement());
 
+				mcreator.getWorkspace().getHistoryManager().checkpoint("mod_element_edited", modElement.getName());
+
 				Map<String, Object> response = new HashMap<>();
 				response.put("result", "Element replaced");
 				return getResultCompletableFuture(suggestedJSON, jsonValidationNotes, result, jsonElement, response);
@@ -178,6 +180,8 @@ public class ModElementTool extends MCreatorMcpTool<ModElementTool.Args> {
 				GEResult result = safeJSONtoGeneratableElementAndStoreIt(mcreator, modElement, suggestedJSON,
 						jsonValidationNotes::add);
 				JsonElement jsonElement = safeGeneratableElementToJsonElement(mcreator, result.generatableElement());
+
+				mcreator.getWorkspace().getHistoryManager().checkpoint("mod_element_edited", modElement.getName());
 
 				Map<String, Object> response = new HashMap<>();
 				response.put("result", "Element patched");
@@ -218,6 +222,9 @@ public class ModElementTool extends MCreatorMcpTool<ModElementTool.Args> {
 				GEResult result = safeJSONtoGeneratableElementAndStoreIt(mcreator, modElement, suggestedJSON,
 						jsonValidationNotes::add);
 				JsonElement jsonElement = safeGeneratableElementToJsonElement(mcreator, result.generatableElement());
+
+				mcreator.getWorkspace().getHistoryManager()
+						.checkpoint("mod_element_added", modElement.getType().getReadableName(), modElement.getName());
 
 				Map<String, Object> response = new HashMap<>();
 				response.put("result", "Element added");
