@@ -88,6 +88,9 @@ Blocks.MANGROVE_PLANKS:
 Blocks.CHERRY_PLANKS:
   - Blocks.CHERRY_PLANKS
   - "cherry_planks"
+Blocks.POPLAR_PLANKS:
+  - Blocks.POPLAR_PLANKS
+  - "poplar_planks"
 Blocks.BAMBOO_PLANKS:
   - Blocks.BAMBOO_PLANKS
   - "bamboo_planks"
@@ -124,6 +127,9 @@ Blocks.MANGROVE_PROPAGULE:
 Blocks.CHERRY_SAPLING:
   - Blocks.CHERRY_SAPLING
   - "cherry_sapling"
+Blocks.POPLAR_SAPLING:
+  - Blocks.POPLAR_SAPLING
+  - "poplar_sapling"
 Blocks.REEDS:
   - Blocks.SUGAR_CANE
   - "sugar_cane"
@@ -280,6 +286,9 @@ Blocks.MANGROVE_LOG:
 Blocks.CHERRY_LOG:
   - Blocks.CHERRY_LOG
   - "cherry_log"
+Blocks.POPLAR_LOG:
+  - Blocks.POPLAR_LOG
+  - "poplar_log"
 Blocks.BAMBOO_BLOCK:
   - Blocks.BAMBOO_BLOCK
   - "bamboo_block"
@@ -319,6 +328,15 @@ Blocks.MANGROVE_LEAVES:
 Blocks.CHERRY_LEAVES:
   - Blocks.CHERRY_LEAVES
   - "cherry_leaves"
+Blocks.RED_POPLAR_LEAVES:
+  - Blocks.RED_POPLAR_LEAVES
+  - "red_poplar_leaves"
+Blocks.ORANGE_POPLAR_LEAVES:
+  - Blocks.ORANGE_POPLAR_LEAVES
+  - "orange_poplar_leaves"
+Blocks.YELLOW_POPLAR_LEAVES:
+  - Blocks.YELLOW_POPLAR_LEAVES
+  - "yellow_poplar_leaves"
 Blocks.MANGROVE_ROOTS:
   - Blocks.MANGROVE_ROOTS
   - "mangrove_roots"
@@ -382,6 +400,9 @@ Blocks.DEADBUSH:
 Blocks.BUSH:
   - Blocks.BUSH
   - "bush"
+Blocks.RED_SHRUB:
+  - Blocks.RED_SHRUB
+  - "red_shrub"
 Blocks.SHORT_DRY_GRASS:
   - Blocks.SHORT_DRY_GRASS
   - "short_dry_grass"
@@ -490,6 +511,9 @@ Blocks.BROWN_MUSHROOM:
 Blocks.RED_MUSHROOM:
   - Blocks.RED_MUSHROOM
   - "red_mushroom"
+Blocks.SHELF_MUSHROOM:
+  - Blocks.SHELF_MUSHROOM
+  - "shelf_mushroom"
 Blocks.BROWN_MUSHROOM_BLOCK:
   - Blocks.BROWN_MUSHROOM_BLOCK
   - "brown_mushroom_block"
@@ -541,6 +565,9 @@ Blocks.MANGROVE_SHELF:
 Blocks.CHERRY_SHELF:
   - Blocks.CHERRY_SHELF
   - "cherry_shelf"
+Blocks.POPLAR_SHELF:
+  - Blocks.POPLAR_SHELF
+  - "poplar_shelf"
 Blocks.BAMBOO_SHELF:
   - Blocks.BAMBOO_SHELF
   - "bamboo_shelf"
@@ -589,6 +616,9 @@ Blocks.MANGROVE_STAIRS:
 Blocks.CHERRY_STAIRS:
   - Blocks.CHERRY_STAIRS
   - "cherry_stairs"
+Blocks.POPLAR_STAIRS:
+  - Blocks.POPLAR_STAIRS
+  - "poplar_stairs"
 Blocks.BAMBOO_STAIRS:
   - Blocks.BAMBOO_STAIRS
   - "bamboo_stairs"
@@ -697,6 +727,9 @@ Blocks.MANGROVE_DOOR:
 Blocks.CHERRY_DOOR:
   - Blocks.CHERRY_DOOR
   - "cherry_door"
+Blocks.POPLAR_DOOR:
+  - Blocks.POPLAR_DOOR
+  - "poplar_door"
 Blocks.BAMBOO_DOOR:
   - Blocks.BAMBOO_DOOR
   - "bamboo_door"
@@ -904,6 +937,9 @@ Blocks.MANGROVE_FENCE:
 Blocks.CHERRY_FENCE:
   - Blocks.CHERRY_FENCE
   - "cherry_fence"
+Blocks.POPLAR_FENCE:
+  - Blocks.POPLAR_FENCE
+  - "poplar_fence"
 Blocks.BAMBOO_FENCE:
   - Blocks.BAMBOO_FENCE
   - "bamboo_fence"
@@ -934,6 +970,9 @@ Blocks.MANGROVE_FENCE_GATE:
 Blocks.CHERRY_FENCE_GATE:
   - Blocks.CHERRY_FENCE_GATE
   - "cherry_fence_gate"
+Blocks.POPLAR_FENCE_GATE:
+  - Blocks.POPLAR_FENCE_GATE
+  - "poplar_fence_gate"
 Blocks.BAMBOO_FENCE_GATE:
   - Blocks.BAMBOO_FENCE_GATE
   - "bamboo_fence_gate"
@@ -1189,6 +1228,9 @@ Blocks.MANGROVE_SLAB:
 Blocks.CHERRY_SLAB:
   - Blocks.CHERRY_SLAB
   - "cherry_slab"
+Blocks.POPLAR_SLAB:
+  - Blocks.POPLAR_SLAB
+  - "poplar_slab"
 Blocks.BAMBOO_SLAB:
   - Blocks.BAMBOO_SLAB
   - "bamboo_slab"
@@ -1342,6 +1384,102 @@ Blocks.WOOL#14:
 Blocks.WOOL#15:
   - Blocks.WOOL.black()
   - "black_wool"
+Blocks.WHITE_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.white()
+  - "white_wool_stairs"
+Blocks.ORANGE_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.orange()
+  - "orange_wool_stairs"
+Blocks.MAGENTA_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.magenta()
+  - "magenta_wool_stairs"
+Blocks.LIGHT_BLUE_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.lightBlue
+  - "light_blue_wool_stairs"
+Blocks.YELLOW_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.yellow()
+  - "yellow_wool_stairs"
+Blocks.LIME_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.lime()
+  - "lime_wool_stairs"
+Blocks.PINK_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.pink()
+  - "pink_wool_stairs"
+Blocks.GRAY_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.gray()
+  - "gray_wool_stairs"
+Blocks.LIGHT_GRAY_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.lightGray()
+  - "light_gray_wool_stairs"
+Blocks.CYAN_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.cyan()
+  - "cyan_wool_stairs"
+Blocks.PURPLE_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.purple()
+  - "purple_wool_stairs"
+Blocks.BLUE_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.blue()
+  - "blue_wool_stairs"
+Blocks.BROWN_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.brown()
+  - "brown_wool_stairs"
+Blocks.GREEN_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.green()
+  - "green_wool_stairs"
+Blocks.RED_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.red()
+  - "red_wool_stairs"
+Blocks.BLACK_WOOL_STAIRS:
+  - Blocks.WOOL_STAIRS.black()
+  - "black_wool_stairs"
+Blocks.WHITE_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.white()
+  - "white_wool_slab"
+Blocks.ORANGE_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.orange()
+  - "orange_wool_slab"
+Blocks.MAGENTA_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.magenta()
+  - "magenta_wool_slab"
+Blocks.LIGHT_BLUE_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.lightBlue
+  - "light_blue_wool_slab"
+Blocks.YELLOW_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.yellow()
+  - "yellow_wool_slab"
+Blocks.LIME_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.lime()
+  - "lime_wool_slab"
+Blocks.PINK_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.pink()
+  - "pink_wool_slab"
+Blocks.GRAY_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.gray()
+  - "gray_wool_slab"
+Blocks.LIGHT_GRAY_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.lightGray()
+  - "light_gray_wool_slab"
+Blocks.CYAN_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.cyan()
+  - "cyan_wool_slab"
+Blocks.PURPLE_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.purple()
+  - "purple_wool_slab"
+Blocks.BLUE_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.blue()
+  - "blue_wool_slab"
+Blocks.BROWN_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.brown()
+  - "brown_wool_slab"
+Blocks.GREEN_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.green()
+  - "green_wool_slab"
+Blocks.RED_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.red()
+  - "red_wool_slab"
+Blocks.BLACK_WOOL_SLAB:
+  - Blocks.WOOL_SLAB.black()
+  - "black_wool_slab"
 Blocks.HARDENED_CLAY:
   - Blocks.TERRACOTTA
   - "terracotta"
@@ -1540,6 +1678,102 @@ Blocks.CONCRETE#14:
 Blocks.CONCRETE#15:
   - Blocks.CONCRETE.black()
   - "black_concrete"
+Blocks.WHITE_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.white()
+  - "white_concrete_stairs"
+Blocks.ORANGE_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.orange()
+  - "orange_concrete_stairs"
+Blocks.MAGENTA_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.magenta()
+  - "magenta_concrete_stairs"
+Blocks.LIGHT_BLUE_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.lightBlue
+  - "light_blue_concrete_stairs"
+Blocks.YELLOW_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.yellow()
+  - "yellow_concrete_stairs"
+Blocks.LIME_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.lime()
+  - "lime_concrete_stairs"
+Blocks.PINK_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.pink()
+  - "pink_concrete_stairs"
+Blocks.GRAY_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.gray()
+  - "gray_concrete_stairs"
+Blocks.LIGHT_GRAY_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.lightGray()
+  - "light_gray_concrete_stairs"
+Blocks.CYAN_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.cyan()
+  - "cyan_concrete_stairs"
+Blocks.PURPLE_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.purple()
+  - "purple_concrete_stairs"
+Blocks.BLUE_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.blue()
+  - "blue_concrete_stairs"
+Blocks.BROWN_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.brown()
+  - "brown_concrete_stairs"
+Blocks.GREEN_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.green()
+  - "green_concrete_stairs"
+Blocks.RED_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.red()
+  - "red_concrete_stairs"
+Blocks.BLACK_CONCRETE_STAIRS:
+  - Blocks.CONCRETE_STAIRS.black()
+  - "black_concrete_stairs"
+Blocks.WHITE_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.white()
+  - "white_concrete_slab"
+Blocks.ORANGE_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.orange()
+  - "orange_concrete_slab"
+Blocks.MAGENTA_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.magenta()
+  - "magenta_concrete_slab"
+Blocks.LIGHT_BLUE_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.lightBlue
+  - "light_blue_concrete_slab"
+Blocks.YELLOW_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.yellow()
+  - "yellow_concrete_slab"
+Blocks.LIME_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.lime()
+  - "lime_concrete_slab"
+Blocks.PINK_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.pink()
+  - "pink_concrete_slab"
+Blocks.GRAY_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.gray()
+  - "gray_concrete_slab"
+Blocks.LIGHT_GRAY_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.lightGray()
+  - "light_gray_concrete_slab"
+Blocks.CYAN_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.cyan()
+  - "cyan_concrete_slab"
+Blocks.PURPLE_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.purple()
+  - "purple_concrete_slab"
+Blocks.BLUE_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.blue()
+  - "blue_concrete_slab"
+Blocks.BROWN_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.brown()
+  - "brown_concrete_slab"
+Blocks.GREEN_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.green()
+  - "green_concrete_slab"
+Blocks.RED_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.red()
+  - "red_concrete_slab"
+Blocks.BLACK_CONCRETE_SLAB:
+  - Blocks.CONCRETE_SLAB.black()
+  - "black_concrete_slab"
 Blocks.CARPET:
   - Blocks.CARPET.white()
   - "#minecraft:wool_carpets"
@@ -1831,6 +2065,9 @@ Blocks.STRIPPED_MANGROVE_LOG:
 Blocks.STRIPPED_CHERRY_LOG:
   - Blocks.STRIPPED_CHERRY_LOG
   - "stripped_cherry_log"
+Blocks.STRIPPED_POPLAR_LOG:
+  - Blocks.STRIPPED_POPLAR_LOG
+  - "stripped_poplar_log"
 Blocks.STRIPPED_BAMBOO_BLOCK:
   - Blocks.STRIPPED_BAMBOO_BLOCK
   - "stripped_bamboo_block"
@@ -1861,6 +2098,9 @@ Blocks.MANGROVE_WOOD:
 Blocks.CHERRY_WOOD:
   - Blocks.CHERRY_WOOD
   - "cherry_wood"
+Blocks.POPLAR_WOOD:
+  - Blocks.POPLAR_WOOD
+  - "poplar_wood"
 Blocks.STRIPPED_OAK_WOOD:
   - Blocks.STRIPPED_OAK_WOOD
   - "stripped_oak_wood"
@@ -1888,6 +2128,9 @@ Blocks.STRIPPED_MANGROVE_WOOD:
 Blocks.STRIPPED_CHERRY_WOOD:
   - Blocks.STRIPPED_CHERRY_WOOD
   - "stripped_cherry_wood"
+Blocks.STRIPPED_POPLAR_WOOD:
+  - Blocks.STRIPPED_POPLAR_WOOD
+  - "stripped_poplar_wood"
 Blocks.BED:
   - Blocks.BED.white()
   - "white_bed"
@@ -1936,6 +2179,9 @@ Blocks.RED_BED:
 Blocks.BLACK_BED:
   - Blocks.BED.black()
   - "black_bed"
+Blocks.STRAW_BED:
+  - Blocks.STRAW_BED
+  - "straw_bed"
 Blocks.SEAGRASS:
   - Blocks.SEAGRASS
   - "seagrass"
@@ -1978,6 +2224,9 @@ Blocks.MANGROVE_SIGN:
 Blocks.CHERRY_SIGN:
   - Blocks.CHERRY_SIGN
   - "cherry_sign"
+Blocks.POPLAR_SIGN:
+  - Blocks.POPLAR_SIGN
+  - "poplar_sign"
 Blocks.BAMBOO_SIGN:
   - Blocks.BAMBOO_SIGN
   - "bamboo_sign"
@@ -2005,6 +2254,9 @@ Blocks.MANGROVE_WALL_SIGN:
 Blocks.CHERRY_WALL_SIGN:
   - Blocks.CHERRY_WALL_SIGN
   - "cherry_wall_sign"
+Blocks.POPLAR_WALL_SIGN:
+  - Blocks.POPLAR_WALL_SIGN
+  - "poplar_wall_sign"
 Blocks.BAMBOO_WALL_SIGN:
   - Blocks.BAMBOO_WALL_SIGN
   - "bamboo_wall_sign"
@@ -2041,6 +2293,9 @@ Blocks.MANGROVE_HANGING_SIGN:
 Blocks.CHERRY_HANGING_SIGN:
   - Blocks.CHERRY_HANGING_SIGN
   - "cherry_hanging_sign"
+Blocks.POPLAR_HANGING_SIGN:
+  - Blocks.POPLAR_HANGING_SIGN
+  - "poplar_hanging_sign"
 Blocks.BAMBOO_HANGING_SIGN:
   - Blocks.BAMBOO_HANGING_SIGN
   - "bamboo_hanging_sign"
@@ -2077,6 +2332,9 @@ Blocks.MANGROVE_WALL_HANGING_SIGN:
 Blocks.CHERRY_WALL_HANGING_SIGN:
   - Blocks.CHERRY_WALL_HANGING_SIGN
   - "cherry_wall_hanging_sign"
+Blocks.POPLAR_WALL_HANGING_SIGN:
+  - Blocks.POPLAR_WALL_HANGING_SIGN
+  - "poplar_wall_hanging_sign"
 Blocks.BAMBOO_WALL_HANGING_SIGN:
   - Blocks.BAMBOO_WALL_HANGING_SIGN
   - "bamboo_wall_hanging_sign"
@@ -2104,6 +2362,9 @@ Blocks.MANGROVE_PRESSURE_PLATE:
 Blocks.CHERRY_PRESSURE_PLATE:
   - Blocks.CHERRY_PRESSURE_PLATE
   - "cherry_pressure_plate"
+Blocks.POPLAR_PRESSURE_PLATE:
+  - Blocks.POPLAR_PRESSURE_PLATE
+  - "poplar_pressure_plate"
 Blocks.BAMBOO_PRESSURE_PLATE:
   - Blocks.BAMBOO_PRESSURE_PLATE
   - "bamboo_pressure_plate"
@@ -2137,6 +2398,9 @@ Blocks.MANGROVE_TRAPDOOR:
 Blocks.CHERRY_TRAPDOOR:
   - Blocks.CHERRY_TRAPDOOR
   - "cherry_trapdoor"
+Blocks.POPLAR_TRAPDOOR:
+  - Blocks.POPLAR_TRAPDOOR
+  - "poplar_trapdoor"
 Blocks.BAMBOO_TRAPDOOR:
   - Blocks.BAMBOO_TRAPDOOR
   - "bamboo_trapdoor"
@@ -2251,10 +2515,12 @@ Blocks.MANGROVE_BUTTON:
 Blocks.CHERRY_BUTTON:
   - Blocks.CHERRY_BUTTON
   - "cherry_button"
+Blocks.POPLAR_BUTTON:
+  - Blocks.POPLAR_BUTTON
+  - "poplar_button"
 Blocks.BAMBOO_BUTTON:
   - Blocks.BAMBOO_BUTTON
   - "bamboo_button"
-
 Blocks.PRISMARINE_STAIRS:
   - Blocks.PRISMARINE_STAIRS
   - "prismarine_stairs"
@@ -3620,6 +3886,9 @@ Blocks.FROGSPAWN:
 Blocks.POTTED_CHERRY_SAPLING:
   - Blocks.POTTED_CHERRY_SAPLING
   - "potted_cherry_sapling"
+Blocks.POTTED_POPLAR_SAPLING:
+  - Blocks.POTTED_POPLAR_SAPLING
+  - "potted_poplar_sapling"
 Blocks.POTTED_TORCHFLOWER:
   - Blocks.POTTED_TORCHFLOWER
   - "potted_torchflower"
@@ -3800,6 +4069,54 @@ Items.MAP:
 Items.FILLED_MAP:
   - Items.FILLED_MAP
   - "filled_map"
+Items.OCEAN_MONUMENT_MAP:
+  - Items.OCEAN_MONUMENT_MAP
+  - "ocean_monument_map"
+Items.WOODLAND_MANSION_MAP:
+  - Items.WOODLAND_MANSION_MAP
+  - "woodland_mansion_map"
+Items.BURED_TRIAL_CHAMBERS_MAP:
+  - Items.BURED_TRIAL_CHAMBERS_MAP
+  - "bured_trial_chambers_map"
+Items.JUNGLE_PYRAMID_MAP:
+  - Items.JUNGLE_PYRAMID_MAP
+  - "jungle_pyramid_map"
+Items.SWAMP_HUT_MAP:
+  - Items.SWAMP_HUT_MAP
+  - "swamp_hut_map"
+Items.DESERT_VILLAGE_MAP:
+  - Items.DESERT_VILLAGE_MAP
+  - "desert_village_map"
+Items.PLAINS_VILLAGE_MAP:
+  - Items.PLAINS_VILLAGE_MAP
+  - "plains_village_map"
+Items.SAVANNA_VILLAGE_MAP:
+  - Items.SAVANNA_VILLAGE_MAP
+  - "savanna_village_map"
+Items.SNOWY_VILLAGE_MAP:
+  - Items.SNOWY_VILLAGE_MAP
+  - "snowy_village_map"
+Items.TAIGA_VILLAGE_MAP:
+  - Items.TAIGA_VILLAGE_MAP
+  - "taiga_village_map"
+Items.BURIED_TREASURE_MAP:
+  - Items.BURIED_TREASURE_MAP
+  - "buried_treasure_map"
+Items.BURIED_ANCIENT_CITY_MAP:
+  - Items.BURIED_ANCIENT_CITY_MAP
+  - "buried_ancient_city_map"
+Items.BURIED_MINESHAFT_MAP:
+  - Items.BURIED_MINESHAFT_MAP
+  - "buried_mineshaft_map"
+Items.DESERT_PYRAMID_MAP:
+  - Items.DESERT_PYRAMID_MAP
+  - "desert_pyramid_map"
+Items.ABANDONED_CAMP_MAP:
+  - Items.ABANDONED_CAMP_MAP
+  - "abandoned_camp_map"
+Items.WARM_OCEAN_RUINS_MAP:
+  - Items.WARM_OCEAN_RUINS_MAP
+  - "warm_ocean_ruins_map"
 Items.TOTEM_OF_UNDYING:
   - Items.TOTEM_OF_UNDYING
   - "totem_of_undying"
@@ -4124,6 +4441,9 @@ Items.MANGROVE_DOOR:
 Items.CHERRY_DOOR:
   - Items.CHERRY_DOOR
   - "cherry_door"
+Items.POPLAR_DOOR:
+  - Items.POPLAR_DOOR
+  - "poplar_door"
 Items.BAMBOO_DOOR:
   - Items.BAMBOO_DOOR
   - "bamboo_door"
@@ -4217,6 +4537,9 @@ Items.MANGROVE_BOAT:
 Items.CHERRY_BOAT:
   - Items.CHERRY_BOAT
   - "cherry_boat"
+Items.POPLAR_BOAT:
+  - Items.POPLAR_BOAT
+  - "poplar_boat"
 Items.BAMBOO_RAFT:
   - Items.BAMBOO_RAFT
   - "bamboo_raft"
@@ -4247,6 +4570,9 @@ Items.MANGROVE_CHEST_BOAT:
 Items.CHERRY_CHEST_BOAT:
   - Items.CHERRY_CHEST_BOAT
   - "cherry_chest_boat"
+Items.POPLAR_CHEST_BOAT:
+  - Items.POPLAR_CHEST_BOAT
+  - "poplar_chest_boat"
 Items.BAMBOO_CHEST_RAFT:
   - Items.BAMBOO_CHEST_RAFT
   - "bamboo_chest_raft"
@@ -4373,6 +4699,54 @@ Items.RED_HARNESS:
 Items.BLACK_HARNESS:
   - Items.HARNESS.black()
   - "black_harness"
+Items.WHITE_CUSHION:
+  - Items.CUSHION.white()
+  - "white_cushion"
+Items.ORANGE_CUSHION:
+  - Items.CUSHION.orange()
+  - "orange_cushion"
+Items.MAGENTA_CUSHION:
+  - Items.CUSHION.magenta()
+  - "magenta_cushion"
+Items.LIGHT_BLUE_CUSHION:
+  - Items.CUSHION.lightBlue()
+  - "light_blue_cushion"
+Items.YELLOW_CUSHION:
+  - Items.CUSHION.yellow()
+  - "yellow_cushion"
+Items.LIME_CUSHION:
+  - Items.CUSHION.lime()
+  - "lime_cushion"
+Items.PINK_CUSHION:
+  - Items.CUSHION.pink()
+  - "pink_cushion"
+Items.GRAY_CUSHION:
+  - Items.CUSHION.gray()
+  - "gray_cushion"
+Items.LIGHT_GRAY_CUSHION:
+  - Items.CUSHION.lightGray()
+  - "light_gray_cushion"
+Items.CYAN_CUSHION:
+  - Items.CUSHION.cyan()
+  - "cyan_cushion"
+Items.PURPLE_CUSHION:
+  - Items.CUSHION.purple()
+  - "purple_cushion"
+Items.BLUE_CUSHION:
+  - Items.CUSHION.blue()
+  - "blue_cushion"
+Items.BROWN_CUSHION:
+  - Items.CUSHION.brown()
+  - "brown_cushion"
+Items.GREEN_CUSHION:
+  - Items.CUSHION.green()
+  - "green_cushion"
+Items.RED_CUSHION:
+  - Items.CUSHION.red()
+  - "red_cushion"
+Items.BLACK_CUSHION:
+  - Items.CUSHION.black()
+  - "black_cushion"
 Items.BRICK:
   - Items.BRICK
   - "brick"
@@ -4799,6 +5173,9 @@ Items.MANGROVE_SIGN:
 Items.CHERRY_SIGN:
   - Items.CHERRY_SIGN
   - "cherry_sign"
+Items.POPLAR_SIGN:
+  - Items.POPLAR_SIGN
+  - "poplar_sign"
 Items.BAMBOO_SIGN:
   - Items.BAMBOO_SIGN
   - "bamboo_sign"
@@ -4835,6 +5212,9 @@ Items.MANGROVE_HANGING_SIGN:
 Items.CHERRY_HANGING_SIGN:
   - Items.CHERRY_HANGING_SIGN
   - "cherry_hanging_sign"
+Items.POPLAR_HANGING_SIGN:
+  - Items.POPLAR_HANGING_SIGN
+  - "poplar_hanging_sign"
 Items.BAMBOO_HANGING_SIGN:
   - Items.BAMBOO_HANGING_SIGN
   - "bamboo_hanging_sign"
