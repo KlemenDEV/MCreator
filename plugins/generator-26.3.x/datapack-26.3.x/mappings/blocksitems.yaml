@@ -3197,6 +3197,90 @@ Blocks.TUFF_BRICK_WALL:
 Blocks.CHISELED_TUFF_BRICKS:
   - Blocks.CHISELED_TUFF_BRICKS
   - "chiseled_tuff_bricks"
+Blocks.SULFUR:
+  - Blocks.SULFUR
+  - "sulfur"
+Blocks.POTENT_SULFUR:
+  - Blocks.POTENT_SULFUR
+  - "potent_sulfur"
+Blocks.SULFUR_SLAB:
+  - Blocks.SULFUR_SLAB
+  - "sulfur_slab"
+Blocks.SULFUR_STAIRS:
+  - Blocks.SULFUR_STAIRS
+  - "sulfur_stairs"
+Blocks.SULFUR_WALL:
+  - Blocks.SULFUR_WALL
+  - "sulfur_wall"
+Blocks.POLISHED_SULFUR:
+  - Blocks.POLISHED_SULFUR
+  - "polished_sulfur"
+Blocks.POLISHED_SULFUR_SLAB:
+  - Blocks.POLISHED_SULFUR_SLAB
+  - "polished_sulfur_slab"
+Blocks.POLISHED_SULFUR_STAIRS:
+  - Blocks.POLISHED_SULFUR_STAIRS
+  - "polished_sulfur_stairs"
+Blocks.POLISHED_SULFUR_WALL:
+  - Blocks.POLISHED_SULFUR_WALL
+  - "polished_sulfur_wall"
+Blocks.SULFUR_BRICKS:
+  - Blocks.SULFUR_BRICKS
+  - "sulfur_bricks"
+Blocks.SULFUR_BRICK_SLAB:
+  - Blocks.SULFUR_BRICK_SLAB
+  - "sulfur_brick_slab"
+Blocks.SULFUR_BRICK_STAIRS:
+  - Blocks.SULFUR_BRICK_STAIRS
+  - "sulfur_brick_stairs"
+Blocks.SULFUR_BRICK_WALL:
+  - Blocks.SULFUR_BRICK_WALL
+  - "sulfur_brick_wall"
+Blocks.CHISELED_SULFUR:
+  - Blocks.CHISELED_SULFUR
+  - "chiseled_sulfur"
+Blocks.SULFUR_SPIKE:
+  - Blocks.SULFUR_SPIKE
+  - "sulfur_spike"
+Blocks.CINNABAR:
+  - Blocks.CINNABAR
+  - "cinnabar"
+Blocks.CINNABAR_SLAB:
+  - Blocks.CINNABAR_SLAB
+  - "cinnabar_slab"
+Blocks.CINNABAR_STAIRS:
+  - Blocks.CINNABAR_STAIRS
+  - "cinnabar_stairs"
+Blocks.CINNABAR_WALL:
+  - Blocks.CINNABAR_WALL
+  - "cinnabar_wall"
+Blocks.POLISHED_CINNABAR:
+  - Blocks.POLISHED_CINNABAR
+  - "polished_cinnabar"
+Blocks.POLISHED_CINNABAR_SLAB:
+  - Blocks.POLISHED_CINNABAR_SLAB
+  - "polished_cinnabar_slab"
+Blocks.POLISHED_CINNABAR_STAIRS:
+  - Blocks.POLISHED_CINNABAR_STAIRS
+  - "polished_cinnabar_stairs"
+Blocks.POLISHED_CINNABAR_WALL:
+  - Blocks.POLISHED_CINNABAR_WALL
+  - "polished_cinnabar_wall"
+Blocks.CINNABAR_BRICKS:
+  - Blocks.CINNABAR_BRICKS
+  - "cinnabar_bricks"
+Blocks.CINNABAR_BRICK_SLAB:
+  - Blocks.CINNABAR_BRICK_SLAB
+  - "cinnabar_brick_slab"
+Blocks.CINNABAR_BRICK_STAIRS:
+  - Blocks.CINNABAR_BRICK_STAIRS
+  - "cinnabar_brick_stairs"
+Blocks.CINNABAR_BRICK_WALL:
+  - Blocks.CINNABAR_BRICK_WALL
+  - "cinnabar_brick_wall"
+Blocks.CHISELED_CINNABAR:
+  - Blocks.CHISELED_CINNABAR
+  - "chiseled_cinnabar"
 Blocks.CALCITE:
   - Blocks.CALCITE
   - "calcite"
@@ -4649,6 +4733,9 @@ Items.MUSIC_DISC_5:
 Items.MUSIC_DISC_RELIC:
   - Items.MUSIC_DISC_RELIC
   - "music_disc_relic"
+Items.MUSIC_DISC_BOUNCE:
+  - Items.MUSIC_DISC_BOUNCE
+  - "music_disc_bounce"
 Items.DISC_FRAGMENT_5:
   - Items.DISC_FRAGMENT_5
   - "disc_fragment_5"
@@ -4766,6 +4853,9 @@ Items.TROPICAL_FISH_BUCKET:
 Items.TADPOLE_BUCKET:
   - Items.TADPOLE_BUCKET
   - "tadpole_bucket"
+Items.SULFUR_CUBE_BUCKET:
+  - Items.SULFUR_CUBE_BUCKET
+  - "sulfur_cube_bucket"
 Items.DRIED_KELP:
   - Items.DRIED_KELP
   - "dried_kelp"
@@ -5303,3 +5393,6 @@ Items.CAMEL_HUSK_SPAWN_EGG:
 Items.PARCHED_SPAWN_EGG:
   - Items.PARCHED_SPAWN_EGG
   - "parched_spawn_egg"
+Items.SULFUR_CUBE_SPAWN_EGG:
+  - Items.SULFUR_CUBE_SPAWN_EGG
+  - "sulfur_cube_spawn_egg"
