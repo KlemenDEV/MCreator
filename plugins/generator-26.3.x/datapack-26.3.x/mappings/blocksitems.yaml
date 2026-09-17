@@ -373,9 +373,6 @@ Blocks.DETECTOR_RAIL:
 Blocks.ACTIVATOR_RAIL:
   - Blocks.ACTIVATOR_RAIL
   - "activator_rail"
-Blocks.BED:
-  - Blocks.WHITE_BED
-  - "white_bed"
 Blocks.WEB:
   - Blocks.COBWEB
   - "cobweb"
@@ -1295,412 +1292,412 @@ Blocks.PIGLIN_HEAD:
   - Blocks.PIGLIN_HEAD
   - "piglin_head"
 Blocks.WOOL:
-  - Blocks.WHITE_WOOL
+  - Blocks.WOOL.white()
   - "#minecraft:wool"
 Blocks.WOOL#0:
-  - Blocks.WHITE_WOOL
+  - Blocks.WOOL.white()
   - "white_wool"
 Blocks.WOOL#1:
-  - Blocks.ORANGE_WOOL
+  - Blocks.WOOL.orange()
   - "orange_wool"
 Blocks.WOOL#2:
-  - Blocks.MAGENTA_WOOL
+  - Blocks.WOOL.magenta()
   - "magenta_wool"
 Blocks.WOOL#3:
-  - Blocks.LIGHT_BLUE_WOOL
+  - Blocks.WOOL.lightBlue()
   - "light_blue_wool"
 Blocks.WOOL#4:
-  - Blocks.YELLOW_WOOL
+  - Blocks.WOOL.yellow()
   - "yellow_wool"
 Blocks.WOOL#5:
-  - Blocks.LIME_WOOL
+  - Blocks.WOOL.lime()
   - "lime_wool"
 Blocks.WOOL#6:
-  - Blocks.PINK_WOOL
+  - Blocks.WOOL.pink()
   - "pink_wool"
 Blocks.WOOL#7:
-  - Blocks.GRAY_WOOL
+  - Blocks.WOOL.gray()
   - "gray_wool"
 Blocks.WOOL#8:
-  - Blocks.LIGHT_GRAY_WOOL
+  - Blocks.WOOL.lightGray()
   - "light_gray_wool"
 Blocks.WOOL#9:
-  - Blocks.CYAN_WOOL
+  - Blocks.WOOL.cyan()
   - "cyan_wool"
 Blocks.WOOL#10:
-  - Blocks.PURPLE_WOOL
+  - Blocks.WOOL.purple()
   - "purple_wool"
 Blocks.WOOL#11:
-  - Blocks.BLUE_WOOL
+  - Blocks.WOOL.blue()
   - "blue_wool"
 Blocks.WOOL#12:
-  - Blocks.BROWN_WOOL
+  - Blocks.WOOL.brown()
   - "brown_wool"
 Blocks.WOOL#13:
-  - Blocks.GREEN_WOOL
+  - Blocks.WOOL.green()
   - "green_wool"
 Blocks.WOOL#14:
-  - Blocks.RED_WOOL
+  - Blocks.WOOL.red()
   - "red_wool"
 Blocks.WOOL#15:
-  - Blocks.BLACK_WOOL
+  - Blocks.WOOL.black()
   - "black_wool"
 Blocks.HARDENED_CLAY:
   - Blocks.TERRACOTTA
   - "terracotta"
 Blocks.STAINED_HARDENED_CLAY:
-  - Blocks.WHITE_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.white()
   - "#minecraft:terracotta"
 Blocks.STAINED_HARDENED_CLAY#0:
-  - Blocks.WHITE_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.white()
   - "white_terracotta"
 Blocks.STAINED_HARDENED_CLAY#1:
-  - Blocks.ORANGE_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.orange()
   - "orange_terracotta"
 Blocks.STAINED_HARDENED_CLAY#2:
-  - Blocks.MAGENTA_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.magenta()
   - "magenta_terracotta"
 Blocks.STAINED_HARDENED_CLAY#3:
-  - Blocks.LIGHT_BLUE_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.lightBlue()
   - "light_blue_terracotta"
 Blocks.STAINED_HARDENED_CLAY#4:
-  - Blocks.YELLOW_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.yellow()
   - "yellow_terracotta"
 Blocks.STAINED_HARDENED_CLAY#5:
-  - Blocks.LIME_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.lime()
   - "lime_terracotta"
 Blocks.STAINED_HARDENED_CLAY#6:
-  - Blocks.PINK_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.pink()
   - "pink_terracotta"
 Blocks.STAINED_HARDENED_CLAY#7:
-  - Blocks.GRAY_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.gray()
   - "gray_terracotta"
 Blocks.STAINED_HARDENED_CLAY#8:
-  - Blocks.LIGHT_GRAY_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.lightGray()
   - "light_gray_terracotta"
 Blocks.STAINED_HARDENED_CLAY#9:
-  - Blocks.CYAN_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.cyan()
   - "cyan_terracotta"
 Blocks.STAINED_HARDENED_CLAY#10:
-  - Blocks.PURPLE_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.purple()
   - "purple_terracotta"
 Blocks.STAINED_HARDENED_CLAY#11:
-  - Blocks.BLUE_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.blue()
   - "blue_terracotta"
 Blocks.STAINED_HARDENED_CLAY#12:
-  - Blocks.BROWN_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.brown()
   - "brown_terracotta"
 Blocks.STAINED_HARDENED_CLAY#13:
-  - Blocks.GREEN_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.green()
   - "green_terracotta"
 Blocks.STAINED_HARDENED_CLAY#14:
-  - Blocks.RED_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.red()
   - "red_terracotta"
 Blocks.STAINED_HARDENED_CLAY#15:
-  - Blocks.BLACK_TERRACOTTA
+  - Blocks.DYED_TERRACOTTA.black()
   - "black_terracotta"
 Blocks.WHITE_GLAZED_TERRACOTTA:
-  - Blocks.WHITE_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.white()
   - "white_glazed_terracotta"
 Blocks.ORANGE_GLAZED_TERRACOTTA:
-  - Blocks.ORANGE_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.orange()
   - "orange_glazed_terracotta"
 Blocks.MAGENTA_GLAZED_TERRACOTTA:
-  - Blocks.MAGENTA_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.magenta()
   - "magenta_glazed_terracotta"
 Blocks.LIGHT_BLUE_GLAZED_TERRACOTTA:
-  - Blocks.LIGHT_BLUE_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.lightBlue()
   - "light_blue_glazed_terracotta"
 Blocks.YELLOW_GLAZED_TERRACOTTA:
-  - Blocks.YELLOW_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.yellow()
   - "yellow_glazed_terracotta"
 Blocks.LIME_GLAZED_TERRACOTTA:
-  - Blocks.LIME_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.lime()
   - "lime_glazed_terracotta"
 Blocks.PINK_GLAZED_TERRACOTTA:
-  - Blocks.PINK_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.pink()
   - "pink_glazed_terracotta"
 Blocks.GRAY_GLAZED_TERRACOTTA:
-  - Blocks.GRAY_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.gray()
   - "gray_glazed_terracotta"
 Blocks.SILVER_GLAZED_TERRACOTTA:
-  - Blocks.LIGHT_GRAY_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.lightGray()
   - "light_gray_glazed_terracotta"
 Blocks.CYAN_GLAZED_TERRACOTTA:
-  - Blocks.CYAN_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.cyan()
   - "cyan_glazed_terracotta"
 Blocks.PURPLE_GLAZED_TERRACOTTA:
-  - Blocks.PURPLE_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.purple()
   - "purple_glazed_terracotta"
 Blocks.BLUE_GLAZED_TERRACOTTA:
-  - Blocks.BLUE_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.blue()
   - "blue_glazed_terracotta"
 Blocks.BROWN_GLAZED_TERRACOTTA:
-  - Blocks.BROWN_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.brown()
   - "brown_glazed_terracotta"
 Blocks.GREEN_GLAZED_TERRACOTTA:
-  - Blocks.GREEN_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.green()
   - "green_glazed_terracotta"
 Blocks.RED_GLAZED_TERRACOTTA:
-  - Blocks.RED_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.red()
   - "red_glazed_terracotta"
 Blocks.BLACK_GLAZED_TERRACOTTA:
-  - Blocks.BLACK_GLAZED_TERRACOTTA
+  - Blocks.GLAZED_TERRACOTTA.black()
   - "black_glazed_terracotta"
 Blocks.CONCRETE_POWDER#0:
-  - Blocks.WHITE_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.white()
   - "white_concrete_powder"
 Blocks.CONCRETE_POWDER#1:
-  - Blocks.ORANGE_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.orange()
   - "orange_concrete_powder"
 Blocks.CONCRETE_POWDER#2:
-  - Blocks.MAGENTA_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.magenta()
   - "magenta_concrete_powder"
 Blocks.CONCRETE_POWDER#3:
-  - Blocks.LIGHT_BLUE_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.lightBlue()
   - "light_blue_concrete_powder"
 Blocks.CONCRETE_POWDER#4:
-  - Blocks.YELLOW_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.yellow()
   - "yellow_concrete_powder"
 Blocks.CONCRETE_POWDER#5:
-  - Blocks.LIME_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.lime()
   - "lime_concrete_powder"
 Blocks.CONCRETE_POWDER#6:
-  - Blocks.PINK_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.pink()
   - "pink_concrete_powder"
 Blocks.CONCRETE_POWDER#7:
-  - Blocks.GRAY_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.gray()
   - "gray_concrete_powder"
 Blocks.CONCRETE_POWDER#8:
-  - Blocks.LIGHT_GRAY_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.lightGray()
   - "light_gray_concrete_powder"
 Blocks.CONCRETE_POWDER#9:
-  - Blocks.CYAN_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.cyan()
   - "cyan_concrete_powder"
 Blocks.CONCRETE_POWDER#10:
-  - Blocks.PURPLE_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.purple()
   - "purple_concrete_powder"
 Blocks.CONCRETE_POWDER#11:
-  - Blocks.BLUE_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.blue()
   - "blue_concrete_powder"
 Blocks.CONCRETE_POWDER#12:
-  - Blocks.BROWN_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.brown()
   - "brown_concrete_powder"
 Blocks.CONCRETE_POWDER#13:
-  - Blocks.GREEN_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.green()
   - "green_concrete_powder"
 Blocks.CONCRETE_POWDER#14:
-  - Blocks.RED_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.red()
   - "red_concrete_powder"
 Blocks.CONCRETE_POWDER#15:
-  - Blocks.BLACK_CONCRETE_POWDER
+  - Blocks.CONCRETE_POWDER.black()
   - "black_concrete_powder"
 Blocks.CONCRETE#0:
-  - Blocks.WHITE_CONCRETE
+  - Blocks.CONCRETE.white()
   - "white_concrete"
 Blocks.CONCRETE#1:
-  - Blocks.ORANGE_CONCRETE
+  - Blocks.CONCRETE.orange()
   - "orange_concrete"
 Blocks.CONCRETE#2:
-  - Blocks.MAGENTA_CONCRETE
+  - Blocks.CONCRETE.magenta()
   - "magenta_concrete"
 Blocks.CONCRETE#3:
-  - Blocks.LIGHT_BLUE_CONCRETE
+  - Blocks.CONCRETE.lightBlue()
   - "light_blue_concrete"
 Blocks.CONCRETE#4:
-  - Blocks.YELLOW_CONCRETE
+  - Blocks.CONCRETE.yellow()
   - "yellow_concrete"
 Blocks.CONCRETE#5:
-  - Blocks.LIME_CONCRETE
+  - Blocks.CONCRETE.lime()
   - "lime_concrete"
 Blocks.CONCRETE#6:
-  - Blocks.PINK_CONCRETE
+  - Blocks.CONCRETE.pink()
   - "pink_concrete"
 Blocks.CONCRETE#7:
-  - Blocks.GRAY_CONCRETE
+  - Blocks.CONCRETE.gray()
   - "gray_concrete"
 Blocks.CONCRETE#8:
-  - Blocks.LIGHT_GRAY_CONCRETE
+  - Blocks.CONCRETE.lightGray()
   - "light_gray_concrete"
 Blocks.CONCRETE#9:
-  - Blocks.CYAN_CONCRETE
+  - Blocks.CONCRETE.cyan()
   - "cyan_concrete"
 Blocks.CONCRETE#10:
-  - Blocks.PURPLE_CONCRETE
+  - Blocks.CONCRETE.purple()
   - "purple_concrete"
 Blocks.CONCRETE#11:
-  - Blocks.BLUE_CONCRETE
+  - Blocks.CONCRETE.blue()
   - "blue_concrete"
 Blocks.CONCRETE#12:
-  - Blocks.BROWN_CONCRETE
+  - Blocks.CONCRETE.brown()
   - "brown_concrete"
 Blocks.CONCRETE#13:
-  - Blocks.GREEN_CONCRETE
+  - Blocks.CONCRETE.green()
   - "green_concrete"
 Blocks.CONCRETE#14:
-  - Blocks.RED_CONCRETE
+  - Blocks.CONCRETE.red()
   - "red_concrete"
 Blocks.CONCRETE#15:
-  - Blocks.BLACK_CONCRETE
+  - Blocks.CONCRETE.black()
   - "black_concrete"
 Blocks.CARPET:
-  - Blocks.WHITE_CARPET
+  - Blocks.CARPET.white()
   - "#minecraft:wool_carpets"
 Blocks.CARPET#0:
-  - Blocks.WHITE_CARPET
+  - Blocks.CARPET.white()
   - "white_carpet"
 Blocks.CARPET#1:
-  - Blocks.ORANGE_CARPET
+  - Blocks.CARPET.orange()
   - "orange_carpet"
 Blocks.CARPET#2:
-  - Blocks.MAGENTA_CARPET
+  - Blocks.CARPET.magenta()
   - "magenta_carpet"
 Blocks.CARPET#3:
-  - Blocks.LIGHT_BLUE_CARPET
+  - Blocks.CARPET.lightBlue()
   - "light_blue_carpet"
 Blocks.CARPET#4:
-  - Blocks.YELLOW_CARPET
+  - Blocks.CARPET.yellow()
   - "yellow_carpet"
 Blocks.CARPET#5:
-  - Blocks.LIME_CARPET
+  - Blocks.CARPET.lime()
   - "lime_carpet"
 Blocks.CARPET#6:
-  - Blocks.PINK_CARPET
+  - Blocks.CARPET.pink()
   - "pink_carpet"
 Blocks.CARPET#7:
-  - Blocks.GRAY_CARPET
+  - Blocks.CARPET.gray()
   - "gray_carpet"
 Blocks.CARPET#8:
-  - Blocks.LIGHT_GRAY_CARPET
+  - Blocks.CARPET.lightGray()
   - "light_gray_carpet"
 Blocks.CARPET#9:
-  - Blocks.CYAN_CARPET
+  - Blocks.CARPET.cyan()
   - "cyan_carpet"
 Blocks.CARPET#10:
-  - Blocks.PURPLE_CARPET
+  - Blocks.CARPET.purple()
   - "purple_carpet"
 Blocks.CARPET#11:
-  - Blocks.BLUE_CARPET
+  - Blocks.CARPET.blue()
   - "blue_carpet"
 Blocks.CARPET#12:
-  - Blocks.BROWN_CARPET
+  - Blocks.CARPET.brown()
   - "brown_carpet"
 Blocks.CARPET#13:
-  - Blocks.GREEN_CARPET
+  - Blocks.CARPET.green()
   - "green_carpet"
 Blocks.CARPET#14:
-  - Blocks.RED_CARPET
+  - Blocks.CARPET.red()
   - "red_carpet"
 Blocks.CARPET#15:
-  - Blocks.BLACK_CARPET
+  - Blocks.CARPET.black()
   - "black_carpet"
 Blocks.GLASS:
   - Blocks.GLASS
   - "glass"
 Blocks.STAINED_GLASS:
-  - Blocks.WHITE_STAINED_GLASS
+  - Blocks.STAINED_GLASS.white()
   - "#c:glass_blocks/cheap"
 Blocks.STAINED_GLASS#0:
-  - Blocks.WHITE_STAINED_GLASS
+  - Blocks.STAINED_GLASS.white()
   - "white_stained_glass"
 Blocks.STAINED_GLASS#1:
-  - Blocks.ORANGE_STAINED_GLASS
+  - Blocks.STAINED_GLASS.orange()
   - "orange_stained_glass"
 Blocks.STAINED_GLASS#2:
-  - Blocks.MAGENTA_STAINED_GLASS
+  - Blocks.STAINED_GLASS.magenta()
   - "magenta_stained_glass"
 Blocks.STAINED_GLASS#3:
-  - Blocks.LIGHT_BLUE_STAINED_GLASS
+  - Blocks.STAINED_GLASS.lightBlue()
   - "light_blue_stained_glass"
 Blocks.STAINED_GLASS#4:
-  - Blocks.YELLOW_STAINED_GLASS
+  - Blocks.STAINED_GLASS.yellow()
   - "yellow_stained_glass"
 Blocks.STAINED_GLASS#5:
-  - Blocks.LIME_STAINED_GLASS
+  - Blocks.STAINED_GLASS.lime()
   - "lime_stained_glass"
 Blocks.STAINED_GLASS#6:
-  - Blocks.PINK_STAINED_GLASS
+  - Blocks.STAINED_GLASS.pink()
   - "pink_stained_glass"
 Blocks.STAINED_GLASS#7:
-  - Blocks.GRAY_STAINED_GLASS
+  - Blocks.STAINED_GLASS.gray()
   - "gray_stained_glass"
 Blocks.STAINED_GLASS#8:
-  - Blocks.LIGHT_GRAY_STAINED_GLASS
+  - Blocks.STAINED_GLASS.lightGray()
   - "light_gray_stained_glass"
 Blocks.STAINED_GLASS#9:
-  - Blocks.CYAN_STAINED_GLASS
+  - Blocks.STAINED_GLASS.cyan()
   - "cyan_stained_glass"
 Blocks.STAINED_GLASS#10:
-  - Blocks.PURPLE_STAINED_GLASS
+  - Blocks.STAINED_GLASS.purple()
   - "purple_stained_glass"
 Blocks.STAINED_GLASS#11:
-  - Blocks.BLUE_STAINED_GLASS
+  - Blocks.STAINED_GLASS.blue()
   - "blue_stained_glass"
 Blocks.STAINED_GLASS#12:
-  - Blocks.BROWN_STAINED_GLASS
+  - Blocks.STAINED_GLASS.brown()
   - "brown_stained_glass"
 Blocks.STAINED_GLASS#13:
-  - Blocks.GREEN_STAINED_GLASS
+  - Blocks.STAINED_GLASS.green()
   - "green_stained_glass"
 Blocks.STAINED_GLASS#14:
-  - Blocks.RED_STAINED_GLASS
+  - Blocks.STAINED_GLASS.red()
   - "red_stained_glass"
 Blocks.STAINED_GLASS#15:
-  - Blocks.BLACK_STAINED_GLASS
+  - Blocks.STAINED_GLASS.black()
   - "black_stained_glass"
 Blocks.GLASS_PANE:
   - Blocks.GLASS_PANE
   - "glass_pane"
 Blocks.STAINED_GLASS_PANE:
-  - Blocks.WHITE_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.white()
   - "#c:glass_panes"
 Blocks.STAINED_GLASS_PANE#0:
-  - Blocks.WHITE_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.white()
   - "white_stained_glass_pane"
 Blocks.STAINED_GLASS_PANE#1:
-  - Blocks.ORANGE_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.orange()
   - "orange_stained_glass_pane"
 Blocks.STAINED_GLASS_PANE#2:
-  - Blocks.MAGENTA_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.magenta()
   - "magenta_stained_glass_pane"
 Blocks.STAINED_GLASS_PANE#3:
-  - Blocks.LIGHT_BLUE_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.lightBlue()
   - "light_blue_stained_glass_pane"
 Blocks.STAINED_GLASS_PANE#4:
-  - Blocks.YELLOW_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.yellow()
   - "yellow_stained_glass_pane"
 Blocks.STAINED_GLASS_PANE#5:
-  - Blocks.LIME_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.lime()
   - "lime_stained_glass_pane"
 Blocks.STAINED_GLASS_PANE#6:
-  - Blocks.PINK_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.pink()
   - "pink_stained_glass_pane"
 Blocks.STAINED_GLASS_PANE#7:
-  - Blocks.GRAY_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.gray()
   - "gray_stained_glass_pane"
 Blocks.STAINED_GLASS_PANE#8:
-  - Blocks.LIGHT_GRAY_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.lightGray()
   - "light_gray_stained_glass_pane"
 Blocks.STAINED_GLASS_PANE#9:
-  - Blocks.CYAN_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.cyan()
   - "cyan_stained_glass_pane"
 Blocks.STAINED_GLASS_PANE#10:
-  - Blocks.PURPLE_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.purple()
   - "purple_stained_glass_pane"
 Blocks.STAINED_GLASS_PANE#11:
-  - Blocks.BLUE_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.blue()
   - "blue_stained_glass_pane"
 Blocks.STAINED_GLASS_PANE#12:
-  - Blocks.BROWN_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.brown()
   - "brown_stained_glass_pane"
 Blocks.STAINED_GLASS_PANE#13:
-  - Blocks.GREEN_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.green()
   - "green_stained_glass_pane"
 Blocks.STAINED_GLASS_PANE#14:
-  - Blocks.RED_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.red()
   - "red_stained_glass_pane"
 Blocks.STAINED_GLASS_PANE#15:
-  - Blocks.BLACK_STAINED_GLASS_PANE
+  - Blocks.STAINED_GLASS_PANE.black()
   - "black_stained_glass_pane"
 Blocks.SEA_LANTERN:
   - Blocks.SEA_LANTERN
@@ -1718,58 +1715,58 @@ Blocks.PRISMARINE#2:
   - Blocks.DARK_PRISMARINE
   - "dark_prismarine"
 Blocks.WHITE_SHULKER_BOX:
-  - Blocks.WHITE_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.white()
   - "white_shulker_box"
 Blocks.ORANGE_SHULKER_BOX:
-  - Blocks.ORANGE_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.orange()
   - "orange_shulker_box"
 Blocks.MAGENTA_SHULKER_BOX:
-  - Blocks.MAGENTA_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.magenta()
   - "magenta_shulker_box"
 Blocks.LIGHT_BLUE_SHULKER_BOX:
-  - Blocks.LIGHT_BLUE_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.lightBlue
   - "light_blue_shulker_box"
 Blocks.YELLOW_SHULKER_BOX:
-  - Blocks.YELLOW_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.yellow()
   - "yellow_shulker_box"
 Blocks.LIME_SHULKER_BOX:
-  - Blocks.LIME_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.lime()
   - "lime_shulker_box"
 Blocks.PINK_SHULKER_BOX:
-  - Blocks.PINK_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.pink()
   - "pink_shulker_box"
 Blocks.GRAY_SHULKER_BOX:
-  - Blocks.GRAY_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.gray()
   - "gray_shulker_box"
 Blocks.SILVER_SHULKER_BOX:
-  - Blocks.LIGHT_GRAY_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.lightGray()
   - "light_gray_shulker_box"
 Blocks.CYAN_SHULKER_BOX:
-  - Blocks.CYAN_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.cyan()
   - "cyan_shulker_box"
 Blocks.PURPLE_SHULKER_BOX:
-  - Blocks.PURPLE_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.purple()
   - "purple_shulker_box"
 Blocks.BLUE_SHULKER_BOX:
-  - Blocks.BLUE_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.blue()
   - "blue_shulker_box"
 Blocks.BROWN_SHULKER_BOX:
-  - Blocks.BROWN_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.brown()
   - "brown_shulker_box"
 Blocks.GREEN_SHULKER_BOX:
-  - Blocks.GREEN_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.green()
   - "green_shulker_box"
 Blocks.RED_SHULKER_BOX:
-  - Blocks.RED_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.red()
   - "red_shulker_box"
 Blocks.BLACK_SHULKER_BOX:
-  - Blocks.BLACK_SHULKER_BOX
+  - Blocks.DYED_SHULKER_BOX.black()
   - "black_shulker_box"
 Blocks.STANDING_BANNER:
-  - Blocks.WHITE_BANNER
+  - Blocks.BANNER.white()
   - "white_banner"
 Blocks.WALL_BANNER:
-  - Blocks.WHITE_WALL_BANNER
+  - Blocks.WALL_BANNER.white()
   - "white_wall_banner"
 Blocks.BARRIER:
   - Blocks.BARRIER
@@ -1891,50 +1888,53 @@ Blocks.STRIPPED_MANGROVE_WOOD:
 Blocks.STRIPPED_CHERRY_WOOD:
   - Blocks.STRIPPED_CHERRY_WOOD
   - "stripped_cherry_wood"
+Blocks.BED:
+  - Blocks.BED.white()
+  - "white_bed"
 Blocks.ORANGE_BED:
-  - Blocks.ORANGE_BED
+  - Blocks.BED.orange()
   - "orange_bed"
 Blocks.MAGENTA_BED:
-  - Blocks.MAGENTA_BED
+  - Blocks.BED.magenta()
   - "magenta_bed"
 Blocks.LIGHT_BLUE_BED:
-  - Blocks.LIGHT_BLUE_BED
+  - Blocks.BED.lightBlue()
   - "light_blue_bed"
 Blocks.YELLOW_BED:
-  - Blocks.YELLOW_BED
+  - Blocks.BED.yellow()
   - "yellow_bed"
 Blocks.LIME_BED:
-  - Blocks.LIME_BED
+  - Blocks.BED.lime()
   - "lime_bed"
 Blocks.PINK_BED:
-  - Blocks.PINK_BED
+  - Blocks.BED.pink()
   - "pink_bed"
 Blocks.GRAY_BED:
-  - Blocks.GRAY_BED
+  - Blocks.BED.gray()
   - "gray_bed"
 Blocks.LIGHT_GRAY_BED:
-  - Blocks.LIGHT_GRAY_BED
+  - Blocks.BED.lightGray()
   - "light_gray_bed"
 Blocks.CYAN_BED:
-  - Blocks.CYAN_BED
+  - Blocks.BED.cyan()
   - "cyan_bed"
 Blocks.PURPLE_BED:
-  - Blocks.PURPLE_BED
+  - Blocks.BED.purple()
   - "purple_bed"
 Blocks.BLUE_BED:
-  - Blocks.BLUE_BED
+  - Blocks.BED.blue()
   - "blue_bed"
 Blocks.BROWN_BED:
-  - Blocks.BROWN_BED
+  - Blocks.BED.brown()
   - "brown_bed"
 Blocks.GREEN_BED:
-  - Blocks.GREEN_BED
+  - Blocks.BED.green()
   - "green_bed"
 Blocks.RED_BED:
-  - Blocks.RED_BED
+  - Blocks.BED.red()
   - "red_bed"
 Blocks.BLACK_BED:
-  - Blocks.BLACK_BED
+  - Blocks.BED.black()
   - "black_bed"
 Blocks.SEAGRASS:
   - Blocks.SEAGRASS
@@ -2274,100 +2274,100 @@ Blocks.DARK_PRISMARINE_SLAB:
   - Blocks.DARK_PRISMARINE_SLAB
   - "dark_prismarine_slab"
 Blocks.WHITE_BANNER:
-  - Blocks.WHITE_BANNER
+  - Blocks.BANNER.white()
   - "white_banner"
 Blocks.ORANGE_BANNER:
-  - Blocks.ORANGE_BANNER
+  - Blocks.BANNER.orange()
   - "orange_banner"
 Blocks.MAGENTA_BANNER:
-  - Blocks.MAGENTA_BANNER
+  - Blocks.BANNER.magenta()
   - "magenta_banner"
 Blocks.LIGHT_BLUE_BANNER:
-  - Blocks.LIGHT_BLUE_BANNER
+  - Blocks.BANNER.lightBlue()
   - "light_blue_banner"
 Blocks.YELLOW_BANNER:
-  - Blocks.YELLOW_BANNER
+  - Blocks.BANNER.yellow()
   - "yellow_banner"
 Blocks.LIME_BANNER:
-  - Blocks.LIME_BANNER
+  - Blocks.BANNER.lime()
   - "lime_banner"
 Blocks.PINK_BANNER:
-  - Blocks.PINK_BANNER
+  - Blocks.BANNER.pink()
   - "pink_banner"
 Blocks.GRAY_BANNER:
-  - Blocks.GRAY_BANNER
+  - Blocks.BANNER.gray()
   - "gray_banner"
 Blocks.LIGHT_GRAY_BANNER:
-  - Blocks.LIGHT_GRAY_BANNER
+  - Blocks.BANNER.lightGray()
   - "light_gray_banner"
 Blocks.CYAN_BANNER:
-  - Blocks.CYAN_BANNER
+  - Blocks.BANNER.cyan()
   - "cyan_banner"
 Blocks.PURPLE_BANNER:
-  - Blocks.PURPLE_BANNER
+  - Blocks.BANNER.purple()
   - "purple_banner"
 Blocks.BLUE_BANNER:
-  - Blocks.BLUE_BANNER
+  - Blocks.BANNER.blue()
   - "blue_banner"
 Blocks.BROWN_BANNER:
-  - Blocks.BROWN_BANNER
+  - Blocks.BANNER.brown()
   - "brown_banner"
 Blocks.GREEN_BANNER:
-  - Blocks.GREEN_BANNER
+  - Blocks.BANNER.green()
   - "green_banner"
 Blocks.RED_BANNER:
-  - Blocks.RED_BANNER
+  - Blocks.BANNER.red()
   - "red_banner"
 Blocks.BLACK_BANNER:
-  - Blocks.BLACK_BANNER
+  - Blocks.BANNER.black()
   - "black_banner"
 Blocks.WHITE_WALL_BANNER:
-  - Blocks.WHITE_WALL_BANNER
+  - Blocks.WALL_BANNER.white()
   - "white_wall_banner"
 Blocks.ORANGE_WALL_BANNER:
-  - Blocks.ORANGE_WALL_BANNER
+  - Blocks.WALL_BANNER.orange()
   - "orange_wall_banner"
 Blocks.MAGENTA_WALL_BANNER:
-  - Blocks.MAGENTA_WALL_BANNER
+  - Blocks.WALL_BANNER.magenta()
   - "magenta_wall_banner"
 Blocks.LIGHT_BLUE_WALL_BANNER:
-  - Blocks.LIGHT_BLUE_WALL_BANNER
+  - Blocks.WALL_BANNER.lightBlue()
   - "light_blue_wall_banner"
 Blocks.YELLOW_WALL_BANNER:
-  - Blocks.YELLOW_WALL_BANNER
+  - Blocks.WALL_BANNER.yellow()
   - "yellow_wall_banner"
 Blocks.LIME_WALL_BANNER:
-  - Blocks.LIME_WALL_BANNER
+  - Blocks.WALL_BANNER.lime()
   - "lime_wall_banner"
 Blocks.PINK_WALL_BANNER:
-  - Blocks.PINK_WALL_BANNER
+  - Blocks.WALL_BANNER.pink()
   - "pink_wall_banner"
 Blocks.GRAY_WALL_BANNER:
-  - Blocks.GRAY_WALL_BANNER
+  - Blocks.WALL_BANNER.gray()
   - "gray_wall_banner"
 Blocks.LIGHT_GRAY_WALL_BANNER:
-  - Blocks.LIGHT_GRAY_WALL_BANNER
+  - Blocks.WALL_BANNER.lightGray()
   - "light_gray_wall_banner"
 Blocks.CYAN_WALL_BANNER:
-  - Blocks.CYAN_WALL_BANNER
+  - Blocks.WALL_BANNER.cyan()
   - "cyan_wall_banner"
 Blocks.PURPLE_WALL_BANNER:
-  - Blocks.PURPLE_WALL_BANNER
+  - Blocks.WALL_BANNER.purple()
   - "purple_wall_banner"
 Blocks.BLUE_WALL_BANNER:
-  - Blocks.BLUE_WALL_BANNER
+  - Blocks.WALL_BANNER.blue()
   - "blue_wall_banner"
 Blocks.BROWN_WALL_BANNER:
-  - Blocks.BROWN_WALL_BANNER
+  - Blocks.WALL_BANNER.brown()
   - "brown_wall_banner"
 Blocks.GREEN_WALL_BANNER:
-  - Blocks.GREEN_WALL_BANNER
+  - Blocks.WALL_BANNER.green()
   - "green_wall_banner"
 Blocks.RED_WALL_BANNER:
-  - Blocks.RED_WALL_BANNER
+  - Blocks.WALL_BANNER.red()
   - "red_wall_banner"
 Blocks.BLACK_WALL_BANNER:
-  - Blocks.BLACK_WALL_BANNER
+  - Blocks.WALL_BANNER.black()
   - "black_wall_banner"
 Blocks.CUT_RED_SANDSTONE_SLAB:
   - Blocks.CUT_RED_SANDSTONE_SLAB
@@ -3036,52 +3036,52 @@ Blocks.CANDLE#0:
   - Blocks.CANDLE
   - "candle"
 Blocks.CANDLE#1:
-  - Blocks.WHITE_CANDLE
+  - Blocks.DYED_CANDLE.white()
   - "white_candle"
 Blocks.CANDLE#2:
-  - Blocks.ORANGE_CANDLE
+  - Blocks.DYED_CANDLE.orange()
   - "orange_candle"
 Blocks.CANDLE#3:
-  - Blocks.MAGENTA_CANDLE
+  - Blocks.DYED_CANDLE.magenta()
   - "magenta_candle"
 Blocks.CANDLE#4:
-  - Blocks.LIGHT_BLUE_CANDLE
+  - Blocks.DYED_CANDLE.lightBlue()
   - "light_blue_candle"
 Blocks.CANDLE#5:
-  - Blocks.YELLOW_CANDLE
+  - Blocks.DYED_CANDLE.yellow()
   - "yellow_candle"
 Blocks.CANDLE#6:
-  - Blocks.LIME_CANDLE
+  - Blocks.DYED_CANDLE.lime()
   - "lime_candle"
 Blocks.CANDLE#7:
-  - Blocks.PINK_CANDLE
+  - Blocks.DYED_CANDLE.pink()
   - "pink_candle"
 Blocks.CANDLE#8:
-  - Blocks.GRAY_CANDLE
+  - Blocks.DYED_CANDLE.gray()
   - "gray_candle"
 Blocks.CANDLE#9:
-  - Blocks.LIGHT_GRAY_CANDLE
+  - Blocks.DYED_CANDLE.lightGray()
   - "light_gray_candle"
 Blocks.CANDLE#10:
-  - Blocks.CYAN_CANDLE
+  - Blocks.DYED_CANDLE.cyan()
   - "cyan_candle"
 Blocks.CANDLE#11:
-  - Blocks.PURPLE_CANDLE
+  - Blocks.DYED_CANDLE.purple()
   - "purple_candle"
 Blocks.CANDLE#12:
-  - Blocks.BLUE_CANDLE
+  - Blocks.DYED_CANDLE.blue()
   - "blue_candle"
 Blocks.CANDLE#13:
-  - Blocks.BROWN_CANDLE
+  - Blocks.DYED_CANDLE.brown()
   - "brown_candle"
 Blocks.CANDLE#14:
-  - Blocks.GREEN_CANDLE
+  - Blocks.DYED_CANDLE.green()
   - "green_candle"
 Blocks.CANDLE#15:
-  - Blocks.RED_CANDLE
+  - Blocks.DYED_CANDLE.red()
   - "red_candle"
 Blocks.CANDLE#16:
-  - Blocks.BLACK_CANDLE
+  - Blocks.DYED_CANDLE.black()
   - "black_candle"
 Blocks.CANDLE_CAKE:
   - Blocks.CANDLE_CAKE
@@ -3090,52 +3090,52 @@ Blocks.CANDLE_CAKE#0:
   - Blocks.CANDLE_CAKE
   - "candle_cake"
 Blocks.CANDLE_CAKE#1:
-  - Blocks.WHITE_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.white()
   - "white_candle_cake"
 Blocks.CANDLE_CAKE#2:
-  - Blocks.ORANGE_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.orange()
   - "orange_candle_cake"
 Blocks.CANDLE_CAKE#3:
-  - Blocks.MAGENTA_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.magenta()
   - "magenta_candle_cake"
 Blocks.CANDLE_CAKE#4:
-  - Blocks.LIGHT_BLUE_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.lightBlue()
   - "light_blue_candle_cake"
 Blocks.CANDLE_CAKE#5:
-  - Blocks.YELLOW_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.yellow()
   - "yellow_candle_cake"
 Blocks.CANDLE_CAKE#6:
-  - Blocks.LIME_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.lime()
   - "lime_candle_cake"
 Blocks.CANDLE_CAKE#7:
-  - Blocks.PINK_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.pink()
   - "pink_candle_cake"
 Blocks.CANDLE_CAKE#8:
-  - Blocks.GRAY_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.gray()
   - "gray_candle_cake"
 Blocks.CANDLE_CAKE#9:
-  - Blocks.LIGHT_GRAY_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.lightGray()
   - "light_gray_candle_cake"
 Blocks.CANDLE_CAKE#10:
-  - Blocks.CYAN_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.cyan()
   - "cyan_candle_cake"
 Blocks.CANDLE_CAKE#11:
-  - Blocks.PURPLE_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.purple()
   - "purple_candle_cake"
 Blocks.CANDLE_CAKE#12:
-  - Blocks.BLUE_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.blue()
   - "blue_candle_cake"
 Blocks.CANDLE_CAKE#13:
-  - Blocks.BROWN_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.brown()
   - "brown_candle_cake"
 Blocks.CANDLE_CAKE#14:
-  - Blocks.GREEN_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.green()
   - "green_candle_cake"
 Blocks.CANDLE_CAKE#15:
-  - Blocks.RED_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.red()
   - "red_candle_cake"
 Blocks.CANDLE_CAKE#16:
-  - Blocks.BLACK_CANDLE_CAKE
+  - Blocks.DYED_CANDLE_CAKE.black()
   - "black_candle_cake"
 Blocks.AMETHYST_BLOCK:
   - Blocks.AMETHYST_BLOCK
@@ -3666,10 +3666,10 @@ Items.DYE#0:
   - Items.INK_SAC
   - "ink_sac"
 Items.DYE#1:
-  - Items.RED_DYE
+  - Items.DYE.red()
   - "red_dye"
 Items.DYE#2:
-  - Items.GREEN_DYE
+  - Items.DYE.green()
   - "green_dye"
 Items.DYE#3:
   - Items.COCOA_BEANS
@@ -3678,49 +3678,49 @@ Items.DYE#4:
   - Items.LAPIS_LAZULI
   - "lapis_lazuli"
 Items.DYE#5:
-  - Items.PURPLE_DYE
+  - Items.DYE.purple()
   - "purple_dye"
 Items.DYE#6:
-  - Items.CYAN_DYE
+  - Items.DYE.cyan()
   - "cyan_dye"
 Items.DYE#7:
-  - Items.LIGHT_GRAY_DYE
+  - Items.DYE.lightGray()
   - "light_gray_dye"
 Items.DYE#8:
-  - Items.GRAY_DYE
+  - Items.DYE.gray()
   - "gray_dye"
 Items.DYE#9:
-  - Items.PINK_DYE
+  - Items.DYE.pink()
   - "pink_dye"
 Items.DYE#10:
-  - Items.LIME_DYE
+  - Items.DYE.lime()
   - "lime_dye"
 Items.DYE#11:
-  - Items.YELLOW_DYE
+  - Items.DYE.yellow()
   - "yellow_dye"
 Items.DYE#12:
-  - Items.LIGHT_BLUE_DYE
+  - Items.DYE.lightBlue()
   - "light_blue_dye"
 Items.DYE#13:
-  - Items.MAGENTA_DYE
+  - Items.DYE.magenta()
   - "magenta_dye"
 Items.DYE#14:
-  - Items.ORANGE_DYE
+  - Items.DYE.orange()
   - "orange_dye"
 Items.DYE#15:
   - Items.BONE_MEAL
   - "bone_meal"
 Items.DYE#16:
-  - Items.BLACK_DYE
+  - Items.DYE.black()
   - "black_dye"
 Items.DYE#17:
-  - Items.BROWN_DYE
+  - Items.DYE.brown()
   - "brown_dye"
 Items.DYE#18:
-  - Items.BLUE_DYE
+  - Items.DYE.blue()
   - "blue_dye"
 Items.DYE#19:
-  - Items.WHITE_DYE
+  - Items.DYE.white()
   - "white_dye"
 Items.COAL#0:
   - Items.COAL
@@ -4038,55 +4038,55 @@ Items.FLOWER_POT:
   - Items.FLOWER_POT
   - "flower_pot"
 Items.BANNER:
-  - Items.BLACK_BANNER
+  - Items.BANNER.black()
   - "#minecraft:banners"
 Items.BANNER#0:
-  - Items.BLACK_BANNER
+  - Items.BANNER.black()
   - "black_banner"
 Items.BANNER#1:
-  - Items.RED_BANNER
+  - Items.BANNER.red()
   - "red_banner"
 Items.BANNER#2:
-  - Items.GREEN_BANNER
+  - Items.BANNER.green()
   - "green_banner"
 Items.BANNER#3:
-  - Items.BROWN_BANNER
+  - Items.BANNER.brown()
   - "brown_banner"
 Items.BANNER#4:
-  - Items.BLUE_BANNER
+  - Items.BANNER.blue()
   - "blue_banner"
 Items.BANNER#5:
-  - Items.PURPLE_BANNER
+  - Items.BANNER.purple()
   - "purple_banner"
 Items.BANNER#6:
-  - Items.CYAN_BANNER
+  - Items.BANNER.cyan()
   - "cyan_banner"
 Items.BANNER#7:
-  - Items.LIGHT_GRAY_BANNER
+  - Items.BANNER.lightGray()
   - "light_gray_banner"
 Items.BANNER#8:
-  - Items.GRAY_BANNER
+  - Items.BANNER.gray()
   - "gray_banner"
 Items.BANNER#9:
-  - Items.PINK_BANNER
+  - Items.BANNER.pink()
   - "pink_banner"
 Items.BANNER#10:
-  - Items.LIME_BANNER
+  - Items.BANNER.lime()
   - "lime_banner"
 Items.BANNER#11:
-  - Items.YELLOW_BANNER
+  - Items.BANNER.yellow()
   - "yellow_banner"
 Items.BANNER#12:
-  - Items.LIGHT_BLUE_BANNER
+  - Items.BANNER.lightBlue()
   - "light_blue_banner"
 Items.BANNER#13:
-  - Items.MAGENTA_BANNER
+  - Items.BANNER.magenta()
   - "magenta_banner"
 Items.BANNER#14:
-  - Items.ORANGE_BANNER
+  - Items.BANNER.orange()
   - "orange_banner"
 Items.BANNER#15:
-  - Items.WHITE_BANNER
+  - Items.BANNER.white()
   - "white_banner"
 Items.PAINTING:
   - Items.PAINTING
@@ -4326,52 +4326,52 @@ Items.SADDLE:
   - Items.SADDLE
   - "saddle"
 Items.WHITE_HARNESS:
-  - Items.WHITE_HARNESS
+  - Items.HARNESS.white()
   - "white_harness"
 Items.ORANGE_HARNESS:
-  - Items.ORANGE_HARNESS
+  - Items.HARNESS.orange()
   - "orange_harness"
 Items.MAGENTA_HARNESS:
-  - Items.MAGENTA_HARNESS
+  - Items.HARNESS.magenta()
   - "magenta_harness"
 Items.LIGHT_BLUE_HARNESS:
-  - Items.LIGHT_BLUE_HARNESS
+  - Items.HARNESS.lightBlue()
   - "light_blue_harness"
 Items.YELLOW_HARNESS:
-  - Items.YELLOW_HARNESS
+  - Items.HARNESS.yellow()
   - "yellow_harness"
 Items.LIME_HARNESS:
-  - Items.LIME_HARNESS
+  - Items.HARNESS.lime()
   - "lime_harness"
 Items.PINK_HARNESS:
-  - Items.PINK_HARNESS
+  - Items.HARNESS.pink()
   - "pink_harness"
 Items.GRAY_HARNESS:
-  - Items.GRAY_HARNESS
+  - Items.HARNESS.gray()
   - "gray_harness"
 Items.LIGHT_GRAY_HARNESS:
-  - Items.LIGHT_GRAY_HARNESS
+  - Items.HARNESS.lightGray()
   - "light_gray_harness"
 Items.CYAN_HARNESS:
-  - Items.CYAN_HARNESS
+  - Items.HARNESS.cyan()
   - "cyan_harness"
 Items.PURPLE_HARNESS:
-  - Items.PURPLE_HARNESS
+  - Items.HARNESS.purple()
   - "purple_harness"
 Items.BLUE_HARNESS:
-  - Items.BLUE_HARNESS
+  - Items.HARNESS.blue()
   - "blue_harness"
 Items.BROWN_HARNESS:
-  - Items.BROWN_HARNESS
+  - Items.HARNESS.brown()
   - "brown_harness"
 Items.GREEN_HARNESS:
-  - Items.GREEN_HARNESS
+  - Items.HARNESS.green()
   - "green_harness"
 Items.RED_HARNESS:
-  - Items.RED_HARNESS
+  - Items.HARNESS.red()
   - "red_harness"
 Items.BLACK_HARNESS:
-  - Items.BLACK_HARNESS
+  - Items.HARNESS.black()
   - "black_harness"
 Items.BRICK:
   - Items.BRICK
@@ -5136,52 +5136,52 @@ Items.BUNDLE:
   - Items.BUNDLE
   - "bundle"
 Items.WHITE_BUNDLE:
-  - Items.WHITE_BUNDLE
+  - Items.DYED_BUNDLE.white()
   - "white_bundle"
 Items.ORANGE_BUNDLE:
-  - Items.ORANGE_BUNDLE
+  - Items.DYED_BUNDLE.orange()
   - "orange_bundle"
 Items.MAGENTA_BUNDLE:
-  - Items.MAGENTA_BUNDLE
+  - Items.DYED_BUNDLE.magenta()
   - "magenta_bundle"
 Items.LIGHT_BLUE_BUNDLE:
-  - Items.LIGHT_BLUE_BUNDLE
+  - Items.DYED_BUNDLE.lightBlue()
   - "light_blue_bundle"
 Items.YELLOW_BUNDLE:
-  - Items.YELLOW_BUNDLE
+  - Items.DYED_BUNDLE.yellow()
   - "yellow_bundle"
 Items.LIME_BUNDLE:
-  - Items.LIME_BUNDLE
+  - Items.DYED_BUNDLE.lime()
   - "lime_bundle"
 Items.PINK_BUNDLE:
-  - Items.PINK_BUNDLE
+  - Items.DYED_BUNDLE.pink()
   - "pink_bundle"
 Items.GRAY_BUNDLE:
-  - Items.GRAY_BUNDLE
+  - Items.DYED_BUNDLE.gray()
   - "gray_bundle"
 Items.LIGHT_GRAY_BUNDLE:
-  - Items.LIGHT_GRAY_BUNDLE
+  - Items.DYED_BUNDLE.lightGray()
   - "light_gray_bundle"
 Items.CYAN_BUNDLE:
-  - Items.CYAN_BUNDLE
+  - Items.DYED_BUNDLE.cyan()
   - "cyan_bundle"
 Items.PURPLE_BUNDLE:
-  - Items.PURPLE_BUNDLE
+  - Items.DYED_BUNDLE.purple()
   - "purple_bundle"
 Items.BLUE_BUNDLE:
-  - Items.BLUE_BUNDLE
+  - Items.DYED_BUNDLE.blue()
   - "blue_bundle"
 Items.BROWN_BUNDLE:
-  - Items.BROWN_BUNDLE
+  - Items.DYED_BUNDLE.brown()
   - "brown_bundle"
 Items.GREEN_BUNDLE:
-  - Items.GREEN_BUNDLE
+  - Items.DYED_BUNDLE.green()
   - "green_bundle"
 Items.RED_BUNDLE:
-  - Items.RED_BUNDLE
+  - Items.DYED_BUNDLE.red()
   - "red_bundle"
 Items.BLACK_BUNDLE:
-  - Items.BLACK_BUNDLE
+  - Items.DYED_BUNDLE.black()
   - "black_bundle"
 Items.RAW_IRON:
   - Items.RAW_IRON
