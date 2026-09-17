@@ -656,28 +656,28 @@ Blocks.TRAPPED_CHEST:
   - Blocks.TRAPPED_CHEST
   - "trapped_chest"
 Blocks.COPPER_CHEST:
-  - Blocks.COPPER_CHEST
+  - Blocks.COPPER_CHEST.weathering().unaffected()
   - "copper_chest"
 Blocks.EXPOSED_COPPER_CHEST:
-  - Blocks.EXPOSED_COPPER_CHEST
+  - Blocks.COPPER_CHEST.weathering().exposed()
   - "exposed_copper_chest"
 Blocks.WEATHERED_COPPER_CHEST:
-  - Blocks.WEATHERED_COPPER_CHEST
+  - Blocks.COPPER_CHEST.weathering().weathered()
   - "weathered_copper_chest"
 Blocks.OXIDIZED_COPPER_CHEST:
-  - Blocks.OXIDIZED_COPPER_CHEST
+  - Blocks.COPPER_CHEST.weathering().oxidized()
   - "oxidized_copper_chest"
 Blocks.WAXED_COPPER_CHEST:
-  - Blocks.WAXED_COPPER_CHEST
+  - Blocks.COPPER_CHEST.waxed().unaffected()
   - "waxed_copper_chest"
 Blocks.WAXED_EXPOSED_COPPER_CHEST:
-  - Blocks.WAXED_EXPOSED_COPPER_CHEST
+  - Blocks.COPPER_CHEST.waxed().exposed()
   - "waxed_exposed_copper_chest"
 Blocks.WAXED_WEATHERED_COPPER_CHEST:
-  - Blocks.WAXED_WEATHERED_COPPER_CHEST
+  - Blocks.COPPER_CHEST.waxed().weathered()
   - "waxed_weathered_copper_chest"
 Blocks.WAXED_OXIDIZED_COPPER_CHEST:
-  - Blocks.WAXED_OXIDIZED_COPPER_CHEST
+  - Blocks.COPPER_CHEST.waxed().oxidized()
   - "waxed_oxidized_copper_chest"
 Blocks.ENDER_CHEST:
   - Blocks.ENDER_CHEST
@@ -743,76 +743,76 @@ Blocks.IRON_TRAPDOOR:
   - Blocks.IRON_TRAPDOOR
   - "iron_trapdoor"
 Blocks.COPPER_TRAPDOOR:
-  - Blocks.COPPER_TRAPDOOR
+  - Blocks.COPPER_TRAPDOOR.weathering().unaffected()
   - "copper_trapdoor"
 Blocks.EXPOSED_COPPER_TRAPDOOR:
-  - Blocks.EXPOSED_COPPER_TRAPDOOR
+  - Blocks.COPPER_TRAPDOOR.weathering().exposed()
   - "exposed_copper_trapdoor"
-Blocks.OXIDIZED_COPPER_TRAPDOOR:
-  - Blocks.OXIDIZED_COPPER_TRAPDOOR
-  - "oxidized_copper_trapdoor"
 Blocks.WEATHERED_COPPER_TRAPDOOR:
-  - Blocks.WEATHERED_COPPER_TRAPDOOR
+  - Blocks.COPPER_TRAPDOOR.weathering().weathered()
   - "weathered_copper_trapdoor"
+Blocks.OXIDIZED_COPPER_TRAPDOOR:
+  - Blocks.COPPER_TRAPDOOR.weathering().oxidized()
+  - "oxidized_copper_trapdoor"
 Blocks.WAXED_COPPER_TRAPDOOR:
-  - Blocks.WAXED_COPPER_TRAPDOOR
+  - Blocks.COPPER_TRAPDOOR.waxed().unaffected()
   - "waxed_copper_trapdoor"
 Blocks.WAXED_EXPOSED_COPPER_TRAPDOOR:
-  - Blocks.WAXED_EXPOSED_COPPER_TRAPDOOR
+  - Blocks.COPPER_TRAPDOOR.waxed().exposed()
   - "waxed_exposed_copper_trapdoor"
-Blocks.WAXED_OXIDIZED_COPPER_TRAPDOOR:
-  - Blocks.WAXED_OXIDIZED_COPPER_TRAPDOOR
-  - "waxed_oxidized_copper_trapdoor"
 Blocks.WAXED_WEATHERED_COPPER_TRAPDOOR:
-  - Blocks.WAXED_WEATHERED_COPPER_TRAPDOOR
+  - Blocks.COPPER_TRAPDOOR.waxed().weathered()
   - "waxed_weathered_copper_trapdoor"
+Blocks.WAXED_OXIDIZED_COPPER_TRAPDOOR:
+  - Blocks.COPPER_TRAPDOOR.waxed().oxidized()
+  - "waxed_oxidized_copper_trapdoor"
 Blocks.COPPER_GRATE:
-  - Blocks.COPPER_GRATE
+  - Blocks.COPPER_GRATE.weathering().unaffected()
   - "copper_grate"
 Blocks.EXPOSED_COPPER_GRATE:
-  - Blocks.EXPOSED_COPPER_GRATE
+  - Blocks.COPPER_GRATE.weathering().exposed()
   - "exposed_copper_grate"
 Blocks.WEATHERED_COPPER_GRATE:
-  - Blocks.WEATHERED_COPPER_GRATE
+  - Blocks.COPPER_GRATE.weathering().weathered()
   - "weathered_copper_grate"
 Blocks.OXIDIZED_COPPER_GRATE:
-  - Blocks.OXIDIZED_COPPER_GRATE
+  - Blocks.COPPER_GRATE.weathering().oxidized()
   - "oxidized_copper_grate"
 Blocks.WAXED_COPPER_GRATE:
-  - Blocks.WAXED_COPPER_GRATE
+  - Blocks.COPPER_GRATE.waxed().unaffected()
   - "waxed_copper_grate"
 Blocks.WAXED_EXPOSED_COPPER_GRATE:
-  - Blocks.WAXED_EXPOSED_COPPER_GRATE
+  - Blocks.COPPER_GRATE.waxed().exposed()
   - "waxed_exposed_copper_grate"
 Blocks.WAXED_WEATHERED_COPPER_GRATE:
-  - Blocks.WAXED_WEATHERED_COPPER_GRATE
+  - Blocks.COPPER_GRATE.waxed().weathered()
   - "waxed_weathered_copper_grate"
 Blocks.WAXED_OXIDIZED_COPPER_GRATE:
-  - Blocks.WAXED_OXIDIZED_COPPER_GRATE
+  - Blocks.COPPER_GRATE.waxed().oxidized()
   - "waxed_oxidized_copper_grate"
 Blocks.COPPER_BULB:
-  - Blocks.COPPER_BULB
+  - Blocks.COPPER_BULB.weathering().unaffected()
   - "copper_bulb"
 Blocks.EXPOSED_COPPER_BULB:
-  - Blocks.EXPOSED_COPPER_BULB
+  - Blocks.COPPER_BULB.weathering().exposed()
   - "exposed_copper_bulb"
 Blocks.WEATHERED_COPPER_BULB:
-  - Blocks.WEATHERED_COPPER_BULB
+  - Blocks.COPPER_BULB.weathering().weathered()
   - "weathered_copper_bulb"
 Blocks.OXIDIZED_COPPER_BULB:
-  - Blocks.OXIDIZED_COPPER_BULB
+  - Blocks.COPPER_BULB.weathering().oxidized()
   - "oxidized_copper_bulb"
 Blocks.WAXED_COPPER_BULB:
-  - Blocks.WAXED_COPPER_BULB
+  - Blocks.COPPER_BULB.waxed().unaffected()
   - "waxed_copper_bulb"
 Blocks.WAXED_EXPOSED_COPPER_BULB:
-  - Blocks.WAXED_EXPOSED_COPPER_BULB
+  - Blocks.COPPER_BULB.waxed().exposed()
   - "waxed_exposed_copper_bulb"
 Blocks.WAXED_WEATHERED_COPPER_BULB:
-  - Blocks.WAXED_WEATHERED_COPPER_BULB
+  - Blocks.COPPER_BULB.waxed().weathered()
   - "waxed_weathered_copper_bulb"
 Blocks.WAXED_OXIDIZED_COPPER_BULB:
-  - Blocks.WAXED_OXIDIZED_COPPER_BULB
+  - Blocks.COPPER_BULB.waxed().oxidized()
   - "waxed_oxidized_copper_bulb"
 Blocks.LADDER:
   - Blocks.LADDER
@@ -1025,52 +1025,52 @@ Blocks.IRON_BARS:
   - Blocks.IRON_BARS
   - "iron_bars"
 Blocks.COPPER_BARS:
-  - Blocks.COPPER_BARS.unaffected()
+  - Blocks.COPPER_BARS.weathering().unaffected()
   - "copper_bars"
 Blocks.EXPOSED_COPPER_BARS:
-  - Blocks.COPPER_BARS.exposed()
+  - Blocks.COPPER_BARS.weathering().exposed()
   - "exposed_copper_bars"
 Blocks.WEATHERED_COPPER_BARS:
-  - Blocks.COPPER_BARS.weathered()
+  - Blocks.COPPER_BARS.weathering().weathered()
   - "weathered_copper_bars"
 Blocks.OXIDIZED_COPPER_BARS:
-  - Blocks.COPPER_BARS.oxidized()
+  - Blocks.COPPER_BARS.weathering().oxidized()
   - "oxidized_copper_bars"
 Blocks.WAXED_COPPER_BARS:
-  - Blocks.COPPER_BARS.waxed()
+  - Blocks.COPPER_BARS.waxed().unaffected()
   - "waxed_copper_bars"
 Blocks.WAXED_EXPOSED_COPPER_BARS:
-  - Blocks.COPPER_BARS.waxedExposed()
+  - Blocks.COPPER_BARS.waxed().exposed()
   - "waxed_exposed_copper_bars"
 Blocks.WAXED_WEATHERED_COPPER_BARS:
-  - Blocks.COPPER_BARS.waxedWeathered()
+  - Blocks.COPPER_BARS.waxed().weathered()
   - "waxed_weathered_copper_bars"
 Blocks.WAXED_OXIDIZED_COPPER_BARS:
-  - Blocks.COPPER_BARS.waxedOxidized()
+  - Blocks.COPPER_BARS.waxed().oxidized()
   - "waxed_oxidized_copper_bars"
 Blocks.COPPER_GOLEM_STATUE:
-  - Blocks.COPPER_GOLEM_STATUE
+  - Blocks.COPPER_GOLEM_STATUE.weathering().unaffected()
   - "copper_golem_statue"
 Blocks.EXPOSED_COPPER_GOLEM_STATUE:
-  - Blocks.EXPOSED_COPPER_GOLEM_STATUE
+  - Blocks.COPPER_GOLEM_STATUE.weathering().exposed()
   - "exposed_copper_golem_statue"
 Blocks.WEATHERED_COPPER_GOLEM_STATUE:
-  - Blocks.WEATHERED_COPPER_GOLEM_STATUE
+  - Blocks.COPPER_GOLEM_STATUE.weathering().weathered()
   - "weathered_copper_golem_statue"
 Blocks.OXIDIZED_COPPER_GOLEM_STATUE:
-  - Blocks.OXIDIZED_COPPER_GOLEM_STATUE
+  - Blocks.COPPER_GOLEM_STATUE.weathering().oxidized()
   - "oxidized_copper_golem_statue"
 Blocks.WAXED_COPPER_GOLEM_STATUE:
-  - Blocks.WAXED_COPPER_GOLEM_STATUE
+  - Blocks.COPPER_GOLEM_STATUE.waxed().unaffected()
   - "waxed_copper_golem_statue"
 Blocks.WAXED_EXPOSED_COPPER_GOLEM_STATUE:
-  - Blocks.WAXED_EXPOSED_COPPER_GOLEM_STATUE
+  - Blocks.COPPER_GOLEM_STATUE.waxed().exposed()
   - "waxed_exposed_copper_golem_statue"
 Blocks.WAXED_WEATHERED_COPPER_GOLEM_STATUE:
-  - Blocks.WAXED_WEATHERED_COPPER_GOLEM_STATUE
+  - Blocks.COPPER_GOLEM_STATUE.waxed().weathered()
   - "waxed_weathered_copper_golem_statue"
 Blocks.WAXED_OXIDIZED_COPPER_GOLEM_STATUE:
-  - Blocks.WAXED_OXIDIZED_COPPER_GOLEM_STATUE
+  - Blocks.COPPER_GOLEM_STATUE.waxed().oxidized()
   - "waxed_oxidized_copper_golem_statue"
 Blocks.MELON_BLOCK:
   - Blocks.MELON
@@ -2966,28 +2966,28 @@ Blocks.LANTERN:
   - Blocks.LANTERN
   - "lantern"
 Blocks.COPPER_LANTERN:
-  - Blocks.COPPER_LANTERN.unaffected()
+  - Blocks.COPPER_LANTERN.weathering().unaffected()
   - "copper_lantern"
 Blocks.EXPOSED_COPPER_LANTERN:
-  - Blocks.COPPER_LANTERN.exposed()
+  - Blocks.COPPER_LANTERN.weathering().exposed()
   - "exposed_copper_lantern"
 Blocks.WEATHERED_COPPER_LANTERN:
-  - Blocks.COPPER_LANTERN.weathered()
+  - Blocks.COPPER_LANTERN.weathering().weathered()
   - "weathered_copper_lantern"
 Blocks.OXIDIZED_COPPER_LANTERN:
-  - Blocks.COPPER_LANTERN.oxidized()
+  - Blocks.COPPER_LANTERN.weathering().oxidized()
   - "oxidized_copper_lantern"
 Blocks.WAXED_COPPER_LANTERN:
-  - Blocks.COPPER_LANTERN.waxed()
+  - Blocks.COPPER_LANTERN.waxed().unaffected()
   - "waxed_copper_lantern"
 Blocks.WAXED_EXPOSED_COPPER_LANTERN:
-  - Blocks.COPPER_LANTERN.waxedExposed()
+  - Blocks.COPPER_LANTERN.waxed().exposed()
   - "waxed_exposed_copper_lantern"
 Blocks.WAXED_WEATHERED_COPPER_LANTERN:
-  - Blocks.COPPER_LANTERN.waxedWeathered()
+  - Blocks.COPPER_LANTERN.waxed().weathered()
   - "waxed_weathered_copper_lantern"
 Blocks.WAXED_OXIDIZED_COPPER_LANTERN:
-  - Blocks.COPPER_LANTERN.waxedOxidized()
+  - Blocks.COPPER_LANTERN.waxed().oxidized()
   - "waxed_oxidized_copper_lantern"
 Blocks.CAMPFIRE:
   - Blocks.CAMPFIRE
@@ -3047,28 +3047,28 @@ Blocks.CHAIN:
   - Blocks.IRON_CHAIN
   - "iron_chain"
 Blocks.COPPER_CHAIN:
-  - Blocks.COPPER_CHAIN.unaffected()
+  - Blocks.COPPER_CHAIN.weathering().unaffected()
   - "copper_chain"
 Blocks.EXPOSED_COPPER_CHAIN:
-  - Blocks.COPPER_CHAIN.exposed()
+  - Blocks.COPPER_CHAIN.weathering().exposed()
   - "exposed_copper_chain"
 Blocks.WEATHERED_COPPER_CHAIN:
-  - Blocks.COPPER_CHAIN.weathered()
+  - Blocks.COPPER_CHAIN.weathering().weathered()
   - "weathered_copper_chain"
 Blocks.OXIDIZED_COPPER_CHAIN:
-  - Blocks.COPPER_CHAIN.oxidized()
+  - Blocks.COPPER_CHAIN.weathering().oxidized()
   - "oxidized_copper_chain"
 Blocks.WAXED_COPPER_CHAIN:
-  - Blocks.COPPER_CHAIN.waxed()
+  - Blocks.COPPER_CHAIN.waxed().unaffected()
   - "waxed_copper_chain"
 Blocks.WAXED_EXPOSED_COPPER_CHAIN:
-  - Blocks.COPPER_CHAIN.waxedExposed()
+  - Blocks.COPPER_CHAIN.waxed().exposed()
   - "waxed_exposed_copper_chain"
 Blocks.WAXED_WEATHERED_COPPER_CHAIN:
-  - Blocks.COPPER_CHAIN.waxedWeathered()
+  - Blocks.COPPER_CHAIN.waxed().weathered()
   - "waxed_weathered_copper_chain"
 Blocks.WAXED_OXIDIZED_COPPER_CHAIN:
-  - Blocks.COPPER_CHAIN.waxedOxidized()
+  - Blocks.COPPER_CHAIN.waxed().oxidized()
   - "waxed_oxidized_copper_chain"
 Blocks.SOUL_LANTERN:
   - Blocks.SOUL_LANTERN
@@ -3574,149 +3574,149 @@ Blocks.SCULK_CATALYST:
 Blocks.SCULK_SHRIEKER:
   - Blocks.SCULK_SHRIEKER
   - "sculk_shrieker"
-Blocks.OXIDIZED_COPPER:
-  - Blocks.OXIDIZED_COPPER
-  - "oxidized_copper"
-Blocks.WEATHERED_COPPER:
-  - Blocks.WEATHERED_COPPER
-  - "weathered_copper"
-Blocks.EXPOSED_COPPER:
-  - Blocks.EXPOSED_COPPER
-  - "exposed_copper"
 Blocks.COPPER_BLOCK:
-  - Blocks.COPPER_BLOCK
+  - Blocks.COPPER_BLOCK.weathering().unaffected()
   - "copper_block"
-Blocks.OXIDIZED_CUT_COPPER:
-  - Blocks.OXIDIZED_CUT_COPPER
-  - "oxidized_cut_copper"
-Blocks.WEATHERED_CUT_COPPER:
-  - Blocks.WEATHERED_CUT_COPPER
-  - "weathered_cut_copper"
-Blocks.EXPOSED_CUT_COPPER:
-  - Blocks.EXPOSED_CUT_COPPER
-  - "exposed_cut_copper"
-Blocks.CUT_COPPER:
-  - Blocks.CUT_COPPER
-  - "cut_copper"
-Blocks.OXIDIZED_CHISELED_COPPER:
-  - Blocks.OXIDIZED_CHISELED_COPPER
-  - "oxidized_chiseled_copper"
-Blocks.WEATHERED_CHISELED_COPPER:
-  - Blocks.WEATHERED_CHISELED_COPPER
-  - "weathered_chiseled_copper"
-Blocks.EXPOSED_CHISELED_COPPER:
-  - Blocks.EXPOSED_CHISELED_COPPER
-  - "exposed_chiseled_copper"
-Blocks.CHISELED_COPPER:
-  - Blocks.CHISELED_COPPER
-  - "chiseled_copper"
-Blocks.WAXED_OXIDIZED_CHISELED_COPPER:
-  - Blocks.WAXED_OXIDIZED_CHISELED_COPPER
-  - "waxed_oxidized_chiseled_copper"
-Blocks.WAXED_WEATHERED_CHISELED_COPPER:
-  - Blocks.WAXED_WEATHERED_CHISELED_COPPER
-  - "waxed_weathered_chiseled_copper"
-Blocks.WAXED_EXPOSED_CHISELED_COPPER:
-  - Blocks.WAXED_EXPOSED_CHISELED_COPPER
-  - "waxed_exposed_chiseled_copper"
-Blocks.WAXED_CHISELED_COPPER:
-  - Blocks.WAXED_CHISELED_COPPER
-  - "waxed_chiseled_copper"
-Blocks.OXIDIZED_CUT_COPPER_STAIRS:
-  - Blocks.OXIDIZED_CUT_COPPER_STAIRS
-  - "oxidized_cut_copper_stairs"
-Blocks.WEATHERED_CUT_COPPER_STAIRS:
-  - Blocks.WEATHERED_CUT_COPPER_STAIRS
-  - "weathered_cut_copper_stairs"
-Blocks.EXPOSED_CUT_COPPER_STAIRS:
-  - Blocks.EXPOSED_CUT_COPPER_STAIRS
-  - "exposed_cut_copper_stairs"
-Blocks.CUT_COPPER_STAIRS:
-  - Blocks.CUT_COPPER_STAIRS
-  - "cut_copper_stairs"
-Blocks.OXIDIZED_CUT_COPPER_SLAB:
-  - Blocks.OXIDIZED_CUT_COPPER_SLAB
-  - "oxidized_cut_copper_slab"
-Blocks.WEATHERED_CUT_COPPER_SLAB:
-  - Blocks.WEATHERED_CUT_COPPER_SLAB
-  - "weathered_cut_copper_slab"
-Blocks.EXPOSED_CUT_COPPER_SLAB:
-  - Blocks.EXPOSED_CUT_COPPER_SLAB
-  - "exposed_cut_copper_slab"
-Blocks.CUT_COPPER_SLAB:
-  - Blocks.CUT_COPPER_SLAB
-  - "cut_copper_slab"
+Blocks.EXPOSED_COPPER:
+  - Blocks.COPPER_BLOCK.weathering().exposed()
+  - "exposed_copper"
+Blocks.WEATHERED_COPPER:
+  - Blocks.COPPER_BLOCK.weathering().weathered()
+  - "weathered_copper"
+Blocks.OXIDIZED_COPPER:
+  - Blocks.COPPER_BLOCK.weathering().oxidized()
+  - "oxidized_copper"
 Blocks.WAXED_COPPER_BLOCK:
-  - Blocks.WAXED_COPPER_BLOCK
+  - Blocks.COPPER_BLOCK.waxed().unaffected()
   - "waxed_copper_block"
 Blocks.WAXED_WEATHERED_COPPER:
-  - Blocks.WAXED_WEATHERED_COPPER
+  - Blocks.COPPER_BLOCK.waxed().exposed()
   - "waxed_weathered_copper"
 Blocks.WAXED_EXPOSED_COPPER:
-  - Blocks.WAXED_EXPOSED_COPPER
+  - Blocks.COPPER_BLOCK.waxed().weathered()
   - "waxed_exposed_copper"
 Blocks.WAXED_OXIDIZED_COPPER:
-  - Blocks.WAXED_OXIDIZED_COPPER
+  - Blocks.COPPER_BLOCK.waxed().oxidized()
   - "waxed_oxidized_copper"
-Blocks.WAXED_OXIDIZED_CUT_COPPER:
-  - Blocks.WAXED_OXIDIZED_CUT_COPPER
-  - "waxed_oxidized_cut_copper"
-Blocks.WAXED_WEATHERED_CUT_COPPER:
-  - Blocks.WAXED_WEATHERED_CUT_COPPER
-  - "waxed_weathered_cut_copper"
-Blocks.WAXED_EXPOSED_CUT_COPPER:
-  - Blocks.WAXED_EXPOSED_CUT_COPPER
-  - "waxed_exposed_cut_copper"
+Blocks.CUT_COPPER:
+  - Blocks.CUT_COPPER.weathering().unaffected()
+  - "cut_copper"
+Blocks.EXPOSED_CUT_COPPER:
+  - Blocks.CUT_COPPER.weathering().exposed()
+  - "exposed_cut_copper"
+Blocks.WEATHERED_CUT_COPPER:
+  - Blocks.CUT_COPPER.weathering().weathered()
+  - "weathered_cut_copper"
+Blocks.OXIDIZED_CUT_COPPER:
+  - Blocks.CUT_COPPER.weathering().oxidized()
+  - "oxidized_cut_copper"
 Blocks.WAXED_CUT_COPPER:
-  - Blocks.WAXED_CUT_COPPER
+  - Blocks.CUT_COPPER.waxed().unaffected()
   - "waxed_cut_copper"
-Blocks.WAXED_OXIDIZED_CUT_COPPER_STAIRS:
-  - Blocks.WAXED_OXIDIZED_CUT_COPPER_STAIRS
-  - "waxed_oxidized_cut_copper_stairs"
-Blocks.WAXED_WEATHERED_CUT_COPPER_STAIRS:
-  - Blocks.WAXED_WEATHERED_CUT_COPPER_STAIRS
-  - "waxed_weathered_cut_copper_stairs"
-Blocks.WAXED_EXPOSED_CUT_COPPER_STAIRS:
-  - Blocks.WAXED_EXPOSED_CUT_COPPER_STAIRS
-  - "waxed_exposed_cut_copper_stairs"
+Blocks.WAXED_EXPOSED_CUT_COPPER:
+  - Blocks.CUT_COPPER.waxed().exposed()
+  - "waxed_exposed_cut_copper"
+Blocks.WAXED_WEATHERED_CUT_COPPER:
+  - Blocks.CUT_COPPER.waxed().weathered()
+  - "waxed_weathered_cut_copper"
+Blocks.WAXED_OXIDIZED_CUT_COPPER:
+  - Blocks.CUT_COPPER.waxed().oxidized()
+  - "waxed_oxidized_cut_copper"
+Blocks.CHISELED_COPPER:
+  - Blocks.CHISELED_COPPER.weathering().unaffected()
+  - "chiseled_copper"
+Blocks.EXPOSED_CHISELED_COPPER:
+  - Blocks.CHISELED_COPPER.weathering().exposed()
+  - "exposed_chiseled_copper"
+Blocks.WEATHERED_CHISELED_COPPER:
+  - Blocks.CHISELED_COPPER.weathering().weathered()
+  - "weathered_chiseled_copper"
+Blocks.OXIDIZED_CHISELED_COPPER:
+  - Blocks.CHISELED_COPPER.weathering().oxidized()
+  - "oxidized_chiseled_copper"
+Blocks.WAXED_CHISELED_COPPER:
+  - Blocks.CHISELED_COPPER.waxed().unaffected()
+  - "waxed_chiseled_copper"
+Blocks.WAXED_EXPOSED_CHISELED_COPPER:
+  - Blocks.CHISELED_COPPER.waxed().exposed()
+  - "waxed_exposed_chiseled_copper"
+Blocks.WAXED_WEATHERED_CHISELED_COPPER:
+  - Blocks.CHISELED_COPPER.waxed().weathered()
+  - "waxed_weathered_chiseled_copper"
+Blocks.WAXED_OXIDIZED_CHISELED_COPPER:
+  - Blocks.CHISELED_COPPER.waxed().oxidized()
+  - "waxed_oxidized_chiseled_copper"
+Blocks.CUT_COPPER_STAIRS:
+  - Blocks.CUT_COPPER_STAIRS.weathering().unaffected()
+  - "cut_copper_stairs"
+Blocks.EXPOSED_CUT_COPPER_STAIRS:
+  - Blocks.CUT_COPPER_STAIRS.weathering().exposed()
+  - "exposed_cut_copper_stairs"
+Blocks.WEATHERED_CUT_COPPER_STAIRS:
+  - Blocks.CUT_COPPER_STAIRS.weathering().weathered()
+  - "weathered_cut_copper_stairs"
+Blocks.OXIDIZED_CUT_COPPER_STAIRS:
+  - Blocks.CUT_COPPER_STAIRS.weathering().oxidized()
+  - "oxidized_cut_copper_stairs"
 Blocks.WAXED_CUT_COPPER_STAIRS:
-  - Blocks.WAXED_CUT_COPPER_STAIRS
+  - Blocks.CUT_COPPER_STAIRS.waxed().unaffected()
   - "waxed_cut_copper_stairs"
-Blocks.WAXED_OXIDIZED_CUT_COPPER_SLAB:
-  - Blocks.WAXED_OXIDIZED_CUT_COPPER_SLAB
-  - "waxed_oxidized_cut_copper_slab"
-Blocks.WAXED_WEATHERED_CUT_COPPER_SLAB:
-  - Blocks.WAXED_WEATHERED_CUT_COPPER_SLAB
-  - "waxed_weathered_cut_copper_slab"
-Blocks.WAXED_EXPOSED_CUT_COPPER_SLAB:
-  - Blocks.WAXED_EXPOSED_CUT_COPPER_SLAB
-  - "waxed_exposed_cut_copper_slab"
+Blocks.WAXED_EXPOSED_CUT_COPPER_STAIRS:
+  - Blocks.CUT_COPPER_STAIRS.waxed().exposed()
+  - "waxed_exposed_cut_copper_stairs"
+Blocks.WAXED_WEATHERED_CUT_COPPER_STAIRS:
+  - Blocks.CUT_COPPER_STAIRS.waxed().weathered()
+  - "waxed_weathered_cut_copper_stairs"
+Blocks.WAXED_OXIDIZED_CUT_COPPER_STAIRS:
+  - Blocks.CUT_COPPER_STAIRS.waxed().oxidized()
+  - "waxed_oxidized_cut_copper_stairs"
+Blocks.CUT_COPPER_SLAB:
+  - Blocks.CUT_COPPER_SLAB.weathering().unaffected()
+  - "cut_copper_slab"
+Blocks.EXPOSED_CUT_COPPER_SLAB:
+  - Blocks.CUT_COPPER_SLAB.weathering().exposed()
+  - "exposed_cut_copper_slab"
+Blocks.WEATHERED_CUT_COPPER_SLAB:
+  - Blocks.CUT_COPPER_SLAB.weathering().weathered()
+  - "weathered_cut_copper_slab"
+Blocks.OXIDIZED_CUT_COPPER_SLAB:
+  - Blocks.CUT_COPPER_SLAB.weathering().oxidized()
+  - "oxidized_cut_copper_slab"
 Blocks.WAXED_CUT_COPPER_SLAB:
-  - Blocks.WAXED_CUT_COPPER_SLAB
+  - Blocks.CUT_COPPER_SLAB.waxed().unaffected()
   - "waxed_cut_copper_slab"
+Blocks.WAXED_EXPOSED_CUT_COPPER_SLAB:
+  - Blocks.CUT_COPPER_SLAB.waxed().exposed()
+  - "waxed_exposed_cut_copper_slab"
+Blocks.WAXED_WEATHERED_CUT_COPPER_SLAB:
+  - Blocks.CUT_COPPER_SLAB.waxed().weathered()
+  - "waxed_weathered_cut_copper_slab"
+Blocks.WAXED_OXIDIZED_CUT_COPPER_SLAB:
+  - Blocks.CUT_COPPER_SLAB.waxed().oxidized()
+  - "waxed_oxidized_cut_copper_slab"
 Blocks.LIGHTNING_ROD:
-  - Blocks.LIGHTNING_ROD
+  - Blocks.LIGHTNING_ROD.weathering().unaffected()
   - "lightning_rod"
 Blocks.EXPOSED_LIGHTNING_ROD:
-  - Blocks.EXPOSED_LIGHTNING_ROD
+  - Blocks.LIGHTNING_ROD.weathering().exposed()
   - "exposed_lightning_rod"
 Blocks.WEATHERED_LIGHTNING_ROD:
-  - Blocks.WEATHERED_LIGHTNING_ROD
+  - Blocks.LIGHTNING_ROD.weathering().weathered()
   - "weathered_lightning_rod"
 Blocks.OXIDIZED_LIGHTNING_ROD:
-  - Blocks.OXIDIZED_LIGHTNING_ROD
+  - Blocks.LIGHTNING_ROD.weathering().oxidized()
   - "oxidized_lightning_rod"
 Blocks.WAXED_LIGHTNING_ROD:
-  - Blocks.WAXED_LIGHTNING_ROD
+  - Blocks.LIGHTNING_ROD.waxed().unaffected()
   - "waxed_lightning_rod"
 Blocks.WAXED_EXPOSED_LIGHTNING_ROD:
-  - Blocks.WAXED_EXPOSED_LIGHTNING_ROD
+  - Blocks.LIGHTNING_ROD.waxed().exposed()
   - "waxed_exposed_lightning_rod"
 Blocks.WAXED_WEATHERED_LIGHTNING_ROD:
-  - Blocks.WAXED_WEATHERED_LIGHTNING_ROD
+  - Blocks.LIGHTNING_ROD.waxed().weathered()
   - "waxed_weathered_lightning_rod"
 Blocks.WAXED_OXIDIZED_LIGHTNING_ROD:
-  - Blocks.WAXED_OXIDIZED_LIGHTNING_ROD
+  - Blocks.LIGHTNING_ROD.waxed().oxidized()
   - "waxed_oxidized_lightning_rod"
 Blocks.POINTED_DRIPSTONE:
   - Blocks.POINTED_DRIPSTONE
@@ -4451,29 +4451,29 @@ Items.IRON_DOOR:
   - Items.IRON_DOOR
   - "iron_door"
 Blocks.COPPER_DOOR:
-  - Blocks.COPPER_DOOR
+  - Blocks.COPPER_DOOR.weathering().unaffected()
   - "copper_door"
 Blocks.EXPOSED_COPPER_DOOR:
-  - Blocks.EXPOSED_COPPER_DOOR
+  - Blocks.COPPER_DOOR.weathering().exposed()
   - "exposed_copper_door"
-Blocks.OXIDIZED_COPPER_DOOR:
-  - Blocks.OXIDIZED_COPPER_DOOR
-  - "oxidized_copper_door"
 Blocks.WEATHERED_COPPER_DOOR:
-  - Blocks.WEATHERED_COPPER_DOOR
+  - Blocks.COPPER_DOOR.weathering().weathered()
   - "weathered_copper_door"
+Blocks.OXIDIZED_COPPER_DOOR:
+  - Blocks.COPPER_DOOR.weathering().oxidized()
+  - "oxidized_copper_door"
 Blocks.WAXED_COPPER_DOOR:
-  - Blocks.WAXED_COPPER_DOOR
+  - Blocks.COPPER_DOOR.waxed().unaffected()
   - "waxed_copper_door"
 Blocks.WAXED_EXPOSED_COPPER_DOOR:
-  - Blocks.WAXED_EXPOSED_COPPER_DOOR
+  - Blocks.COPPER_DOOR.waxed().exposed()
   - "waxed_exposed_copper_door"
-Blocks.WAXED_OXIDIZED_COPPER_DOOR:
-  - Blocks.WAXED_OXIDIZED_COPPER_DOOR
-  - "waxed_oxidized_copper_door"
 Blocks.WAXED_WEATHERED_COPPER_DOOR:
-  - Blocks.WAXED_WEATHERED_COPPER_DOOR
+  - Blocks.COPPER_DOOR.waxed().weathered()
   - "waxed_weathered_copper_door"
+Blocks.WAXED_OXIDIZED_COPPER_DOOR:
+  - Blocks.COPPER_DOOR.waxed().oxidized()
+  - "waxed_oxidized_copper_door"
 Items.CRIMSON_DOOR:
   - Items.CRIMSON_DOOR
   - "crimson_door"
