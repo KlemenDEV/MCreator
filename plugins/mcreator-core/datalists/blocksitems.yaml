@@ -334,6 +334,146 @@
   type: block
   texture: POINTED_DRIPSTONE
 
+- Blocks.SULFUR:
+  readable_name: "Sulfur"
+  type: block
+  texture: SULFUR
+
+- Blocks.POTENT_SULFUR:
+  readable_name: "Potent Sulfur"
+  type: block
+  texture: POTENT_SULFUR
+
+- Blocks.SULFUR_SLAB:
+  readable_name: "Sulfur Slab"
+  type: block
+  texture: SULFUR_SLAB
+
+- Blocks.SULFUR_STAIRS:
+  readable_name: "Sulfur Stairs"
+  type: block
+  texture: SULFUR_STAIRS
+
+- Blocks.SULFUR_WALL:
+  readable_name: "Sulfur Wall"
+  type: block
+  texture: SULFUR_WALL
+
+- Blocks.POLISHED_SULFUR:
+  readable_name: "Polished Sulfur"
+  type: block
+  texture: POLISHED_SULFUR
+
+- Blocks.POLISHED_SULFUR_SLAB:
+  readable_name: "Polished Sulfur Slab"
+  type: block
+  texture: POLISHED_SULFUR_SLAB
+
+- Blocks.POLISHED_SULFUR_STAIRS:
+  readable_name: "Polished Sulfur Stairs"
+  type: block
+  texture: POLISHED_SULFUR_STAIRS
+
+- Blocks.POLISHED_SULFUR_WALL:
+  readable_name: "Polished Sulfur Wall"
+  type: block
+  texture: POLISHED_SULFUR_WALL
+
+- Blocks.SULFUR_BRICKS:
+  readable_name: "Sulfur Bricks"
+  type: block
+  texture: SULFUR_BRICKS
+
+- Blocks.SULFUR_BRICK_SLAB:
+  readable_name: "Sulfur Brick Slab"
+  type: block
+  texture: SULFUR_BRICK_SLAB
+
+- Blocks.SULFUR_BRICK_STAIRS:
+  readable_name: "Sulfur Brick Stairs"
+  type: block
+  texture: SULFUR_BRICK_STAIRS
+
+- Blocks.SULFUR_BRICK_WALL:
+  readable_name: "Sulfur Brick Wall"
+  type: block
+  texture: SULFUR_BRICK_WALL
+
+- Blocks.CHISELED_SULFUR:
+  readable_name: "Chiseled Sulfur"
+  type: block
+  texture: CHISELED_SULFUR
+
+- Blocks.SULFUR_SPIKE:
+  readable_name: "Sulfur Spike"
+  type: block
+  texture: SULFUR_SPIKE
+
+- Blocks.CINNABAR:
+  readable_name: "Cinnabar"
+  type: block
+  texture: CINNABAR
+
+- Blocks.CINNABAR_SLAB:
+  readable_name: "Cinnabar Slab"
+  type: block
+  texture: CINNABAR_SLAB
+
+- Blocks.CINNABAR_STAIRS:
+  readable_name: "Cinnabar Stairs"
+  type: block
+  texture: CINNABAR_STAIRS
+
+- Blocks.CINNABAR_WALL:
+  readable_name: "Cinnabar Wall"
+  type: block
+  texture: CINNABAR_WALL
+
+- Blocks.POLISHED_CINNABAR:
+  readable_name: "Polished Cinnabar"
+  type: block
+  texture: POLISHED_CINNABAR
+
+- Blocks.POLISHED_CINNABAR_SLAB:
+  readable_name: "Polished Cinnabar Slab"
+  type: block
+  texture: POLISHED_CINNABAR_SLAB
+
+- Blocks.POLISHED_CINNABAR_STAIRS:
+  readable_name: "Polished Cinnabar Stairs"
+  type: block
+  texture: POLISHED_CINNABAR_STAIRS
+
+- Blocks.POLISHED_CINNABAR_WALL:
+  readable_name: "Polished Cinnabar Wall"
+  type: block
+  texture: POLISHED_CINNABAR_WALL
+
+- Blocks.CINNABAR_BRICKS:
+  readable_name: "Cinnabar Bricks"
+  type: block
+  texture: CINNABAR_BRICKS
+
+- Blocks.CINNABAR_BRICK_SLAB:
+  readable_name: "Cinnabar Brick Slab"
+  type: block
+  texture: CINNABAR_BRICK_SLAB
+
+- Blocks.CINNABAR_BRICK_STAIRS:
+  readable_name: "Cinnabar Brick Stairs"
+  type: block
+  texture: CINNABAR_BRICK_STAIRS
+
+- Blocks.CINNABAR_BRICK_WALL:
+  readable_name: "Cinnabar Brick Wall"
+  type: block
+  texture: CINNABAR_BRICK_WALL
+
+- Blocks.CHISELED_CINNABAR:
+  readable_name: "Chiseled Cinnabar"
+  type: block
+  texture: CHISELED_CINNABAR
+
 - Blocks.GRASS:
   readable_name: "Grass"
   type: block
@@ -7251,6 +7391,11 @@
   type: item
   texture: TADPOLE_BUCKET
 
+- Items.SULFUR_CUBE_BUCKET:
+  readable_name: "Bucket of Sulfur Cube"
+  type: item
+  texture: SULFUR_CUBE_BUCKET
+
 - Items.LAVA_BUCKET:
   readable_name: "Lava Bucket"
   type: item
@@ -8088,6 +8233,11 @@
   type: item
   texture: SPAWN_EGG#55
 
+- Items.SULFUR_CUBE_SPAWN_EGG:
+  readable_name: "Sulfur Cube Spawn Egg"
+  type: item
+  texture: SULFUR_CUBE_SPAWN_EGG
+
 - Items.SPAWN_EGG#56:
   readable_name: "Ghast Spawn Egg"
   type: item
@@ -8668,6 +8818,12 @@
   description: "Aaron Cherof - Relic"
   type: item
   texture: MUSIC_DISC_RELIC
+
+- Items.RECORD_BOUNCE:
+  readable_name: "Music Disc"
+  type: item
+  texture: RECORD_BOUNCE
+  description: "fingerspit - Bounce"
 
 - Items.DISC_FRAGMENT_5:
   readable_name: "Disc Fragment 5"
