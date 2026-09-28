@@ -53,16 +53,23 @@ loadScripts(document, 'script');</script>
 <div class="toc-header">Contents&nbsp;<input type="text" class="filter-input" disabled placeholder="Filter contents (type .)" aria-label="Filter table of contents" autocomplete="off" spellcheck="false"><input type="reset" class="reset-filter" disabled tabindex="-1" value="Reset"></div>
 <ol class="toc-list" tabindex="-1">
 <li><a href="#" tabindex="0">Description</a></li>
+<li><a href="#field-summary" tabindex="0">Field Summary</a></li>
 <li><a href="#constructor-summary" tabindex="0">Constructor Summary</a></li>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
+<li><a href="#field-detail" tabindex="0">Field Details</a>
+<ol class="toc-list">
+<li><a href="#VANILLA_NAMES" tabindex="0">VANILLA_NAMES</a></li>
+</ol>
+</li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(net.mcreator.ui.validation.component.VTextField,boolean)" tabindex="0">JavaMemberNameValidator(VTextField, boolean)</a></li>
-<li><a href="#%3Cinit%3E(net.mcreator.ui.validation.component.VTextField,boolean,boolean)" tabindex="0">JavaMemberNameValidator(VTextField, boolean, boolean)</a></li>
+<li><a href="#%3Cinit%3E(net.mcreator.ui.validation.component.VTextField)" tabindex="0">JavaMemberNameValidator(VTextField)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
+<li><a href="#firstLetterUppercase()" tabindex="0">firstLetterUppercase()</a></li>
+<li><a href="#noInitialUnderscore()" tabindex="0">noInitialUnderscore()</a></li>
 <li><a href="#validate()" tabindex="0">validate()</a></li>
 </ol>
 </li>
@@ -90,6 +97,21 @@ implements <a href="../Validator.html" title="interface in net.mcreator.ui.valid
 </section>
 <section class="summary">
 <ul class="summary-list">
+<!-- =========== FIELD SUMMARY =========== -->
+<li>
+<section class="field-summary" id="field-summary">
+<h2>Field Summary</h2>
+<div class="caption"><span>Fields</span></div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier and Type</div>
+<div class="table-header col-second">Field</div>
+<div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#VANILLA_NAMES" class="member-name-link">VANILLA_NAMES</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+</div>
+</section>
+</li>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
 <li>
 <section class="constructor-summary" id="constructor-summary">
@@ -98,13 +120,8 @@ implements <a href="../Validator.html" title="interface in net.mcreator.ui.valid
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(net.mcreator.ui.validation.component.VTextField,boolean)" class="member-name-link">JavaMemberNameValidator</a><wbr>(<a href="../component/VTextField.html" title="class in net.mcreator.ui.validation.component">VTextField</a>&nbsp;textField,
- boolean&nbsp;requireFirstLetterUppercase)</code></div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(net.mcreator.ui.validation.component.VTextField)" class="member-name-link">JavaMemberNameValidator</a><wbr>(<a href="../component/VTextField.html" title="class in net.mcreator.ui.validation.component">VTextField</a>&nbsp;textField)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(net.mcreator.ui.validation.component.VTextField,boolean,boolean)" class="member-name-link">JavaMemberNameValidator</a><wbr>(<a href="../component/VTextField.html" title="class in net.mcreator.ui.validation.component">VTextField</a>&nbsp;textField,
- boolean&nbsp;requireFirstLetterUppercase,
- boolean&nbsp;allowInitialUnderscore)</code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </section>
 </li>
@@ -119,6 +136,12 @@ implements <a href="../Validator.html" title="interface in net.mcreator.ui.valid
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="JavaMemberNameValidator.html" title="class in net.mcreator.ui.validation.validators">JavaMemberNameValidator</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#firstLetterUppercase()" class="member-name-link">firstLetterUppercase</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="JavaMemberNameValidator.html" title="class in net.mcreator.ui.validation.validators">JavaMemberNameValidator</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#noInitialUnderscore()" class="member-name-link">noInitialUnderscore</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../ValidationResult.html" title="class in net.mcreator.ui.validation">ValidationResult</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#validate()" class="member-name-link">validate</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -137,27 +160,32 @@ implements <a href="../Validator.html" title="interface in net.mcreator.ui.valid
 </section>
 <section class="details">
 <ul class="details-list">
+<!-- ============ FIELD DETAIL =========== -->
+<li>
+<section class="field-details" id="field-detail">
+<h2>Field Details</h2>
+<ul class="member-list">
+<li>
+<section class="detail" id="VANILLA_NAMES">
+<h3>VANILLA_NAMES</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">VANILLA_NAMES</span></div>
+</div>
+</section>
+</li>
+</ul>
+</section>
+</li>
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 <li>
 <section class="constructor-details" id="constructor-detail">
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(net.mcreator.ui.validation.component.VTextField,boolean)">
+<section class="detail" id="&lt;init&gt;(net.mcreator.ui.validation.component.VTextField)">
 <h3>JavaMemberNameValidator</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">JavaMemberNameValidator</span><wbr><span class="parameters">(<a href="../component/VTextField.html" title="class in net.mcreator.ui.validation.component">VTextField</a>&nbsp;textField,
- boolean&nbsp;requireFirstLetterUppercase)</span></div>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="&lt;init&gt;(net.mcreator.ui.validation.component.VTextField,boolean,boolean)">
-<h3>JavaMemberNameValidator</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">JavaMemberNameValidator</span><wbr><span class="parameters">(<a href="../component/VTextField.html" title="class in net.mcreator.ui.validation.component">VTextField</a>&nbsp;textField,
- boolean&nbsp;requireFirstLetterUppercase,
- boolean&nbsp;allowInitialUnderscore)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">JavaMemberNameValidator</span><wbr><span class="parameters">(<a href="../component/VTextField.html" title="class in net.mcreator.ui.validation.component">VTextField</a>&nbsp;textField)</span></div>
 </div>
 </section>
 </li>
@@ -169,6 +197,22 @@ implements <a href="../Validator.html" title="interface in net.mcreator.ui.valid
 <section class="method-details" id="method-detail">
 <h2>Method Details</h2>
 <ul class="member-list">
+<li>
+<section class="detail" id="firstLetterUppercase()">
+<h3>firstLetterUppercase</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="JavaMemberNameValidator.html" title="class in net.mcreator.ui.validation.validators">JavaMemberNameValidator</a></span>&nbsp;<span class="element-name">firstLetterUppercase</span>()</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="noInitialUnderscore()">
+<h3>noInitialUnderscore</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="JavaMemberNameValidator.html" title="class in net.mcreator.ui.validation.validators">JavaMemberNameValidator</a></span>&nbsp;<span class="element-name">noInitialUnderscore</span>()</div>
+</div>
+</section>
+</li>
 <li>
 <section class="detail" id="validate()">
 <h3>validate</h3>
